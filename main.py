@@ -2,7 +2,7 @@ import pygame
 import sys
 import random
 import time
-from scripts import AStar
+from scripts import AStar, create_enemy_behavior
 
 # Inicializar Pygame
 pygame.init()
@@ -15,7 +15,7 @@ SCREEN_WIDTH = TILE_SIZE * MAZE_WIDTH
 SCREEN_HEIGHT = TILE_SIZE * MAZE_HEIGHT
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("🐶 Perro Pacman")
+pygame.display.set_caption("🐶 Perro Pacman - IA Avanzada")
 
 # Fuente para textos y emojis
 pygame.font.init()
@@ -113,19 +113,19 @@ levels = [
         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,1],
         [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     ],
-    # Nivel 2
+    # Nivel 2 
     [
         [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-        [1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1],
-        [1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1,0,1],
-        [1,0,1,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1],
-        [1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,1,0,1],
-        [1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1],
-        [1,1,1,1,1,0,1,1,1,1,1,1,1,1,1,0,1,1],
+        [1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,1],
+        [1,0,1,1,0,1,0,1,0,1,0,1,0,1,0,1,0,1],
+        [1,0,1,0,0,0,0,1,0,0,0,1,0,0,0,1,0,1],
+        [1,0,1,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1],
+        [1,0,0,0,1,0,0,0,0,1,0,0,0,1,0,0,0,1],
+        [1,1,1,0,1,0,1,1,0,1,0,1,0,1,0,1,1,1],
+        [1,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1],
+        [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-        [1,0,1,1,1,0,1,1,1,1,1,1,1,0,1,1,0,1],
-        [1,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,1],
-        [1,1,1,0,1,1,1,1,1,0,1,0,1,1,1,0,1,1],
+        [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,2,0,1],
         [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
     ],
@@ -166,6 +166,28 @@ enemies = [
     {"pos": [16, 1], "dir": [-1, 0], "type": enemy_types[1]}
 ]
 
+# ¡NUEVO! Sistema de comportamientos de IA
+enemy_behaviors = []
+
+# Función para obtener la posición del jugador (para los comportamientos de enemigos)
+def get_player_position():
+    return player_pos
+
+# Función para inicializar comportamientos de enemigos
+def initialize_enemy_behaviors():
+    """Inicializa los comportamientos de IA para todos los enemigos"""
+    global enemy_behaviors
+    enemy_behaviors = []
+    
+    for enemy in enemies:
+        behavior = create_enemy_behavior(
+            enemy_data=enemy,
+            pathfinder=pathfinder,
+            player_pos_getter=get_player_position,
+            all_enemies=enemies  # Para comportamientos cooperativos
+        )
+        enemy_behaviors.append(behavior)
+
 # Función para dibujar el menú principal
 def draw_menu():
     screen.fill(COLOR_BACKGROUND)
@@ -173,6 +195,11 @@ def draw_menu():
         color = (255, 255, 255) if i == menu_idx else (150, 150, 150)
         text = font.render(option, True, color)
         screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, 150 + i * 50))
+    
+    # Mostrar información sobre IA
+    ai_info = font.render("Incluye: A* + Árboles de Comportamiento", True, (100, 255, 100))
+    screen.blit(ai_info, (SCREEN_WIDTH // 2 - ai_info.get_width() // 2, 50))
+    
     pygame.display.flip()
 
 # Función para dibujar el menú de dificultad
@@ -222,11 +249,40 @@ def reset_enemies():
         {"pos": [1, 10], "dir": [0, -1], "type": enemy_types[0]},
         {"pos": [16, 1], "dir": [-1, 0], "type": enemy_types[1]}
     ]
-    # Si hay enemigos adicionales por nivel, también los reposicionamos
+
     if current_level > 0:
         idx = min(current_level + 2, len(enemy_types) - 1)
-        enemies.append({"pos": [MAZE_WIDTH // 2, MAZE_HEIGHT // 2], "dir": [1, 0], "type": enemy_types[idx]})
+        base_x, base_y = MAZE_WIDTH // 2, MAZE_HEIGHT // 2
 
+        def is_good_position(x, y):
+            if maze[y][x] != 0:
+                return False
+            vecinos = 0
+            for dx, dy in [(-1,0), (1,0), (0,-1), (0,1)]:
+                nx, ny = x + dx, y + dy
+                if 0 <= nx < MAZE_WIDTH and 0 <= ny < MAZE_HEIGHT and maze[ny][nx] == 0:
+                    vecinos += 1
+            return vecinos >= 2
+
+        # Buscar celda válida desde el centro hacia afuera
+        found = False
+        for r in range(6):
+            for dy in range(-r, r + 1):
+                for dx in range(-r, r + 1):
+                    x, y = base_x + dx, base_y + dy
+                    if 0 <= x < MAZE_WIDTH and 0 <= y < MAZE_HEIGHT and is_good_position(x, y):
+                        enemies.append({"pos": [x, y], "dir": [1, 0], "type": enemy_types[idx]})
+                        print(f"[INFO] Enemigo agregado en [{x}, {y}]")
+                        found = True
+                        break
+                if found: break
+            if found: break
+
+        if not found:
+            print("[ADVERTENCIA] No se pudo encontrar una celda segura para el enemigo extra.")
+
+    # Inicializar los comportamientos de enemigos
+    initialize_enemy_behaviors()
 # Función para reiniciar el juego
 def reset_game():
     global player_pos, player_lives, current_level, maze, enemies, projectiles, pathfinder
@@ -239,7 +295,7 @@ def reset_game():
     # Actualizar el pathfinder con el nuevo laberinto
     pathfinder = AStar(maze)
     
-    # Restablecer enemigos
+    # Restablecer enemigos y sus comportamientos
     reset_enemies()
 
 # Función para dibujar el laberinto
@@ -277,65 +333,28 @@ def draw_enemies():
         enemy_emoji = emoji_font.render(enemy["type"], True, (0, 0, 0))
         screen.blit(enemy_emoji, (x * TILE_SIZE + 4, y * TILE_SIZE))
 
-# Función para mover a los enemigos usando A*
+# ¡NUEVO! Función para mover enemigos usando Árboles de Comportamiento
 def move_enemies():
     """
-    Mueve a los enemigos usando el algoritmo A* para perseguir al jugador
+    Mueve a los enemigos usando Árboles de Comportamiento con A*
     """
-    global pathfinder
-    
-    for enemy in enemies:
-        x, y = enemy["pos"]
-        player_x, player_y = player_pos
-        
-        # Calcular distancia al jugador
-        distance_to_player = abs(player_x - x) + abs(player_y - y)
-        
-        # Diferentes comportamientos según el tipo de enemigo
-        if enemy["type"] == '👻':  # Fantasma - siempre persigue con A*
-            dx, dy = pathfinder.get_next_move(x, y, player_x, player_y)
+    for behavior in enemy_behaviors:
+        try:
+            behavior.update()
+        except Exception as e:
+            print(f"Error en comportamiento de enemigo: {e}")
+            # En caso de error, usar comportamiento básico de respaldo
+            enemy = behavior.enemy
+            player_x, player_y = player_pos
+            enemy_x, enemy_y = enemy["pos"]
             
-        elif enemy["type"] == '👽':  # Alien - persigue solo si está cerca
-            if distance_to_player <= 5:
-                dx, dy = pathfinder.get_next_move(x, y, player_x, player_y)
-            else:
-                # Movimiento aleatorio cuando está lejos
-                dx, dy = random.choice([(0, 1), (1, 0), (0, -1), (-1, 0), (0, 0)])
-                
-        elif enemy["type"] == '🧟':  # Zombie - lento pero persistente
-            if distance_to_player <= 8:  # Mayor rango de detección
-                # Usa A* pero se mueve más lento (50% de probabilidad de moverse)
-                if random.random() < 0.5:
-                    dx, dy = pathfinder.get_next_move(x, y, player_x, player_y)
-                else:
-                    dx, dy = (0, 0)  # Se queda quieto
-            else:
-                dx, dy = (0, 0)
-                
-        else:  # Otros enemigos - comportamiento mixto
-            if distance_to_player <= 3:
-                dx, dy = pathfinder.get_next_move(x, y, player_x, player_y)
-            else:
-                # Patrullaje aleatorio
-                possible_moves = []
-                for test_dx, test_dy in [(0, 1), (1, 0), (0, -1), (-1, 0)]:
-                    new_x = x + test_dx
-                    new_y = y + test_dy
-                    if pathfinder.is_valid_position(new_x, new_y):
-                        possible_moves.append((test_dx, test_dy))
-                
-                if possible_moves:
-                    dx, dy = random.choice(possible_moves)
-                else:
-                    dx, dy = (0, 0)
-        
-        # Aplicar el movimiento calculado
-        new_x = x + dx
-        new_y = y + dy
-        
-        # Verificar que el movimiento sea válido antes de aplicarlo
-        if pathfinder.is_valid_position(new_x, new_y):
-            enemy["pos"] = [new_x, new_y]
+            # Fallback: usar A* directamente
+            dx, dy = pathfinder.get_next_move(enemy_x, enemy_y, player_x, player_y)
+            new_x = enemy_x + dx
+            new_y = enemy_y + dy
+            
+            if pathfinder.is_valid_position(new_x, new_y):
+                enemy["pos"] = [new_x, new_y]
 
 # Función para mover los proyectiles
 def move_projectiles():
@@ -358,9 +377,12 @@ def move_projectiles():
                 
         # Verificar colisión con enemigos
         hit = False
-        for e in enemies[:]:  # Hacer una copia para poder eliminar durante la iteración
+        for i, e in enumerate(enemies[:]):  # Hacer una copia para poder eliminar durante la iteración
             if e['pos'] == [x, y]:
                 enemies.remove(e)
+                # ¡NUEVO! También remover el comportamiento correspondiente
+                if i < len(enemy_behaviors):
+                    enemy_behaviors.pop(i)
                 hit = True
                 break
                     
@@ -386,6 +408,21 @@ def draw_lives():
     lives_text = font.render(f"Vidas: {hearts}", True, COLOR_TEXT)
     screen.blit(lives_text, (10, 10))
 
+# ¡NUEVO! Función para mostrar información de IA
+def draw_ai_info():
+    """Muestra información sobre el estado de la IA"""
+    info_lines = [
+        f"Enemigos: {len(enemies)}",
+        f"👻: Agresivo",
+        f"👽: Estratégico", 
+        f"🧟: Zombie lento",
+        f"🦹: Cooperativo"
+    ]
+    
+    for i, line in enumerate(info_lines):
+        info_text = pygame.font.SysFont('Arial', 20).render(line, True, COLOR_TEXT)
+        screen.blit(info_text, (10, SCREEN_HEIGHT - 120 + i * 20))
+
 # Función para mostrar mensajes en pantalla
 def show_message(message):
     text = font.render(message, True, COLOR_TEXT)
@@ -406,7 +443,7 @@ def next_level():
         
         player_pos = [1, 1]
         projectiles = []  # Limpiar proyectiles al cambiar de nivel
-        reset_enemies()  # Usar la función para reposicionar enemigos
+        reset_enemies()  # Usar la función para reposicionar enemigos y reinicializar IA
         show_message(f"¡Nivel {current_level + 1}!")
     else:
         show_message("¡Felicidades! ¡Has completado el juego!")
@@ -415,6 +452,9 @@ def next_level():
 
 # Clock para controlar la velocidad del juego
 clock = pygame.time.Clock()
+
+# ¡NUEVO! Inicializar comportamientos de IA al comenzar
+initialize_enemy_behaviors()
 
 # Loop principal
 running = True
@@ -513,7 +553,7 @@ while running:
         if maze[player_pos[1]][player_pos[0]] == 2:
             next_level()
         
-        # Mover enemigos y proyectiles
+        # ¡ACTUALIZADO! Mover enemigos con Árboles de Comportamiento
         move_enemies()
         move_projectiles()
         
@@ -521,8 +561,8 @@ while running:
         if check_enemy_collision():
             player_lives -= 1
             player_pos = [1, 1]  # Volver a la posición inicial
-            reset_enemies()  # ¡NUEVO! Reposicionar enemigos también
-            projectiles = []  # ¡NUEVO! Limpiar proyectiles tambié
+            reset_enemies()  # Reposicionar enemigos y reinicializar IA
+            projectiles = []  # Limpiar proyectiles también
             
             if player_lives <= 0:
                 show_message("¡Game Over!")
@@ -538,6 +578,7 @@ while running:
         draw_enemies()
         draw_projectiles()
         draw_lives()
+        draw_ai_info()  # ¡NUEVO! Mostrar info de IA
 
         # Tecla de escape para volver al menú
         if keys[pygame.K_ESCAPE]:

@@ -1,200 +1,208 @@
 """
-test_behavior_trees.py - Prueba independiente de los Árboles de Comportamiento
+behavior_tree.py - Sistema base de Árboles de Comportamiento
 Autor: Alan Alberto Martinez Ubiera - 23-EISN-2-062
 """
 
-from scripts import (
-    BehaviorTree, BehaviorState, Selector, Sequence, 
-    Action, Condition, Inverter, Timer, create_enemy_behavior, AStar
-)
+import time
+from enum import Enum
 
-def test_basic_behavior_tree():
-    """Prueba básica del sistema de árboles de comportamiento"""
-    print("🌳 Probando Árboles de Comportamiento básicos...")
-    
-    # Variables de prueba
-    test_data = {'health': 100, 'enemy_nearby': True, 'ammo': 5}
-    
-    # Crear acciones de prueba
-    def attack_action(blackboard):
-        print("   ⚔️ Atacando!")
-        blackboard['ammo'] -= 1
-        return BehaviorState.SUCCESS
-    
-    def flee_action(blackboard):
-        print("   🏃 Huyendo!")
-        return BehaviorState.SUCCESS
-    
-    def check_health(blackboard):
-        print(f"   💖 Verificando salud: {blackboard['health']}")
-        return blackboard['health'] > 50
-    
-    def check_ammo(blackboard):
-        print(f"   🔫 Verificando munición: {blackboard['ammo']}")
-        return blackboard['ammo'] > 0
-    
-    # Crear árbol de comportamiento de prueba
-    # Selector principal
-    root = Selector("TestRoot")
-    
-    # Secuencia de ataque (si hay salud y munición)
-    attack_sequence = Sequence("AttackSequence")
-    attack_sequence.add_child(Condition(check_health, "CheckHealth"))
-    attack_sequence.add_child(Condition(check_ammo, "CheckAmmo"))
-    attack_sequence.add_child(Action(attack_action, "Attack"))
-    
-    # Acción de huida como respaldo
-    flee_action_node = Action(flee_action, "Flee")
-    
-    # Ensamblar árbol
-    root.add_child(attack_sequence)
-    root.add_child(flee_action_node)
-    
-    # Crear y ejecutar el árbol
-    behavior_tree = BehaviorTree(root, "TestBehaviorTree")
-    behavior_tree.blackboard = test_data
-    
-    # Ejecutar varias veces para ver el comportamiento
-    for i in range(3):
-        print(f"\n--- Ejecución {i+1} ---")
-        result = behavior_tree.execute()
-        print(f"Resultado: {result}")
-        print(f"Munición restante: {behavior_tree.blackboard['ammo']}")
-    
-    print("✅ Prueba básica completada!\n")
+class BehaviorState(Enum):
+    """Estados posibles de un nodo de comportamiento"""
+    SUCCESS = "SUCCESS"
+    FAILURE = "FAILURE" 
+    RUNNING = "RUNNING"
 
-def test_enemy_behaviors():
-    """Prueba los comportamientos específicos de enemigos"""
-    print("🤖 Probando Comportamientos de Enemigos...")
+class BehaviorNode:
+    """Nodo base para todos los elementos del árbol de comportamiento"""
     
-    # Crear un laberinto simple para las pruebas
-    test_maze = [
-        [1,1,1,1,1],
-        [1,0,0,0,1],
-        [1,0,1,0,1],
-        [1,0,0,0,1],
-        [1,1,1,1,1]
-    ]
-    
-    # Crear pathfinder
-    pathfinder = AStar(test_maze)
-    
-    # Posición del jugador para las pruebas
-    test_player_pos = [3, 3]
-    
-    def get_test_player_pos():
-        return test_player_pos
-    
-    # Crear datos de enemigos de prueba
-    test_enemies = [
-        {"pos": [1, 1], "dir": [0, 1], "type": "👻"},  # Fantasma
-        {"pos": [2, 1], "dir": [1, 0], "type": "👽"},  # Alien
-        {"pos": [3, 1], "dir": [0, 1], "type": "🧟"},  # Zombie
-        {"pos": [1, 2], "dir": [1, 0], "type": "🦹"},  # Villano
-    ]
-    
-    # Crear comportamientos para cada enemigo
-    behaviors = []
-    for enemy_data in test_enemies:
-        behavior = create_enemy_behavior(
-            enemy_data=enemy_data,
-            pathfinder=pathfinder,
-            player_pos_getter=get_test_player_pos,
-            all_enemies=test_enemies
-        )
-        behaviors.append(behavior)
-    
-    print(f"✅ Creados {len(behaviors)} comportamientos de enemigos")
-    
-    # Probar cada comportamiento
-    for i, behavior in enumerate(behaviors):
-        enemy = test_enemies[i]
-        print(f"\n--- Probando {enemy['type']} en posición {enemy['pos']} ---")
+    def __init__(self, name="BehaviorNode"):
+        self.name = name
+        self.children = []
+        self.parent = None
         
-        # Ejecutar comportamiento varias veces
-        for step in range(3):
-            old_pos = enemy['pos'].copy()
-            result = behavior.update()
-            new_pos = enemy['pos']
+    def add_child(self, child):
+        """Agrega un nodo hijo"""
+        child.parent = self
+        self.children.append(child)
+        
+    def execute(self, blackboard=None):
+        """Ejecuta el nodo - debe ser implementado por subclases"""
+        return BehaviorState.FAILURE
+
+class Selector(BehaviorNode):
+    """
+    Nodo Selector - Ejecuta hijos hasta que uno tenga éxito
+    Retorna SUCCESS si algún hijo tiene éxito
+    Retorna FAILURE si todos los hijos fallan
+    """
+    
+    def __init__(self, name="Selector"):
+        super().__init__(name)
+        
+    def execute(self, blackboard=None):
+        for child in self.children:
+            result = child.execute(blackboard)
             
-            print(f"  Paso {step+1}: {old_pos} → {new_pos} (Estado: {result})")
-        
-        print(f"  ✅ Comportamiento de {enemy['type']} funcionando")
-    
-    print("\n✅ Todas las pruebas de comportamientos completadas!")
+            if result == BehaviorState.SUCCESS:
+                return BehaviorState.SUCCESS
+            elif result == BehaviorState.RUNNING:
+                return BehaviorState.RUNNING
+                
+        return BehaviorState.FAILURE
 
-def test_advanced_nodes():
-    """Prueba nodos avanzados como Inverter y Timer"""
-    print("\n🔧 Probando Nodos Avanzados...")
+class Sequence(BehaviorNode):
+    """
+    Nodo Secuencia - Ejecuta todos los hijos en orden
+    Retorna SUCCESS solo si todos los hijos tienen éxito
+    Retorna FAILURE si algún hijo falla
+    """
     
-    # Test del nodo Inverter
-    print("--- Probando Inverter ---")
-    
-    def always_true(blackboard):
-        print("   Función siempre retorna True")
-        return True
-    
-    def always_false(blackboard):
-        print("   Función siempre retorna False")
-        return False
-    
-    # Crear nodos con inverter
-    true_action = Action(always_true, "AlwaysTrue")
-    false_action = Action(always_false, "AlwaysFalse")
-    
-    inverted_true = Inverter(true_action, "InvertedTrue")
-    inverted_false = Inverter(false_action, "InvertedFalse")
-    
-    # Probar inversores
-    print("Resultado de True invertido:", inverted_true.execute())
-    print("Resultado de False invertido:", inverted_false.execute())
-    
-    # Test del nodo Timer
-    print("\n--- Probando Timer ---")
-    
-    def delayed_action(blackboard):
-        print("   ⏰ Acción ejecutada después del delay!")
+    def __init__(self, name="Sequence"):
+        super().__init__(name)
+        
+    def execute(self, blackboard=None):
+        for child in self.children:
+            result = child.execute(blackboard)
+            
+            if result == BehaviorState.FAILURE:
+                return BehaviorState.FAILURE
+            elif result == BehaviorState.RUNNING:
+                return BehaviorState.RUNNING
+                
         return BehaviorState.SUCCESS
-    
-    # Crear timer con delay de 0.1 segundos
-    timer_action = Action(delayed_action, "DelayedAction")
-    timer_node = Timer(0.1, timer_action, "Timer")
-    
-    # Ejecutar timer varias veces
-    import time
-    for i in range(5):
-        result = timer_node.execute()
-        print(f"   Timer ejecutión {i+1}: {result}")
-        time.sleep(0.05)  # Esperar un poco entre ejecuciones
-    
-    print("✅ Nodos avanzados funcionando correctamente!")
 
-def main():
-    """Función principal de pruebas"""
-    print("🧪 INICIANDO PRUEBAS DE ÁRBOLES DE COMPORTAMIENTO")
-    print("=" * 50)
+class Action(BehaviorNode):
+    """
+    Nodo Acción - Ejecuta una función específica
+    """
     
-    try:
-        # Ejecutar todas las pruebas
-        test_basic_behavior_tree()
-        test_enemy_behaviors()
-        test_advanced_nodes()
+    def __init__(self, action_function, name="Action"):
+        super().__init__(name)
+        self.action_function = action_function
         
-        print("\n" + "=" * 50)
-        print("🎉 ¡TODAS LAS PRUEBAS EXITOSAS!")
-        print("✅ Sistema de Árboles de Comportamiento funcionando correctamente")
-        print("✅ Integración con A* verificada")
-        print("✅ Comportamientos específicos de enemigos operativos")
-        print("\n🚀 ¡Listo para integrar en el juego principal!")
-        
-    except ImportError as e:
-        print(f"❌ Error de importación: {e}")
-        print("💡 Asegúrate de que todos los archivos estén creados y guardados")
-        print("💡 Verifica que la estructura de carpetas sea correcta")
-    
-    except Exception as e:
-        print(f"❌ Error durante las pruebas: {e}")
-        print("💡 Revisa que el código de los árboles de comportamiento esté correcto")
+    def execute(self, blackboard=None):
+        try:
+            if blackboard is not None:
+                result = self.action_function(blackboard)
+            else:
+                result = self.action_function()
+                
+            # Convertir resultado booleano a BehaviorState
+            if isinstance(result, bool):
+                return BehaviorState.SUCCESS if result else BehaviorState.FAILURE
+            elif isinstance(result, BehaviorState):
+                return result
+            else:
+                return BehaviorState.SUCCESS if result else BehaviorState.FAILURE
+                
+        except Exception as e:
+            print(f"Error en acción {self.name}: {e}")
+            return BehaviorState.FAILURE
 
-if __name__ == "__main__":
-    main()
+class Condition(BehaviorNode):
+    """
+    Nodo Condición - Evalúa una condición sin efectos secundarios
+    """
+    
+    def __init__(self, condition_function, name="Condition"):
+        super().__init__(name)
+        self.condition_function = condition_function
+        
+    def execute(self, blackboard=None):
+        try:
+            if blackboard is not None:
+                result = self.condition_function(blackboard)
+            else:
+                result = self.condition_function()
+                
+            return BehaviorState.SUCCESS if result else BehaviorState.FAILURE
+            
+        except Exception as e:
+            print(f"Error en condición {self.name}: {e}")
+            return BehaviorState.FAILURE
+
+class Inverter(BehaviorNode):
+    """
+    Nodo Inversor - Invierte el resultado de su hijo
+    SUCCESS -> FAILURE
+    FAILURE -> SUCCESS
+    RUNNING -> RUNNING
+    """
+    
+    def __init__(self, child=None, name="Inverter"):
+        super().__init__(name)
+        if child:
+            self.add_child(child)
+            
+    def execute(self, blackboard=None):
+        if not self.children:
+            return BehaviorState.FAILURE
+            
+        result = self.children[0].execute(blackboard)
+        
+        if result == BehaviorState.SUCCESS:
+            return BehaviorState.FAILURE
+        elif result == BehaviorState.FAILURE:
+            return BehaviorState.SUCCESS
+        else:  # RUNNING
+            return BehaviorState.RUNNING
+
+class Timer(BehaviorNode):
+    """
+    Nodo Timer - Ejecuta su hijo después de un delay
+    """
+    
+    def __init__(self, delay_seconds, child=None, name="Timer"):
+        super().__init__(name)
+        self.delay_seconds = delay_seconds
+        self.start_time = None
+        if child:
+            self.add_child(child)
+            
+    def execute(self, blackboard=None):
+        if not self.children:
+            return BehaviorState.FAILURE
+            
+        current_time = time.time()
+        
+        # Iniciar el timer si no está iniciado
+        if self.start_time is None:
+            self.start_time = current_time
+            return BehaviorState.RUNNING
+            
+        # Verificar si el tiempo ha pasado
+        if current_time - self.start_time >= self.delay_seconds:
+            # Resetear el timer
+            self.start_time = None
+            # Ejecutar el hijo
+            return self.children[0].execute(blackboard)
+        else:
+            return BehaviorState.RUNNING
+
+class BehaviorTree:
+    """
+    Árbol de Comportamiento principal que maneja la ejecución
+    """
+    
+    def __init__(self, root_node, name="BehaviorTree"):
+        self.root = root_node
+        self.name = name
+        self.blackboard = {}  # Memoria compartida para el árbol
+        
+    def execute(self):
+        """Ejecuta el árbol de comportamiento"""
+        if self.root:
+            return self.root.execute(self.blackboard)
+        return BehaviorState.FAILURE
+        
+    def set_blackboard_value(self, key, value):
+        """Establece un valor en la pizarra"""
+        self.blackboard[key] = value
+        
+    def get_blackboard_value(self, key, default=None):
+        """Obtiene un valor de la pizarra"""
+        return self.blackboard.get(key, default)
+        
+    def reset(self):
+        """Resetea el estado del árbol"""
+        self.blackboard.clear()
