@@ -1,0 +1,18 @@
+# ========================================
+# REQUIREMENTS.TXT - PROYECTO PARCIAL IA
+# ========================================
+# Estudiante: Alan Alberto Martinez Ubiera
+# Matrícula: 23-EISN-2-062
+# Fecha: Julio 2025
+# ========================================
+
+# Dependencia principal para el juego
+pygame==2.6.1
+
+# Dependencias adicionales que podrían ser necesarias
+# (descomenta si las necesitas más adelante)
+# numpy>=1.24.0
+# pillow>=9.0.0# Dependencias para Proyecto Parcial IA
+# Perro Héroe - Juego con A* y Árboles de Comportamiento
+
+pygame==2.6.1
