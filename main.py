@@ -1,9 +1,9 @@
 # ========================================
-# PERRO HÉROE - CON SPRITES MÚLTIPLES
+# PERRO HÉROE - ESTRUCTURA ASSETS (EXAMEN)
 # ========================================
 # Protagonista: Sprite del perro + sprites de enemigos
-# Soporte para: perro.png, fantasma.png, alien.png, zombie.png, etc.
-# Fallback automático a emojis si no hay sprites
+# Estructura: assets/images/, assets/sounds/, assets/music/
+# Cumple requisitos del examen parcial de IA
 # ========================================
 
 import pygame
@@ -152,7 +152,7 @@ SCREEN_WIDTH = TILE_SIZE * MAZE_WIDTH
 SCREEN_HEIGHT = TILE_SIZE * MAZE_HEIGHT + 100
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("🐶 Perro Héroe - Aventura con Sprites Múltiples")
+pygame.display.set_caption("🐶 Perro Héroe - Examen Parcial IA")
 
 # Configuración de fuentes
 pygame.font.init()
@@ -203,7 +203,7 @@ def load_dog_sprite():
     """Función para cargar el sprite del perro si existe"""
     global use_sprites, dog_sprites
     
-    sprite_path = 'resources/imagenes/perro.png'
+    sprite_path = 'assets/images/perro.png'  # ← NUEVA RUTA
     
     try:
         import os
@@ -235,7 +235,7 @@ def load_dog_sprite():
             return True
         else:
             print(f"📁 No se encontró sprite en: {sprite_path}")
-            print("💡 Tip: Crea la carpeta 'resources/imagenes/' y pon tu 'perro.png' ahí")
+            print("💡 Tip: Crea la carpeta 'assets/images/' y pon tu 'perro.png' ahí")
             return False
             
     except Exception as e:
@@ -259,7 +259,7 @@ def load_enemy_sprites():
     sprites_loaded = 0
     
     for emoji, filename in enemy_files.items():
-        sprite_path = f'resources/imagenes/{filename}'
+        sprite_path = f'assets/images/{filename}'  # ← NUEVA RUTA
         
         try:
             import os
@@ -288,7 +288,7 @@ def load_enemy_sprites():
         print(f"🎭 ¡{sprites_loaded} sprites de enemigos cargados!")
     else:
         print("📁 No se encontraron sprites de enemigos")
-        print("💡 Tip: Puedes agregar: fantasma.png, alien.png, zombie.png, etc.")
+        print("💡 Tip: Puedes agregar: fantasma.png, alien.png, zombie.png, etc. en assets/images/")
     
     return sprites_loaded > 0
 
@@ -418,9 +418,9 @@ def draw_menu():
     if not use_sprites or len(enemy_sprites) == 0:
         sprite_info_lines = []
         if not use_sprites:
-            sprite_info_lines.append("💡 Para sprite de perro: 'resources/imagenes/perro.png'")
+            sprite_info_lines.append("💡 Para sprite de perro: 'assets/images/perro.png'")
         if len(enemy_sprites) == 0:
-            sprite_info_lines.append("👾 Para sprites de enemigos: 'fantasma.png', 'alien.png', etc.")
+            sprite_info_lines.append("👾 Para sprites de enemigos: 'assets/images/fantasma.png', etc.")
         
         for i, line in enumerate(sprite_info_lines):
             sprite_info = small_font.render(line, True, (150, 150, 255))
