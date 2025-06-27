@@ -162,13 +162,13 @@ El juego soporta sprites personalizados:
 ## 📄 Licencia
 
 Proyecto académico - Examen Parcial de Inteligencia Artificial  
-**Universidad:** [Tu Universidad]  
+**Universidad:**  Universidad o&m
 **Materia:** Inteligencia Artificial  
-**Profesor:** [Nombre del Profesor]# 🐶 Perro Héroe - Aventura con IA
+**Profesor:** Yoel Andeyci Pilier Martínez # 🐶 Perro Héroe - Aventura con IA
 
 **Examen Parcial - Inteligencia Artificial**  
-**Estudiante:** [Tu Nombre]  
-**Matrícula:** [Tu Matrícula]  
+**Estudiante:** Alan Alberto Martinez Ubiera  
+**Matrícula:** 23-EISN-2-062
 **Fecha:** Julio 2025  
 
 ## 📋 Descripción
