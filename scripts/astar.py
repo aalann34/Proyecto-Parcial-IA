@@ -1,6 +1,6 @@
 """
 astar.py - Implementación del algoritmo A* para pathfinding
-Autor: [Tu nombre y matrícula]
+Autor: Alan Alberto Martinez Ubiera - 23-EISN-2-062
 """
 
 import heapq

@@ -90,7 +90,7 @@ levels = [
         ]
     },
 
-    # NIVEL 4 - COMPLEJO PERO SIMPLE
+    # NIVEL 4 - ALIEN, FANTASMA, ZOMBIE, VILLANO
     {
         'id': 4,
         'name': 'Laberinto Avanzado',
@@ -115,7 +115,7 @@ levels = [
         ]
     },
 
-    # NIVEL 5 - DESAFÍO FINAL SIMPLIFICADO
+    # NIVEL 5 - TODOS LOS ENEMIGOS
     {
         'id': 5,
         'name': 'Desafío Final',
@@ -420,12 +420,34 @@ def update_maze_dimensions():
 # Inicializar pathfinder A*
 pathfinder = AStar(maze)
 
+# ========================================
+# CONFIGURACIÓN DE ENEMIGOS POR NIVEL
+# ========================================
+
+# Definir qué enemigos aparecen en cada nivel
+LEVEL_ENEMIES = {
+    0: [],  # Nivel 1 - Sin enemigos
+    1: [{'type': '👽', 'pos': [18, 1]}],  # Nivel 2 - Solo Alien
+    2: [{'type': '👽', 'pos': [18, 1]}, {'type': '👻', 'pos': [1, 10]}],  # Nivel 3 - Alien + Fantasma
+    3: [  # Nivel 4 - Alien, Fantasma, Zombie, Villano
+        {'type': '👽', 'pos': [18, 1]},   # Alien (A* inteligente)
+        {'type': '👻', 'pos': [1, 10]},   # Fantasma (evade)
+        {'type': '🧟', 'pos': [10, 6]},   # Zombie (aleatorio)
+        {'type': '🦹', 'pos': [5, 8]}     # Villano (emboscada)
+    ],
+    4: [  # Nivel 5 - TODOS los enemigos
+        {'type': '👽', 'pos': [18, 1]},   # Alien (A* inteligente)
+        {'type': '👻', 'pos': [1, 10]},   # Fantasma (evade)
+        {'type': '🧟', 'pos': [10, 6]},   # Zombie (aleatorio)
+        {'type': '🦹', 'pos': [5, 8]},    # Villano (emboscada)
+        {'type': '👺', 'pos': [15, 10]},  # Demonio (teletransporte)
+        {'type': '🤡', 'pos': [3, 3]}     # Payaso (trampas + errático)
+    ]
+}
+
 # Enemigos mejorados
 enemy_types = ['👻', '👽', '🧟', '🦹', '👺', '🤡']
-enemies = [
-    {"pos": [1, 9], "dir": [0, -1], "type": enemy_types[0]},
-    {"pos": [18, 1], "dir": [-1, 0], "type": enemy_types[1]}
-]
+enemies = []
 
 # Sistema de comportamientos de IA
 enemy_behaviors = []
@@ -479,9 +501,22 @@ def draw_menu():
         text = font.render(option, True, color)
         screen.blit(text, (menu_width // 2 - text.get_width() // 2, title_y + i * 50))
     
-    # Información del juego (REMOVIDA - ya no se muestra)
+    # Información de IA por nivel
+    info_lines = [
+        "🧠 SISTEMA DE INTELIGENCIA ARTIFICIAL:",
+        "Nivel 1: Sin enemigos - Tutorial",
+        "Nivel 2: 👽 Alien (A* inteligente)",
+        "Nivel 3: 👽 Alien + 👻 Fantasma (evade)",
+        "Nivel 4: 👽👻🧟🦹 (4 enemigos con IA única)",
+        "Nivel 5: 👽👻🧟🦹👺🤡 (TODOS - 6 enemigos)"
+    ]
     
-    # Instrucciones para sprites (REMOVIDAS - ya no se muestran)
+    start_y = title_y + 200
+    for i, line in enumerate(info_lines):
+        color = (255, 255, 0) if i == 0 else (200, 200, 200)
+        font_size = font if i == 0 else small_font
+        text = font_size.render(line, True, color)
+        screen.blit(text, (50, start_y + i * 25))
     
     pygame.display.flip()
 
@@ -502,23 +537,55 @@ def draw_difficulty_menu():
         txt = font.render(opt, True, color)
         screen.blit(txt, (menu_width // 2 - txt.get_width() // 2, 200 + i * 50))
     
+    # Información de dificultad
+    fps_info = [
+        f"Fácil: {FPS_levels['Fácil']} FPS - Enemigos lentos",
+        f"Medio: {FPS_levels['Medio']} FPS - Velocidad normal", 
+        f"Difícil: {FPS_levels['Difícil']} FPS - Enemigos rápidos"
+    ]
+    
+    for i, info in enumerate(fps_info):
+        color = (255, 255, 0) if i == diff_idx else (150, 150, 150)
+        text = small_font.render(info, True, color)
+        screen.blit(text, (menu_width // 2 - text.get_width() // 2, 350 + i * 30))
+    
     pygame.display.flip()
 
 def reset_enemies():
-    global enemies, current_level, enemy_behaviors
+    """Resetea enemigos según el nivel actual"""
+    global enemies, enemy_behaviors
     
-    # Posiciones básicas de enemigos que funcionan en todos los niveles
-    enemies = [
-        {"pos": [1, 9], "dir": [0, -1], "type": enemy_types[0]},
-        {"pos": [18, 1], "dir": [-1, 0], "type": enemy_types[1]}
-    ]
-
-    # Añadir un enemigo extra en niveles superiores
-    if current_level > 1:
-        enemies.append({"pos": [9, 6], "dir": [1, 0], "type": enemy_types[2]})
-
-    # Inicializar comportamientos
+    # Obtener configuración de enemigos para el nivel actual
+    level_config = LEVEL_ENEMIES.get(current_level, [])
+    
+    # Crear lista de enemigos con posiciones seguras
+    enemies = []
+    for enemy_config in level_config:
+        enemy = {
+            'pos': enemy_config['pos'].copy(),
+            'dir': [0, -1],  # Dirección inicial
+            'type': enemy_config['type']
+        }
+        
+        # Verificar que la posición sea válida
+        x, y = enemy['pos']
+        if pathfinder.is_valid_position(x, y):
+            enemies.append(enemy)
+        else:
+            # Si no es válida, usar una posición por defecto
+            safe_positions = [[2, 2], [17, 2], [2, 10], [17, 10]]
+            for safe_pos in safe_positions:
+                if pathfinder.is_valid_position(safe_pos[0], safe_pos[1]):
+                    enemy['pos'] = safe_pos
+                    enemies.append(enemy)
+                    break
+    
+    # Inicializar comportamientos de IA
     initialize_enemy_behaviors()
+    
+    print(f"🎮 Nivel {current_level + 1}: {len(enemies)} enemigos cargados")
+    for enemy in enemies:
+        print(f"   {enemy['type']} en posición {enemy['pos']}")
 
 def reset_game():
     global player_pos, player_lives, current_level, maze, enemies, projectiles, pathfinder
@@ -594,6 +661,7 @@ def move_enemies():
             behavior.update()
         except Exception as e:
             print(f"Error en comportamiento de enemigo: {e}")
+            # Fallback a movimiento simple hacia el jugador
             enemy = behavior.enemy
             player_x, player_y = player_pos
             enemy_x, enemy_y = enemy["pos"]
@@ -654,7 +722,7 @@ def check_enemy_collision():
     return any(e['pos'] == player_pos for e in enemies)
 
 def draw_ui():
-    """Dibuja la interfaz de usuario simplificada"""
+    """Dibuja la interfaz de usuario mejorada"""
     ui_y = MAZE_HEIGHT * TILE_SIZE + 10
     
     # Información del nivel
@@ -671,16 +739,22 @@ def draw_ui():
     lives_text = small_font.render(f"Vidas: {hearts}", True, COLOR_TEXT)
     screen.blit(lives_text, (200, ui_y))
     
-    # Información de IA y controles
-    enemy_sprites_count = len(enemy_sprites)
-    ai_info = [
-        f"Enemigos: {len(enemies)}",
-        f"Dificultad: {levels[current_level]['difficulty']}",
-        f"Perro: {'✅' if use_sprites else '❌'} | Enemigos: {enemy_sprites_count}✅ | Caca: {'✅' if poop_sprite else '❌'}",
-        f"(R=recargar sprites | ESPACIO=disparar)"
+    # Información de enemigos en el nivel actual
+    enemy_count = len(enemies)
+    enemy_types_current = [e['type'] for e in enemies]
+    enemy_info = f"Enemigos: {enemy_count} {''.join(enemy_types_current) if enemy_types_current else 'Ninguno'}"
+    
+    enemy_text = small_font.render(enemy_info, True, COLOR_TEXT)
+    screen.blit(enemy_text, (200, ui_y + 25))
+    
+    # Información de sprites y controles
+    sprite_info = [
+        f"Perro: {'✅' if use_sprites else '❌'} | Enemigos: {len(enemy_sprites)}✅ | Caca: {'✅' if poop_sprite else '❌'}",
+        f"Dificultad: {levels[current_level]['difficulty']} | FPS: {FPS}",
+        f"(R=recargar sprites | ESPACIO=disparar | ESC=menú)"
     ]
     
-    for i, line in enumerate(ai_info):
+    for i, line in enumerate(sprite_info):
         info_text = small_font.render(line, True, COLOR_TEXT)
         screen.blit(info_text, (400, ui_y + i * 20))
 

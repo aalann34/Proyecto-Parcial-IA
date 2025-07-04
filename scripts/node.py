@@ -1,6 +1,6 @@
 """
 Node.py - Clase Node para el algoritmo A*
-Autor: [Tu nombre y matrícula]
+Autor: Alan Alberto Martinez Ubiera - 23-EISN-2-062
 """
 
 class Node:

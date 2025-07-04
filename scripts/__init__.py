@@ -11,14 +11,16 @@ from .behavior_tree import (
     Selector, Sequence, Action, Condition, Inverter, Timer
 )
 from .enemy_behaviors import (
-    EnemyBehavior, GhostBehavior, AlienBehavior, 
-    ZombieBehavior, VillainBehavior, create_enemy_behavior
+    EnemyBehavior, AlienBehavior, GhostBehavior, 
+    ZombieBehavior, VillainBehavior, DemonBehavior, ClownBehavior,
+    create_enemy_behavior
 )
 
 __all__ = [
     'AStar', 'Node',
     'BehaviorTree', 'BehaviorState', 'BehaviorNode',
     'Selector', 'Sequence', 'Action', 'Condition', 'Inverter', 'Timer',
-    'EnemyBehavior', 'GhostBehavior', 'AlienBehavior', 
-    'ZombieBehavior', 'VillainBehavior', 'create_enemy_behavior'
+    'EnemyBehavior', 'AlienBehavior', 'GhostBehavior', 
+    'ZombieBehavior', 'VillainBehavior', 'DemonBehavior', 'ClownBehavior',
+    'create_enemy_behavior'
 ]
