@@ -1,7 +1,7 @@
 # ========================================
-# PERRO HÉROE - SISTEMA MEJORADO CON AIM BOT
+# PERRO HÉROE - SISTEMA MEJORADO CON AIM BOT Y PAREDES INFERNALES
 # ========================================
-# Protagonista: Sprite del perro + sprites de enemigos + sprite de caca + portada
+# Protagonista: Sprite del perro + sprites de enemigos + sprite de caca + portada + BLOQUE ROJO INFERNAL
 # Estructura: assets/images/, assets/sounds/, assets/music/
 # Cumple requisitos del examen parcial de IA
 # ========================================
@@ -11,7 +11,7 @@ import sys
 import random
 import time
 import math
-from scripts import AStar, create_enemy_behavior
+from scripts import AStar, create_enemy_behavior, GhostBehavior
 
 # Inicializar Pygame
 pygame.init()
@@ -205,8 +205,9 @@ print("🐶 Perro héroe de las dimensiones infernales inicializado")
 use_sprites = False
 dog_sprites = {}
 enemy_sprites = {}  # Sprites de enemigos
-poop_sprite = None  # NUEVO: Sprite de caca
-cover_image = None  # NUEVO: Portada del juego
+poop_sprite = None  # Sprite de caca
+cover_image = None  # Portada del juego
+wall_sprite = None  # NUEVO: Sprite de pared infernal
 current_direction = 'right'
 
 # ========================================
@@ -283,7 +284,7 @@ def load_dog_sprite():
     """Función para cargar el sprite del perro si existe"""
     global use_sprites, dog_sprites
     
-    sprite_path = 'assets/images/perro.png'  # De vuelta a perro.png
+    sprite_path = 'assets/images/perro.png'
     
     try:
         import os
@@ -326,7 +327,7 @@ def load_enemy_sprites():
     """Función para cargar sprites de criaturas infernales"""
     global enemy_sprites
     
-    # Lista de criaturas con sus archivos correspondientes (ORIGINALES + DEMONIO)
+    # Lista de criaturas con sus archivos correspondientes
     enemy_files = {
         '👻': 'fantasma.png',
         '👽': 'alien.png',
@@ -334,7 +335,7 @@ def load_enemy_sprites():
         '🦹': 'villano.png',
         '👺': 'demonio.png',
         '🤡': 'payaso.png',
-        '👹': 'diablo.png'  # NUEVO: Demonio adicional
+        '👹': 'diablo.png'
     }
     
     sprites_loaded = 0
@@ -374,7 +375,7 @@ def load_enemy_sprites():
     return sprites_loaded > 0
 
 def load_poop_sprite():
-    """NUEVO: Función para cargar el sprite de caca"""
+    """Función para cargar el sprite de caca"""
     global poop_sprite
     
     sprite_path = 'assets/images/caca.png'
@@ -402,7 +403,7 @@ def load_poop_sprite():
         return False
 
 def load_cover_image():
-    """NUEVO: Función para cargar la portada del juego"""
+    """Función para cargar la portada del juego"""
     global cover_image
     
     sprite_path = 'assets/images/portada.png'
@@ -429,11 +430,40 @@ def load_cover_image():
         print(f"❌ Error cargando portada: {e}")
         return False
 
+def load_wall_sprite():
+    """NUEVO: Función para cargar el sprite de pared infernal"""
+    global wall_sprite
+    
+    sprite_path = 'assets/images/bloquerojo.png'
+    
+    try:
+        import os
+        if os.path.exists(sprite_path):
+            print(f"🧱 ¡Sprite de pared infernal encontrado! Cargando desde: {sprite_path}")
+            
+            # Cargar el sprite
+            wall_image = pygame.image.load(sprite_path)
+            
+            # Escalar al tamaño de celda
+            wall_sprite = pygame.transform.scale(wall_image, (TILE_SIZE, TILE_SIZE))
+            
+            print("🧱 ¡Sprite de pared infernal cargado exitosamente!")
+            return True
+        else:
+            print(f"📁 No se encontró sprite de pared en: {sprite_path}")
+            print("💡 Tip: Agrega 'bloquerojo.png' en assets/images/")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error cargando sprite de pared: {e}")
+        return False
+
 # Intentar cargar sprites al iniciar
 load_dog_sprite()
 load_enemy_sprites()
-load_poop_sprite()  # NUEVO: Cargar sprite de caca
-load_cover_image()  # NUEVO: Cargar portada
+load_poop_sprite()
+load_cover_image()
+load_wall_sprite()  # NUEVO: Cargar sprite de pared
 
 # Función para recargar sprites durante el juego (opcional)
 def reload_sprites_if_needed():
@@ -445,13 +475,17 @@ def reload_sprites_if_needed():
     # También recargar sprites de enemigos
     load_enemy_sprites()
     
-    # NUEVO: Recargar sprite de caca
+    # Recargar sprite de caca
     if poop_sprite is None:
         load_poop_sprite()
     
-    # NUEVO: Recargar portada
+    # Recargar portada
     if cover_image is None:
         load_cover_image()
+    
+    # NUEVO: Recargar sprite de pared
+    if wall_sprite is None:
+        load_wall_sprite()
 
 # Símbolos para elementos del juego (simplificados)
 GAME_SYMBOLS = {
@@ -471,18 +505,19 @@ current_level = 0
 maze = levels[current_level]['maze']
 projectiles = []
 last_direction = [1, 0]
+player_web_slowdown = 0  # NUEVO: Contador de ralentización por telarañas
 
 # ========================================
 # CONFIGURACIÓN ALEATORIA DE ENEMIGOS
 # ========================================
 
-# Tipos de enemigos infernales disponibles (ORIGINALES + DEMONIO)
+# Tipos de enemigos infernales disponibles
 ALL_ENEMY_TYPES = ['👽', '👻', '🧟', '🦹', '👺', '🤡', '👹']
 
-# Configuración de enemigos por nivel (ACTUALIZADO)
+# Configuración de enemigos por nivel
 ENEMIES_PER_LEVEL = {
-    0: 2,  # Nivel 1: 2 enemigos
-    1: 2,  # Nivel 2: 2 enemigos  
+    0: 3,  # Nivel 1: 3 enemigos
+    1: 3,  # Nivel 2: 3 enemigos  
     2: 3,  # Nivel 3: 3 enemigos
     3: 3,  # Nivel 4: 3 enemigos
     4: 3   # Nivel 5: 3 enemigos
@@ -539,6 +574,97 @@ enemies = []
 # Sistema de comportamientos de IA
 enemy_behaviors = []
 
+# ========================================
+# SISTEMA GLOBAL DE TELARAÑAS SIMPLIFICADO Y FUNCIONAL
+# ========================================
+ghost_webs = []  # Lista global de todas las telarañas activas
+
+def update_ghost_webs():
+    """VERSIÓN SIMPLIFICADA: Actualiza las telarañas globales de todos los fantasmas"""
+    global ghost_webs
+    current_time = time.time()
+    
+    # PASO 1: Limpiar telarañas viejas
+    old_count = len(ghost_webs)
+    ghost_webs = [web for web in ghost_webs 
+                 if current_time - web['time'] < web['duration']]
+    
+    if len(ghost_webs) != old_count:
+        print(f"🕸️ Limpiando telarañas viejas: {old_count} -> {len(ghost_webs)}")
+    
+    # PASO 2: Recopilar telarañas de todos los fantasmas
+    if not enemy_behaviors:
+        return
+    
+    for i, behavior in enumerate(enemy_behaviors):
+        try:
+            # VERIFICAR SI ES UN FANTASMA
+            if hasattr(behavior, 'get_active_webs') and behavior.enemy.get('type') == '👻':
+                webs_from_ghost = behavior.get_active_webs()
+                
+                for web in webs_from_ghost:
+                    # EVITAR DUPLICADOS (comparar posición y tiempo)
+                    web_exists = False
+                    for existing_web in ghost_webs:
+                        if (existing_web['pos'] == web['pos'] and 
+                            abs(existing_web['time'] - web['time']) < 0.5):
+                            web_exists = True
+                            break
+                    
+                    if not web_exists:
+                        ghost_webs.append(web)
+                        print(f"🕸️ NUEVA TELARAÑA AGREGADA: {web['pos']} - Total global: {len(ghost_webs)}")
+                        
+        except Exception as e:
+            print(f"❌ Error procesando fantasma {i}: {e}")
+            continue
+
+def draw_ghost_webs():
+    """VERSIÓN SIMPLIFICADA: Dibuja todas las telarañas activas"""
+    if not ghost_webs:
+        return
+        
+    current_time = time.time()
+    
+    for web in ghost_webs:
+        try:
+            x, y = web['pos']
+            age = current_time - web['time']
+            
+            # Efecto de desvanecimiento
+            alpha = max(0, 1 - (age / web['duration']))
+            
+            if alpha > 0:
+                # FONDO GRIS OSCURO
+                web_rect = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
+                gray_color = int(60 * alpha)
+                pygame.draw.rect(screen, (gray_color, gray_color, gray_color), web_rect)
+                
+                # EMOJI DE TELARAÑA
+                web_emoji = emoji_font.render('🕸️', True, (200, 200, 200))
+                screen.blit(web_emoji, (x * TILE_SIZE + 4, y * TILE_SIZE))
+                
+        except Exception as e:
+            print(f"❌ Error dibujando telaraña: {e}")
+            continue
+
+def check_web_collision():
+    """VERSIÓN SIMPLIFICADA: Verifica si el jugador está en una telaraña"""
+    if not ghost_webs:
+        return False
+        
+    player_x, player_y = player_pos
+    
+    for web in ghost_webs:
+        try:
+            web_x, web_y = web['pos']
+            if player_x == web_x and player_y == web_y:
+                return True
+        except:
+            continue
+            
+    return False
+
 def get_player_position():
     return player_pos
 
@@ -556,6 +682,10 @@ def initialize_enemy_behaviors():
             all_enemies=enemies
         )
         enemy_behaviors.append(behavior)
+        
+        # DEBUG: Verificar si se crearon fantasmas
+        if enemy['type'] == '👻':
+            print(f"🕸️ FANTASMA CREADO: {enemy['pos']} - Puede crear telarañas")
 
 # ========================================
 # FUNCIONES BÁSICAS DEL JUEGO
@@ -596,7 +726,7 @@ def draw_menu():
     # Fondo infernal degradado
     screen.fill((20, 0, 0))
     
-    # NUEVO: Mostrar portada si está disponible
+    # Mostrar portada si está disponible
     if cover_image:
         # Centrar la portada en la parte superior
         cover_x = (menu_width - cover_image.get_width()) // 2
@@ -628,12 +758,14 @@ def draw_menu():
     # Información de IA infernal
     info_lines = [
         "👹 CRIATURAS INFERNALES CON IA:",
-        "Portal de Entrada: 2 criaturas aleatorias",
-        "Cámaras de Tormento: 2 seres del averno", 
+        "Portal de Entrada: 3 criaturas aleatorias",
+        "Cámaras de Tormento: 3 seres del averno", 
         "Laberinto de Fuego: 3 bestias infernales",
         "Fortaleza Demoníaca: 3 guardianes élite",
         "Trono de Lucifer: 3 señores supremos del mal",
-        "Enemigos: 👽👻🧟🦹👺🤡👹 (7 tipos disponibles)"
+        "Enemigos: 👽👻🧟🦹👺🤡👹 (7 tipos disponibles)",
+        "👻 Fantasmas dejan telarañas temporales 🕸️",
+        "🧱 Paredes infernales con bloquerojo.png"
     ]
     
     start_y = title_y + 200
@@ -701,7 +833,11 @@ def draw_difficulty_menu():
 
 def reset_enemies():
     """Resetea enemigos de forma aleatoria según el nivel actual"""
-    global enemies, enemy_behaviors, pathfinder
+    global enemies, enemy_behaviors, pathfinder, ghost_webs
+    
+    # LIMPIAR TELARAÑAS AL RESETEAR ENEMIGOS
+    ghost_webs = []
+    print("🕸️ Telarañas limpiadas al resetear enemigos")
     
     # Asegurar pathfinder
     current_maze = levels[current_level]['maze']
@@ -733,14 +869,17 @@ def reset_enemies():
     initialize_enemy_behaviors()
     
     print(f"✅ Nivel {current_level + 1}: {len(enemies)} enemigos cargados")
+
 def reset_game():
     global player_pos, player_lives, current_level, maze, enemies, projectiles, pathfinder
-    global player_score, screen
+    global player_score, screen, ghost_webs, player_web_slowdown
     
     player_pos = [1, 1]
     player_lives = 3
     current_level = 0
     player_score = 0
+    player_web_slowdown = 0  # NUEVO: Resetear ralentización
+    ghost_webs = []  # NUEVO: Limpiar telarañas
     
     # Cargar laberinto del nivel inicial
     maze = levels[current_level]['maze']
@@ -758,14 +897,20 @@ def reset_game():
     print(f"🔄 Juego reiniciado - Nivel {current_level + 1}")
 
 def draw_maze():
+    """MODIFICADO: Dibuja el laberinto con sprites de pared infernal si están disponibles"""
     for y in range(len(maze)):
         for x in range(len(maze[y])):
             rect = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
             
             if maze[y][x] == 1:  # Paredes infernales
-                pygame.draw.rect(screen, COLOR_WALL, rect)
-                # Agregar borde más oscuro para efecto 3D
-                pygame.draw.rect(screen, (10, 0, 0), rect, 2)
+                # NUEVO: Usar sprite de pared si está disponible
+                if wall_sprite:
+                    screen.blit(wall_sprite, (x * TILE_SIZE, y * TILE_SIZE))
+                else:
+                    # Usar color sólido como respaldo
+                    pygame.draw.rect(screen, COLOR_WALL, rect)
+                    # Agregar borde más oscuro para efecto 3D
+                    pygame.draw.rect(screen, (10, 0, 0), rect, 2)
             elif maze[y][x] == 2:  # Portal de salida
                 pygame.draw.rect(screen, COLOR_PATH, rect)
                 # Efecto de portal con gradiente
@@ -871,7 +1016,7 @@ def move_projectiles():
     projectiles = newp
 
 def draw_projectiles():
-    """NUEVO: Dibuja proyectiles (sprite si disponible, sino emoji)"""
+    """Dibuja proyectiles (sprite si disponible, sino emoji)"""
     for p in projectiles:
         x, y = p['pos']
         
@@ -906,7 +1051,7 @@ def draw_ui():
     lives_text = small_font.render(f"Vida: {hearts}", True, COLOR_FIRE)
     screen.blit(lives_text, (200, ui_y))
     
-    # Información de criaturas infernales (SIN advertencias)
+    # Información de criaturas infernales
     enemy_count = len(enemies)
     enemy_types_current = [e['type'] for e in enemies]
     enemy_info = f"Demonios: {enemy_count} {''.join(enemy_types_current) if enemy_types_current else ''}"
@@ -914,11 +1059,30 @@ def draw_ui():
     enemy_text = small_font.render(enemy_info, True, COLOR_FIRE)
     screen.blit(enemy_text, (200, ui_y + 25))
     
+    # NUEVO: Estado de telarañas con debug
+    web_count = len(ghost_webs)
+    in_web = check_web_collision()
+    
+    if in_web:
+        web_status = f"🕸️ ATRAPADO EN TELARAÑA - MOVIMIENTO LENTO (Total: {web_count})"
+        web_color = (255, 100, 100)  # Rojo de advertencia
+        web_text = small_font.render(web_status, True, web_color)
+        screen.blit(web_text, (200, ui_y + 50))
+        ui_y_offset = 25
+    elif web_count > 0:
+        web_status = f"🕸️ Telarañas activas: {web_count}"
+        web_color = (200, 200, 200)  # Gris informativo
+        web_text = small_font.render(web_status, True, web_color)
+        screen.blit(web_text, (200, ui_y + 50))
+        ui_y_offset = 25
+    else:
+        ui_y_offset = 0
+    
     # Información de aim bot infernal
     aim_status = "🎯 PROYECTIL GUIADO: ON" if aim_bot.aim_assistance else "🎯 PROYECTIL GUIADO: OFF"
     aim_color = COLOR_FIRE if aim_bot.aim_assistance else (100, 100, 100)
     aim_text = small_font.render(aim_status, True, aim_color)
-    screen.blit(aim_text, (200, ui_y + 50))
+    screen.blit(aim_text, (200, ui_y + 50 + ui_y_offset))
     
     # Información de controles infernales
     sprite_info = [
@@ -947,9 +1111,15 @@ def show_message(message):
 
 def next_level():
     global current_level, maze, player_pos, enemies, projectiles, game_state, pathfinder, screen
+    global ghost_webs, player_web_slowdown
     
     current_level += 1
     if current_level < len(levels):
+        # Limpiar telarañas del nivel anterior
+        ghost_webs = []
+        player_web_slowdown = 0
+        print("🕸️ Telarañas limpiadas al cambiar de nivel")
+        
         # Actualizar laberinto
         maze = levels[current_level]['maze']
         update_maze_dimensions()
@@ -1025,32 +1195,47 @@ while running:
         keys = pygame.key.get_pressed()
         new_pos = player_pos.copy()
         
-        if keys[pygame.K_UP]:
-            new_pos[1] -= 1
-            last_direction = [0, -1]
-            current_direction = 'up'
-        elif keys[pygame.K_DOWN]:
-            new_pos[1] += 1
-            last_direction = [0, 1]
-            current_direction = 'down'
-        elif keys[pygame.K_LEFT]:
-            new_pos[0] -= 1
-            last_direction = [-1, 0]
-            current_direction = 'left'
-        elif keys[pygame.K_RIGHT]:
-            new_pos[0] += 1
-            last_direction = [1, 0]
-            current_direction = 'right'
+        # VERIFICAR SI ESTÁ EN TELARAÑA (movimiento más lento)
+        in_web = check_web_collision()
+        
+        # Sistema de ralentización por telarañas
+        move_allowed = True
+        if in_web:
+            player_web_slowdown += 1
+            # Solo se puede mover cada 3 frames cuando está en telaraña
+            if player_web_slowdown % 3 != 0:
+                move_allowed = False
+        else:
+            player_web_slowdown = 0
+        
+        if move_allowed:
+            if keys[pygame.K_UP]:
+                new_pos[1] -= 1
+                last_direction = [0, -1]
+                current_direction = 'up'
+            elif keys[pygame.K_DOWN]:
+                new_pos[1] += 1
+                last_direction = [0, 1]
+                current_direction = 'down'
+            elif keys[pygame.K_LEFT]:
+                new_pos[0] -= 1
+                last_direction = [-1, 0]
+                current_direction = 'left'
+            elif keys[pygame.K_RIGHT]:
+                new_pos[0] += 1
+                last_direction = [1, 0]
+                current_direction = 'right'
         
         # Verificar movimiento válido
-        if (0 <= new_pos[0] < MAZE_WIDTH and 0 <= new_pos[1] < MAZE_HEIGHT and 
+        if (move_allowed and 
+            0 <= new_pos[0] < MAZE_WIDTH and 0 <= new_pos[1] < MAZE_HEIGHT and 
             maze[new_pos[1]][new_pos[0]] != 1):
             
             # Manejar bonificaciones
             handle_bonus_tile(new_pos[0], new_pos[1])
             player_pos = new_pos
         
-        # NUEVO: Sistema de disparo con aim bot
+        # Sistema de disparo con aim bot
         if keys[pygame.K_SPACE] and len(projectiles) < 5:  # Aumentado límite de proyectiles
             # Obtener dirección de aim bot
             aim_direction = aim_bot.get_aim_direction(player_pos, enemies)
@@ -1081,12 +1266,17 @@ while running:
         move_enemies()
         move_projectiles()
         
+        # ACTUALIZAR TELARAÑAS DE FANTASMAS (SIMPLIFICADO)
+        update_ghost_webs()
+        
         # Verificar colisiones
         if check_enemy_collision():
             player_lives -= 1
             player_pos = [1, 1]
             reset_enemies()
             projectiles = []
+            ghost_webs = []  # LIMPIAR telarañas al morir
+            player_web_slowdown = 0  # Resetear ralentización
             
             if player_lives <= 0:
                 show_message(f"💀 Tu alma ha sido devorada 💀")
@@ -1100,10 +1290,11 @@ while running:
         # Dibujar todo
         screen.fill(COLOR_BACKGROUND)
         draw_maze()
+        draw_ghost_webs()  # DIBUJAR TELARAÑAS SIMPLIFICADO
         draw_player()
         draw_enemies()
         draw_projectiles()
-        draw_aim_bot_indicators()  # NUEVO: Indicadores del aim bot
+        draw_aim_bot_indicators()
         draw_ui()
 
         if keys[pygame.K_ESCAPE]:
