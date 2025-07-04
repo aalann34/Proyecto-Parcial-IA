@@ -1,7 +1,7 @@
 # ========================================
 # PERRO HÉROE - ESTRUCTURA ASSETS (EXAMEN)
 # ========================================
-# Protagonista: Sprite del perro + sprites de enemigos
+# Protagonista: Sprite del perro + sprites de enemigos + sprite de caca + portada
 # Estructura: assets/images/, assets/sounds/, assets/music/
 # Cumple requisitos del examen parcial de IA
 # ========================================
@@ -196,14 +196,16 @@ print("🐶 Perro héroe inicializado con emoji")
 # Variables para sprites
 use_sprites = False
 dog_sprites = {}
-enemy_sprites = {}  # NUEVO: Sprites de enemigos
+enemy_sprites = {}  # Sprites de enemigos
+poop_sprite = None  # NUEVO: Sprite de caca
+cover_image = None  # NUEVO: Portada del juego
 current_direction = 'right'
 
 def load_dog_sprite():
     """Función para cargar el sprite del perro si existe"""
     global use_sprites, dog_sprites
     
-    sprite_path = 'assets/images/perro.png'  # ← NUEVA RUTA
+    sprite_path = 'assets/images/perro.png'
     
     try:
         import os
@@ -259,7 +261,7 @@ def load_enemy_sprites():
     sprites_loaded = 0
     
     for emoji, filename in enemy_files.items():
-        sprite_path = f'assets/images/{filename}'  # ← NUEVA RUTA
+        sprite_path = f'assets/images/{filename}'
         
         try:
             import os
@@ -292,9 +294,67 @@ def load_enemy_sprites():
     
     return sprites_loaded > 0
 
+def load_poop_sprite():
+    """NUEVO: Función para cargar el sprite de caca"""
+    global poop_sprite
+    
+    sprite_path = 'assets/images/caca.png'
+    
+    try:
+        import os
+        if os.path.exists(sprite_path):
+            print(f"💩 ¡Sprite de caca encontrado! Cargando desde: {sprite_path}")
+            
+            # Cargar el sprite
+            poop_image = pygame.image.load(sprite_path)
+            
+            # Escalar al tamaño de celda
+            poop_sprite = pygame.transform.scale(poop_image, (TILE_SIZE, TILE_SIZE))
+            
+            print("💩 ¡Sprite de caca cargado exitosamente!")
+            return True
+        else:
+            print(f"📁 No se encontró sprite de caca en: {sprite_path}")
+            print("💡 Tip: Agrega 'caca.png' en assets/images/")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error cargando sprite de caca: {e}")
+        return False
+
+def load_cover_image():
+    """NUEVO: Función para cargar la portada del juego"""
+    global cover_image
+    
+    sprite_path = 'assets/images/portada.png'
+    
+    try:
+        import os
+        if os.path.exists(sprite_path):
+            print(f"🖼️ ¡Portada encontrada! Cargando desde: {sprite_path}")
+            
+            # Cargar la imagen
+            cover_raw = pygame.image.load(sprite_path)
+            
+            # Escalar a un tamaño apropiado para el menú (por ejemplo, 400x300)
+            cover_image = pygame.transform.scale(cover_raw, (400, 300))
+            
+            print("🖼️ ¡Portada cargada exitosamente!")
+            return True
+        else:
+            print(f"📁 No se encontró portada en: {sprite_path}")
+            print("💡 Tip: Agrega 'portada.png' en assets/images/")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error cargando portada: {e}")
+        return False
+
 # Intentar cargar sprites al iniciar
 load_dog_sprite()
-load_enemy_sprites()  # NUEVO: Cargar sprites de enemigos
+load_enemy_sprites()
+load_poop_sprite()  # NUEVO: Cargar sprite de caca
+load_cover_image()  # NUEVO: Cargar portada
 
 # Función para recargar sprites durante el juego (opcional)
 def reload_sprites_if_needed():
@@ -305,6 +365,14 @@ def reload_sprites_if_needed():
     
     # También recargar sprites de enemigos
     load_enemy_sprites()
+    
+    # NUEVO: Recargar sprite de caca
+    if poop_sprite is None:
+        load_poop_sprite()
+    
+    # NUEVO: Recargar portada
+    if cover_image is None:
+        load_cover_image()
 
 # Símbolos para elementos del juego (simplificados)
 GAME_SYMBOLS = {
@@ -390,41 +458,30 @@ def draw_menu():
         screen = pygame.display.set_mode((menu_width, menu_height))
     
     screen.fill(COLOR_BACKGROUND)
-    title = font.render("🐶 PERRO HÉROE - AVENTURA PIXELART", True, COLOR_TEXT)
-    screen.blit(title, (menu_width // 2 - title.get_width() // 2, 50))
+    
+    # NUEVO: Mostrar portada si está disponible
+    if cover_image:
+        # Centrar la portada en la parte superior
+        cover_x = (menu_width - cover_image.get_width()) // 2
+        cover_y = 20
+        screen.blit(cover_image, (cover_x, cover_y))
+        title_y = cover_y + cover_image.get_height() + 20
+    else:
+        # Si no hay portada, mostrar título normal
+        title = font.render("🐶 PERRO HÉROE - AVENTURA PIXELART", True, COLOR_TEXT)
+        screen.blit(title, (menu_width // 2 - title.get_width() // 2, 50))
+        title_y = 120
     
     # SOLO dibujar las 3 opciones del menú
     valid_options = ['Nueva Partida', 'Seleccionar Dificultad', 'Salir']
     for i, option in enumerate(valid_options):
         color = (255, 255, 255) if i == menu_idx else (150, 150, 150)
         text = font.render(option, True, color)
-        screen.blit(text, (menu_width // 2 - text.get_width() // 2, 150 + i * 50))
+        screen.blit(text, (menu_width // 2 - text.get_width() // 2, title_y + i * 50))
     
-    # Información del juego
-    enemy_sprites_count = len(enemy_sprites)
-    info_lines = [
-        "🎮 5 Niveles Únicos",
-        "🧠 IA Avanzada con A*",
-        "⭐ Sistema de Bonificaciones", 
-        f"🐶 Perro: {'Sprite' if use_sprites else 'Emoji'}",
-        f"👾 Enemigos: {enemy_sprites_count} Sprites + Emojis"
-    ]
+    # Información del juego (REMOVIDA - ya no se muestra)
     
-    for i, line in enumerate(info_lines):
-        info_text = small_font.render(line, True, (100, 255, 100))
-        screen.blit(info_text, (50, 350 + i * 25))
-    
-    # Instrucciones para sprites
-    if not use_sprites or len(enemy_sprites) == 0:
-        sprite_info_lines = []
-        if not use_sprites:
-            sprite_info_lines.append("💡 Para sprite de perro: 'assets/images/perro.png'")
-        if len(enemy_sprites) == 0:
-            sprite_info_lines.append("👾 Para sprites de enemigos: 'assets/images/fantasma.png', etc.")
-        
-        for i, line in enumerate(sprite_info_lines):
-            sprite_info = small_font.render(line, True, (150, 150, 255))
-            screen.blit(sprite_info, (50, 480 + i * 20))
+    # Instrucciones para sprites (REMOVIDAS - ya no se muestran)
     
     pygame.display.flip()
 
@@ -579,10 +636,17 @@ def move_projectiles():
     projectiles = newp
 
 def draw_projectiles():
+    """NUEVO: Dibuja proyectiles (sprite si disponible, sino emoji)"""
     for p in projectiles:
         x, y = p['pos']
-        poop = emoji_font.render('💩', True, (0, 0, 0))
-        screen.blit(poop, (x * TILE_SIZE + 4, y * TILE_SIZE))
+        
+        # Usar sprite de caca si está disponible, sino emoji
+        if poop_sprite:
+            screen.blit(poop_sprite, (x * TILE_SIZE, y * TILE_SIZE))
+        else:
+            # Usar emoji como respaldo
+            poop = emoji_font.render('💩', True, (0, 0, 0))
+            screen.blit(poop, (x * TILE_SIZE + 4, y * TILE_SIZE))
 
 def check_enemy_collision():
     global player_score, enemies, enemy_behaviors
@@ -612,8 +676,8 @@ def draw_ui():
     ai_info = [
         f"Enemigos: {len(enemies)}",
         f"Dificultad: {levels[current_level]['difficulty']}",
-        f"Perro: {'✅' if use_sprites else '❌'} | Enemigos: {enemy_sprites_count}✅",
-        f"(R=recargar sprites)"
+        f"Perro: {'✅' if use_sprites else '❌'} | Enemigos: {enemy_sprites_count}✅ | Caca: {'✅' if poop_sprite else '❌'}",
+        f"(R=recargar sprites | ESPACIO=disparar)"
     ]
     
     for i, line in enumerate(ai_info):
@@ -741,6 +805,7 @@ while running:
         if keys[pygame.K_r]:
             print("🔄 Recargando sprites...")
             reload_sprites_if_needed()
+            show_message("¡Sprites recargados!")
         
         # Verificar llegada a la salida
         if maze[player_pos[1]][player_pos[0]] == 2:
