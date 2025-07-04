@@ -1,5 +1,5 @@
 # ========================================
-# PERRO HÉROE - ESTRUCTURA ASSETS (EXAMEN)
+# PERRO HÉROE - SISTEMA MEJORADO CON AIM BOT
 # ========================================
 # Protagonista: Sprite del perro + sprites de enemigos + sprite de caca + portada
 # Estructura: assets/images/, assets/sounds/, assets/music/
@@ -10,6 +10,7 @@ import pygame
 import sys
 import random
 import time
+import math
 from scripts import AStar, create_enemy_behavior
 
 # Inicializar Pygame
@@ -90,7 +91,7 @@ levels = [
         ]
     },
 
-    # NIVEL 4 - ALIEN, FANTASMA, ZOMBIE, VILLANO
+    # NIVEL 4 - COMPLEJO PERO BALANCEADO
     {
         'id': 4,
         'name': 'Laberinto Avanzado',
@@ -115,7 +116,7 @@ levels = [
         ]
     },
 
-    # NIVEL 5 - TODOS LOS ENEMIGOS
+    # NIVEL 5 - DESAFÍO FINAL BALANCEADO
     {
         'id': 5,
         'name': 'Desafío Final',
@@ -152,7 +153,7 @@ SCREEN_WIDTH = TILE_SIZE * MAZE_WIDTH
 SCREEN_HEIGHT = TILE_SIZE * MAZE_HEIGHT + 100
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("🐶 Perro Héroe - Examen Parcial IA")
+pygame.display.set_caption("🐶 Perro Héroe - Sistema Mejorado con Aim Bot")
 
 # Configuración de fuentes
 pygame.font.init()
@@ -168,6 +169,7 @@ COLOR_PLAYER = (255, 255, 0)
 COLOR_EXIT = (0, 255, 0)
 COLOR_ENEMY = (255, 0, 0)
 COLOR_TEXT = (255, 255, 255)
+COLOR_AIMBOT = (255, 255, 0)  # Color para indicador de aim bot
 
 # Game states (SOLO 3 ESTADOS)
 STATE_MENU = 'MENU'
@@ -177,7 +179,7 @@ STATE_PLAY = 'PLAY'
 # Menú principal simplificado (SOLO 3 OPCIONES)
 menu_options = ['Nueva Partida', 'Seleccionar Dificultad', 'Salir']
 difficulty_options = ['Fácil', 'Medio', 'Difícil']
-FPS_levels = {'Fácil': 5, 'Medio': 8, 'Difícil': 12}
+FPS_levels = {'Fácil': 4, 'Medio': 6, 'Difícil': 8}  # Reducido para mejor jugabilidad
 
 # Variables del menú (CONTROLADAS Y LIMITADAS)
 menu_idx = 0  # SIEMPRE entre 0-2 (3 opciones máximo)
@@ -191,7 +193,7 @@ def reset_menu():
     menu_idx = 0  # Resetear al inicio
 
 # Configuración del protagonista perro (CON SOPORTE PARA SPRITES)
-print("🐶 Perro héroe inicializado con emoji")
+print("🐶 Perro héroe inicializado con emoji y aim bot")
 
 # Variables para sprites
 use_sprites = False
@@ -200,6 +202,76 @@ enemy_sprites = {}  # Sprites de enemigos
 poop_sprite = None  # NUEVO: Sprite de caca
 cover_image = None  # NUEVO: Portada del juego
 current_direction = 'right'
+
+# ========================================
+# SISTEMA DE AIM BOT MEJORADO
+# ========================================
+
+class AimBot:
+    """Sistema de aim bot inteligente para ayudar al jugador"""
+    
+    def __init__(self, detection_range=6):
+        self.detection_range = detection_range
+        self.aim_assistance = True
+        self.target_enemy = None
+        
+    def find_nearest_enemy(self, player_pos, enemies):
+        """Encuentra el enemigo más cercano dentro del rango"""
+        nearest_enemy = None
+        min_distance = float('inf')
+        
+        for enemy in enemies:
+            enemy_pos = enemy['pos']
+            distance = math.sqrt((player_pos[0] - enemy_pos[0])**2 + 
+                               (player_pos[1] - enemy_pos[1])**2)
+            
+            if distance <= self.detection_range and distance < min_distance:
+                min_distance = distance
+                nearest_enemy = enemy
+                
+        return nearest_enemy, min_distance
+    
+    def calculate_aim_direction(self, player_pos, target_pos):
+        """Calcula la dirección óptima para disparar"""
+        dx = target_pos[0] - player_pos[0]
+        dy = target_pos[1] - player_pos[1]
+        
+        # Normalizar direcciones para proyectiles
+        if abs(dx) > abs(dy):
+            return [1 if dx > 0 else -1, 0]
+        else:
+            return [0, 1 if dy > 0 else -1]
+    
+    def get_aim_direction(self, player_pos, enemies):
+        """Obtiene la dirección de disparo asistido"""
+        if not self.aim_assistance:
+            return None
+            
+        nearest_enemy, distance = self.find_nearest_enemy(player_pos, enemies)
+        
+        if nearest_enemy:
+            self.target_enemy = nearest_enemy
+            return self.calculate_aim_direction(player_pos, nearest_enemy['pos'])
+        
+        self.target_enemy = None
+        return None
+    
+    def draw_aim_indicator(self, screen, player_pos, target_pos):
+        """Dibuja un indicador visual del aim bot"""
+        if target_pos:
+            # Línea de mira
+            start_pixel = (player_pos[0] * TILE_SIZE + TILE_SIZE//2, 
+                          player_pos[1] * TILE_SIZE + TILE_SIZE//2)
+            end_pixel = (target_pos[0] * TILE_SIZE + TILE_SIZE//2, 
+                        target_pos[1] * TILE_SIZE + TILE_SIZE//2)
+            
+            pygame.draw.line(screen, COLOR_AIMBOT, start_pixel, end_pixel, 2)
+            
+            # Círculo alrededor del objetivo
+            pygame.draw.circle(screen, COLOR_AIMBOT, end_pixel, TILE_SIZE//2, 2)
+
+# Instancia global del aim bot
+aim_bot = AimBot(detection_range=6)
 
 def load_dog_sprite():
     """Función para cargar el sprite del perro si existe"""
@@ -394,6 +466,77 @@ projectiles = []
 last_direction = [1, 0]
 
 # ========================================
+# CONFIGURACIÓN ALEATORIA DE ENEMIGOS
+# ========================================
+
+# Tipos de enemigos disponibles
+ALL_ENEMY_TYPES = ['👽', '👻', '🧟', '🦹', '👺', '🤡']
+
+# Configuración de enemigos por nivel (NUEVO SISTEMA)
+ENEMIES_PER_LEVEL = {
+    0: 2,  # Nivel 1: 2 enemigos
+    1: 2,  # Nivel 2: 2 enemigos
+    2: 3,  # Nivel 3: 3 enemigos
+    3: 3,  # Nivel 4: 3 enemigos
+    4: 3   # Nivel 5: 3 enemigos
+}
+
+# Posiciones seguras para enemigos
+SAFE_ENEMY_POSITIONS = [
+    [18, 1], [1, 10], [10, 6], [5, 8], [15, 10], [3, 3],
+    [17, 11], [2, 2], [16, 2], [3, 10], [14, 8], [7, 4],
+    [12, 9], [6, 2], [13, 3], [4, 11], [11, 5], [8, 7]
+]
+
+def generate_random_enemies(level):
+    """Genera enemigos aleatorios para un nivel específico"""
+    enemy_count = ENEMIES_PER_LEVEL.get(level, 2)
+    
+    # Seleccionar tipos aleatorios
+    selected_types = random.sample(ALL_ENEMY_TYPES, min(enemy_count, len(ALL_ENEMY_TYPES)))
+    
+    # Seleccionar posiciones aleatorias
+    available_positions = SAFE_ENEMY_POSITIONS.copy()
+    random.shuffle(available_positions)
+    
+    enemies_config = []
+    for i, enemy_type in enumerate(selected_types):
+        if i < len(available_positions):
+            pos = available_positions[i]
+            # Verificar que la posición sea válida en el laberinto actual
+            if pathfinder.is_valid_position(pos[0], pos[1]):
+                enemies_config.append({
+                    'type': enemy_type,
+                    'pos': pos
+                })
+    
+    return enemies_config
+
+# Enemigos (se generarán dinámicamente)
+enemies = []
+
+# Sistema de comportamientos de IA
+enemy_behaviors = []
+
+def get_player_position():
+    return player_pos
+
+# Función para inicializar comportamientos de enemigos
+def initialize_enemy_behaviors():
+    """Inicializa los comportamientos de IA para todos los enemigos"""
+    global enemy_behaviors
+    enemy_behaviors = []
+    
+    for enemy in enemies:
+        behavior = create_enemy_behavior(
+            enemy_data=enemy,
+            pathfinder=pathfinder,
+            player_pos_getter=get_player_position,
+            all_enemies=enemies
+        )
+        enemy_behaviors.append(behavior)
+
+# ========================================
 # FUNCIONES BÁSICAS DEL JUEGO
 # ========================================
 
@@ -420,56 +563,6 @@ def update_maze_dimensions():
 # Inicializar pathfinder A*
 pathfinder = AStar(maze)
 
-# ========================================
-# CONFIGURACIÓN DE ENEMIGOS POR NIVEL
-# ========================================
-
-# Definir qué enemigos aparecen en cada nivel
-LEVEL_ENEMIES = {
-    0: [],  # Nivel 1 - Sin enemigos
-    1: [{'type': '👽', 'pos': [18, 1]}],  # Nivel 2 - Solo Alien
-    2: [{'type': '👽', 'pos': [18, 1]}, {'type': '👻', 'pos': [1, 10]}],  # Nivel 3 - Alien + Fantasma
-    3: [  # Nivel 4 - Alien, Fantasma, Zombie, Villano
-        {'type': '👽', 'pos': [18, 1]},   # Alien (A* inteligente)
-        {'type': '👻', 'pos': [1, 10]},   # Fantasma (evade)
-        {'type': '🧟', 'pos': [10, 6]},   # Zombie (aleatorio)
-        {'type': '🦹', 'pos': [5, 8]}     # Villano (emboscada)
-    ],
-    4: [  # Nivel 5 - TODOS los enemigos
-        {'type': '👽', 'pos': [18, 1]},   # Alien (A* inteligente)
-        {'type': '👻', 'pos': [1, 10]},   # Fantasma (evade)
-        {'type': '🧟', 'pos': [10, 6]},   # Zombie (aleatorio)
-        {'type': '🦹', 'pos': [5, 8]},    # Villano (emboscada)
-        {'type': '👺', 'pos': [15, 10]},  # Demonio (teletransporte)
-        {'type': '🤡', 'pos': [3, 3]}     # Payaso (trampas + errático)
-    ]
-}
-
-# Enemigos mejorados
-enemy_types = ['👻', '👽', '🧟', '🦹', '👺', '🤡']
-enemies = []
-
-# Sistema de comportamientos de IA
-enemy_behaviors = []
-
-def get_player_position():
-    return player_pos
-
-# Función para inicializar comportamientos de enemigos
-def initialize_enemy_behaviors():
-    """Inicializa los comportamientos de IA para todos los enemigos"""
-    global enemy_behaviors
-    enemy_behaviors = []
-    
-    for enemy in enemies:
-        behavior = create_enemy_behavior(
-            enemy_data=enemy,
-            pathfinder=pathfinder,
-            player_pos_getter=get_player_position,
-            all_enemies=enemies
-        )
-        enemy_behaviors.append(behavior)
-
 # Funciones de dibujo actualizadas
 def draw_menu():
     # Asegurar que la pantalla tenga el tamaño correcto para el menú
@@ -490,7 +583,7 @@ def draw_menu():
         title_y = cover_y + cover_image.get_height() + 20
     else:
         # Si no hay portada, mostrar título normal
-        title = font.render("🐶 PERRO HÉROE - AVENTURA PIXELART", True, COLOR_TEXT)
+        title = font.render("🐶 PERRO HÉROE - CON AIM BOT", True, COLOR_TEXT)
         screen.blit(title, (menu_width // 2 - title.get_width() // 2, 50))
         title_y = 120
     
@@ -501,14 +594,14 @@ def draw_menu():
         text = font.render(option, True, color)
         screen.blit(text, (menu_width // 2 - text.get_width() // 2, title_y + i * 50))
     
-    # Información de IA por nivel
+    # Información de IA y aim bot
     info_lines = [
-        "🧠 SISTEMA DE INTELIGENCIA ARTIFICIAL:",
-        "Nivel 1: Sin enemigos - Tutorial",
-        "Nivel 2: 👽 Alien (A* inteligente)",
-        "Nivel 3: 👽 Alien + 👻 Fantasma (evade)",
-        "Nivel 4: 👽👻🧟🦹 (4 enemigos con IA única)",
-        "Nivel 5: 👽👻🧟🦹👺🤡 (TODOS - 6 enemigos)"
+        "🎯 NUEVO: SISTEMA DE AIM BOT INTELIGENTE",
+        "🧠 Enemigos aleatorios por nivel:",
+        "Niveles 1-2: 2 enemigos aleatorios",
+        "Niveles 3-5: 3 enemigos aleatorios",
+        "🎮 Aim Bot: Disparo asistido automático",
+        "⚡ Dificultad balanceada para mejor jugabilidad"
     ]
     
     start_y = title_y + 200
@@ -537,11 +630,11 @@ def draw_difficulty_menu():
         txt = font.render(opt, True, color)
         screen.blit(txt, (menu_width // 2 - txt.get_width() // 2, 200 + i * 50))
     
-    # Información de dificultad
+    # Información de dificultad ACTUALIZADA
     fps_info = [
-        f"Fácil: {FPS_levels['Fácil']} FPS - Enemigos lentos",
-        f"Medio: {FPS_levels['Medio']} FPS - Velocidad normal", 
-        f"Difícil: {FPS_levels['Difícil']} FPS - Enemigos rápidos"
+        f"Fácil: {FPS_levels['Fácil']} FPS - Muy lento, ideal para principiantes",
+        f"Medio: {FPS_levels['Medio']} FPS - Velocidad equilibrada", 
+        f"Difícil: {FPS_levels['Difícil']} FPS - Más rápido, para expertos"
     ]
     
     for i, info in enumerate(fps_info):
@@ -552,38 +645,28 @@ def draw_difficulty_menu():
     pygame.display.flip()
 
 def reset_enemies():
-    """Resetea enemigos según el nivel actual"""
+    """Resetea enemigos de forma aleatoria según el nivel actual"""
     global enemies, enemy_behaviors
     
-    # Obtener configuración de enemigos para el nivel actual
-    level_config = LEVEL_ENEMIES.get(current_level, [])
+    print(f"🎮 Generando enemigos para nivel {current_level + 1}...")
     
-    # Crear lista de enemigos con posiciones seguras
+    # Generar enemigos aleatorios para el nivel actual
+    enemies_config = generate_random_enemies(current_level)
+    
+    # Crear lista de enemigos
     enemies = []
-    for enemy_config in level_config:
+    for enemy_config in enemies_config:
         enemy = {
             'pos': enemy_config['pos'].copy(),
             'dir': [0, -1],  # Dirección inicial
             'type': enemy_config['type']
         }
-        
-        # Verificar que la posición sea válida
-        x, y = enemy['pos']
-        if pathfinder.is_valid_position(x, y):
-            enemies.append(enemy)
-        else:
-            # Si no es válida, usar una posición por defecto
-            safe_positions = [[2, 2], [17, 2], [2, 10], [17, 10]]
-            for safe_pos in safe_positions:
-                if pathfinder.is_valid_position(safe_pos[0], safe_pos[1]):
-                    enemy['pos'] = safe_pos
-                    enemies.append(enemy)
-                    break
+        enemies.append(enemy)
     
     # Inicializar comportamientos de IA
     initialize_enemy_behaviors()
     
-    print(f"🎮 Nivel {current_level + 1}: {len(enemies)} enemigos cargados")
+    print(f"✅ Nivel {current_level + 1}: {len(enemies)} enemigos generados")
     for enemy in enemies:
         print(f"   {enemy['type']} en posición {enemy['pos']}")
 
@@ -652,6 +735,11 @@ def draw_enemies():
             # Usar emoji como respaldo
             enemy_emoji = emoji_font.render(enemy_type, True, (0, 0, 0))
             screen.blit(enemy_emoji, (x * TILE_SIZE + 4, y * TILE_SIZE))
+
+def draw_aim_bot_indicators():
+    """Dibuja indicadores del aim bot"""
+    if aim_bot.target_enemy:
+        aim_bot.draw_aim_indicator(screen, player_pos, aim_bot.target_enemy['pos'])
 
 def move_enemies():
     global enemy_behaviors, pathfinder
@@ -747,11 +835,17 @@ def draw_ui():
     enemy_text = small_font.render(enemy_info, True, COLOR_TEXT)
     screen.blit(enemy_text, (200, ui_y + 25))
     
+    # Información de aim bot
+    aim_status = "🎯 AIM BOT: ON" if aim_bot.aim_assistance else "🎯 AIM BOT: OFF"
+    aim_color = (0, 255, 0) if aim_bot.aim_assistance else (255, 0, 0)
+    aim_text = small_font.render(aim_status, True, aim_color)
+    screen.blit(aim_text, (200, ui_y + 50))
+    
     # Información de sprites y controles
     sprite_info = [
         f"Perro: {'✅' if use_sprites else '❌'} | Enemigos: {len(enemy_sprites)}✅ | Caca: {'✅' if poop_sprite else '❌'}",
         f"Dificultad: {levels[current_level]['difficulty']} | FPS: {FPS}",
-        f"(R=recargar sprites | ESPACIO=disparar | ESC=menú)"
+        f"(R=sprites | ESPACIO=disparar | A=aim bot | ESC=menú)"
     ]
     
     for i, line in enumerate(sprite_info):
@@ -871,9 +965,22 @@ while running:
             handle_bonus_tile(new_pos[0], new_pos[1])
             player_pos = new_pos
         
-        # Lanzar proyectil
-        if keys[pygame.K_SPACE] and len(projectiles) < 3:
-            projectiles.append({'pos': player_pos.copy(), 'dir': last_direction.copy()})
+        # NUEVO: Sistema de disparo con aim bot
+        if keys[pygame.K_SPACE] and len(projectiles) < 5:  # Aumentado límite de proyectiles
+            # Obtener dirección de aim bot
+            aim_direction = aim_bot.get_aim_direction(player_pos, enemies)
+            
+            if aim_direction:
+                # Usar aim bot
+                projectiles.append({'pos': player_pos.copy(), 'dir': aim_direction})
+            else:
+                # Disparo normal
+                projectiles.append({'pos': player_pos.copy(), 'dir': last_direction.copy()})
+        
+        # Toggle aim bot
+        if keys[pygame.K_a]:
+            aim_bot.aim_assistance = not aim_bot.aim_assistance
+            time.sleep(0.2)  # Evitar toggle múltiple
         
         # Recargar sprites si se presiona R
         if keys[pygame.K_r]:
@@ -910,6 +1017,7 @@ while running:
         draw_player()
         draw_enemies()
         draw_projectiles()
+        draw_aim_bot_indicators()  # NUEVO: Indicadores del aim bot
         draw_ui()
 
         if keys[pygame.K_ESCAPE]:
