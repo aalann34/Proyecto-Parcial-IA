@@ -22,122 +22,125 @@ pygame.init()
 # Solo elementos básicos: 0=camino, 1=pared, 2=salida, 3=bonus
 
 levels = [
-    # NIVEL 1 - INTRODUCCIÓN
+    # NIVEL 1 - ENTRADA AL INFIERNO
     {
         'id': 1,
-        'name': 'Primer Paso',
-        'difficulty': 'Fácil',
-        'description': 'El perro héroe comienza su aventura',
+        'name': 'Portal de Entrada',
+        'difficulty': 'Principiante',
+        'description': 'Las puertas del infierno se abren ante ti',
         'maze': [
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,3,0,0,1],
-            [1,0,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1],
-            [1,0,1,0,0,0,0,1,0,1,0,1,0,0,0,0,0,1,0,1],
-            [1,0,1,0,1,1,0,1,0,1,0,1,0,1,1,3,0,1,0,1],
-            [1,0,1,0,1,3,0,0,0,0,0,0,0,0,0,1,0,1,0,1],
-            [1,0,1,0,1,0,1,1,1,1,1,1,1,1,0,1,0,1,0,1],
-            [1,0,0,0,1,0,0,0,0,1,0,0,0,0,0,1,0,0,0,1],
-            [1,1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
-            [1,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,2,0,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,1,0,1,1,1,1,1,1,1,1,1,1,0,1,1,1,0,3,0,1],
+            [1,0,1,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,1,0,0,0,1],
+            [1,0,1,0,1,1,1,1,0,1,0,1,0,1,1,1,1,1,0,1,1,1,0,1],
+            [1,0,0,0,1,3,0,0,0,0,0,0,0,0,0,3,0,1,0,0,0,0,0,1],
+            [1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,0,1,1,0,1,1,1,0,1],
+            [1,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,1],
+            [1,0,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,1,1,1,0,1,1,0,0,0,1,1,0,1,1,1,1,1,1,0,1],
+            [1,0,0,0,0,0,0,0,1,3,0,0,0,3,1,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,1,1,2,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         ]
     },
 
-    # NIVEL 2 - CORREGIDO
+    # NIVEL 2 - CÁMARAS DE TORMENTO
     {
         'id': 2,
-        'name': 'Laberinto Básico',
-        'difficulty': 'Intermedio',
-        'description': 'El perro explora laberintos más complejos',
+        'name': 'Cámaras de Tormento',
+        'difficulty': 'Iniciado',
+        'description': 'Los gritos resuenan en estas cámaras malditas',
         'maze': [
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1,0,0,0,3,0,0,0,0,1,0,0,0,0,0,3,0,0,0,1],
-            [1,0,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1],
-            [1,0,1,0,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,1],
-            [1,0,1,0,1,1,0,1,1,1,0,1,1,1,0,1,0,1,0,1],
-            [1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],
-            [1,1,1,0,1,0,1,1,0,1,0,1,1,0,1,0,1,1,1,1],
-            [1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1],
-            [1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,1,0,1],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,1,1],
-            [1,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,2,0,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,3,0,1],
+            [1,0,1,0,1,0,1,1,1,1,1,1,1,1,1,1,0,1,0,1,1,1,0,1],
+            [1,0,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,1],
+            [1,0,1,1,1,1,1,1,0,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1],
+            [1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,1],
+            [1,1,1,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,1,1,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,1,1,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,1,1,0,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1,1,1],
+            [1,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         ]
     },
 
-    # NIVEL 3 - SIMPLIFICADO
+    # NIVEL 3 - LABERINTO DE FUEGO (CORREGIDO - diamantes accesibles)
     {
         'id': 3,
-        'name': 'Desafío Medio',
-        'difficulty': 'Avanzado',
-        'description': 'El perro enfrenta más obstáculos',
+        'name': 'Laberinto de Fuego',
+        'difficulty': 'Guerrero',
+        'description': 'Las llamas danzan en cada esquina',
         'maze': [
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,1],
-            [1,0,1,1,1,1,0,1,1,1,1,0,1,1,1,1,1,1,0,1],
-            [1,0,1,0,0,0,0,0,0,1,0,0,0,0,0,3,0,1,0,1],
-            [1,0,1,0,1,1,1,1,0,1,0,1,1,1,0,1,0,1,0,1],
-            [1,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
-            [1,1,1,0,1,0,1,1,1,0,1,1,0,1,0,1,1,1,0,1],
-            [1,0,0,0,1,0,0,0,0,0,0,0,0,1,0,0,0,0,0,1],
-            [1,0,1,0,1,1,1,1,0,1,1,1,1,1,0,1,0,1,0,1],
-            [1,0,1,0,0,0,0,1,0,0,0,0,0,0,0,1,0,1,0,1],
-            [1,0,1,1,1,1,0,1,1,1,1,0,1,1,1,1,0,1,0,1],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,3,0,1],
+            [1,0,1,1,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,1,1,1,0,1],
+            [1,0,1,0,0,0,0,0,0,0,1,0,1,0,0,0,0,0,0,0,0,1,0,1],
+            [1,0,1,0,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,1,0,1,0,1],
+            [1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],
+            [1,1,1,0,1,0,1,1,1,1,1,0,1,1,1,1,1,1,0,1,0,1,1,1],
+            [1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,1],
+            [1,0,1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,0,1,0,1],
+            [1,0,1,0,0,0,0,0,0,0,1,3,1,0,0,0,0,0,0,0,0,1,0,1],
+            [1,0,1,1,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,1,1,1,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         ]
     },
 
-    # NIVEL 4 - COMPLEJO PERO BALANCEADO
+    # NIVEL 4 - FORTALEZA DEMONÍACA (CORREGIDO - diamantes accesibles)
     {
         'id': 4,
-        'name': 'Laberinto Avanzado',
-        'difficulty': 'Experto',
-        'description': 'Aventura desafiante para el perro héroe',
+        'name': 'Fortaleza Demoníaca',
+        'difficulty': 'Veterano',
+        'description': 'El corazón del mal late en esta fortaleza',
         'maze': [
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1,3,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,3,1],
-            [1,0,1,0,1,0,1,1,0,1,0,1,1,0,1,0,1,1,0,1],
-            [1,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,1,0,1],
-            [1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,1,0,1],
-            [1,0,0,0,1,0,0,0,1,3,1,0,0,0,1,0,0,0,0,1],
-            [1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1],
-            [1,0,0,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,0,1],
-            [1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,0,1],
-            [1,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,1,0,1],
-            [1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,0,1,1,0,1],
-            [1,0,0,0,1,3,0,0,0,0,0,0,0,3,1,0,0,0,0,1],
-            [1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,1],
-            [1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,2,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,3,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,3,1],
+            [1,0,1,0,1,0,1,1,1,1,1,0,1,1,1,1,1,0,1,0,1,1,0,1],
+            [1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,1,0,0,1],
+            [1,0,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1,0,1,1,1,0,1,1],
+            [1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1],
+            [1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,1],
+            [1,0,0,0,0,0,0,0,0,0,1,3,1,0,0,0,0,0,0,0,0,0,0,1],
+            [1,1,1,0,1,1,1,0,1,0,1,0,1,0,1,0,1,1,1,0,1,1,1,1],
+            [1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1],
+            [1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,1,0,1],
+            [1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1],
+            [1,0,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,0,1],
+            [1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,2,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         ]
     },
 
-    # NIVEL 5 - DESAFÍO FINAL BALANCEADO
+    # NIVEL 5 - TRONO DE LUCIFER
     {
         'id': 5,
-        'name': 'Desafío Final',
-        'difficulty': 'Maestro',
-        'description': 'La prueba definitiva del perro héroe',
+        'name': 'Trono de Lucifer',
+        'difficulty': 'Señor Infernal',
+        'description': 'El mismísimo trono del príncipe de las tinieblas',
         'maze': [
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
-            [1,3,0,0,1,0,0,0,0,1,1,0,0,0,0,1,0,0,0,1],
-            [1,0,1,0,1,0,1,1,0,1,0,1,0,1,1,0,1,0,1,1],
-            [1,0,1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,1,0],
-            [1,0,1,1,1,0,1,0,1,1,1,1,0,1,0,1,1,1,1,0],
-            [1,0,0,0,1,0,0,0,1,3,0,1,0,0,0,1,0,0,0,0],
-            [1,1,1,0,1,1,1,0,1,1,0,1,0,1,1,1,0,1,1,1],
-            [1,0,0,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0],
-            [1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0],
-            [1,0,1,0,0,0,0,0,1,0,1,0,1,0,0,0,0,1,1,0],
-            [1,0,1,0,1,1,1,0,1,0,1,0,1,0,1,1,1,0,1,0],
-            [1,0,0,0,1,3,0,0,0,0,1,0,0,0,0,3,1,0,0,0],
-            [1,1,1,0,1,0,1,1,1,0,1,0,1,1,1,0,1,0,1,1],
-            [1,0,0,0,1,0,0,0,0,0,1,0,0,0,0,0,1,0,2,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,3,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,0,0,0,3,1],
+            [1,0,1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1,1,1,0,1],
+            [1,0,1,0,0,0,0,0,0,1,0,0,0,1,0,0,0,0,0,0,0,1,0,1],
+            [1,0,1,0,1,1,1,1,0,1,0,1,0,1,0,1,1,1,1,1,0,1,0,1],
+            [1,0,0,0,1,0,0,0,0,0,0,1,0,0,0,0,0,0,0,1,0,0,0,1],
+            [1,1,1,0,1,0,1,1,1,1,0,1,0,1,1,1,1,1,0,1,0,1,1,1],
+            [1,0,0,0,0,0,1,0,0,0,0,1,0,0,0,0,1,0,0,0,0,0,0,1],
+            [1,0,1,1,1,0,1,0,1,1,0,1,0,1,1,0,1,0,1,1,1,1,0,1],
+            [1,0,1,0,0,0,0,0,1,3,0,0,0,3,1,0,0,0,0,0,0,1,0,1],
+            [1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,0,1,0,1],
+            [1,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,1,0,0,0,1],
+            [1,1,1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,1,0,1,0,1,1,1],
+            [1,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,1,0,0,2,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         ]
     }
 ]
@@ -153,7 +156,7 @@ SCREEN_WIDTH = TILE_SIZE * MAZE_WIDTH
 SCREEN_HEIGHT = TILE_SIZE * MAZE_HEIGHT + 100
 
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-pygame.display.set_caption("🐶 Perro Héroe - Sistema Mejorado con Aim Bot")
+pygame.display.set_caption("🔥 Dimensiones Infernales - Sistema de IA Avanzado")
 
 # Configuración de fuentes
 pygame.font.init()
@@ -161,15 +164,18 @@ font = pygame.font.SysFont('Arial', 30)
 small_font = pygame.font.SysFont('Arial', 20)
 emoji_font = pygame.font.SysFont('Segoe UI Emoji', TILE_SIZE)
 
-# Colores del juego
-COLOR_WALL = (40, 40, 40)
-COLOR_PATH = (200, 200, 200)
-COLOR_BACKGROUND = (0, 0, 0)
-COLOR_PLAYER = (255, 255, 0)
-COLOR_EXIT = (0, 255, 0)
-COLOR_ENEMY = (255, 0, 0)
-COLOR_TEXT = (255, 255, 255)
-COLOR_AIMBOT = (255, 255, 0)  # Color para indicador de aim bot
+# Colores del juego - TEMA INFERNAL
+COLOR_WALL = (20, 0, 0)          # Rojo muy oscuro para paredes
+COLOR_PATH = (80, 40, 40)        # Rojo oscuro para caminos
+COLOR_BACKGROUND = (0, 0, 0)     # Negro profundo
+COLOR_PLAYER = (255, 255, 0)     # Amarillo brillante para el protagonista
+COLOR_EXIT = (255, 100, 0)       # Naranja brillante para salida
+COLOR_ENEMY = (255, 0, 0)        # Rojo intenso para enemigos
+COLOR_TEXT = (255, 255, 255)     # Blanco para texto
+COLOR_AIMBOT = (255, 255, 0)     # Amarillo para aim bot
+COLOR_BONUS = (255, 215, 0)      # Dorado para bonus
+COLOR_FIRE = (255, 69, 0)        # Rojo fuego para efectos
+COLOR_LAVA = (139, 0, 0)         # Rojo lava para elementos especiales
 
 # Game states (SOLO 3 ESTADOS)
 STATE_MENU = 'MENU'
@@ -193,7 +199,7 @@ def reset_menu():
     menu_idx = 0  # Resetear al inicio
 
 # Configuración del protagonista perro (CON SOPORTE PARA SPRITES)
-print("🐶 Perro héroe inicializado con emoji y aim bot")
+print("🐶 Perro héroe de las dimensiones infernales inicializado")
 
 # Variables para sprites
 use_sprites = False
@@ -277,12 +283,12 @@ def load_dog_sprite():
     """Función para cargar el sprite del perro si existe"""
     global use_sprites, dog_sprites
     
-    sprite_path = 'assets/images/perro.png'
+    sprite_path = 'assets/images/perro.png'  # De vuelta a perro.png
     
     try:
         import os
         if os.path.exists(sprite_path):
-            print(f"✅ ¡Sprite encontrado! Cargando desde: {sprite_path}")
+            print(f"✅ ¡Sprite del perro encontrado! Cargando desde: {sprite_path}")
             
             # Cargar el sprite
             dog_spritesheet = pygame.image.load(sprite_path)
@@ -317,17 +323,18 @@ def load_dog_sprite():
         return False
 
 def load_enemy_sprites():
-    """Función para cargar sprites de enemigos"""
+    """Función para cargar sprites de criaturas infernales"""
     global enemy_sprites
     
-    # Lista de enemigos con sus archivos correspondientes
+    # Lista de criaturas con sus archivos correspondientes (ORIGINALES + DEMONIO)
     enemy_files = {
         '👻': 'fantasma.png',
         '👽': 'alien.png',
         '🧟': 'zombie.png',
         '🦹': 'villano.png',
         '👺': 'demonio.png',
-        '🤡': 'payaso.png'
+        '🤡': 'payaso.png',
+        '👹': 'diablo.png'  # NUEVO: Demonio adicional
     }
     
     sprites_loaded = 0
@@ -338,7 +345,7 @@ def load_enemy_sprites():
         try:
             import os
             if os.path.exists(sprite_path):
-                print(f"👾 Cargando enemigo: {sprite_path}")
+                print(f"👾 Cargando criatura infernal: {sprite_path}")
                 
                 # Cargar sprite del enemigo
                 enemy_spritesheet = pygame.image.load(sprite_path)
@@ -359,10 +366,10 @@ def load_enemy_sprites():
             print(f"⚠️ Error cargando {sprite_path}: {e}")
     
     if sprites_loaded > 0:
-        print(f"🎭 ¡{sprites_loaded} sprites de enemigos cargados!")
+        print(f"🔥 ¡{sprites_loaded} criaturas infernales cargadas!")
     else:
-        print("📁 No se encontraron sprites de enemigos")
-        print("💡 Tip: Puedes agregar: fantasma.png, alien.png, zombie.png, etc. en assets/images/")
+        print("📁 No se encontraron sprites de criaturas infernales")
+        print("💡 Tip: Puedes agregar: fantasma.png, alien.png, zombie.png, villano.png, demonio.png, payaso.png, diablo.png en assets/images/")
     
     return sprites_loaded > 0
 
@@ -469,24 +476,37 @@ last_direction = [1, 0]
 # CONFIGURACIÓN ALEATORIA DE ENEMIGOS
 # ========================================
 
-# Tipos de enemigos disponibles
-ALL_ENEMY_TYPES = ['👽', '👻', '🧟', '🦹', '👺', '🤡']
+# Tipos de enemigos infernales disponibles (ORIGINALES + DEMONIO)
+ALL_ENEMY_TYPES = ['👽', '👻', '🧟', '🦹', '👺', '🤡', '👹']
 
-# Configuración de enemigos por nivel (NUEVO SISTEMA)
+# Configuración de enemigos por nivel (ACTUALIZADO)
 ENEMIES_PER_LEVEL = {
     0: 2,  # Nivel 1: 2 enemigos
-    1: 2,  # Nivel 2: 2 enemigos
+    1: 2,  # Nivel 2: 2 enemigos  
     2: 3,  # Nivel 3: 3 enemigos
     3: 3,  # Nivel 4: 3 enemigos
     4: 3   # Nivel 5: 3 enemigos
 }
 
-# Posiciones seguras para enemigos
-SAFE_ENEMY_POSITIONS = [
-    [18, 1], [1, 10], [10, 6], [5, 8], [15, 10], [3, 3],
-    [17, 11], [2, 2], [16, 2], [3, 10], [14, 8], [7, 4],
-    [12, 9], [6, 2], [13, 3], [4, 11], [11, 5], [8, 7]
-]
+def find_valid_enemy_positions(maze, count=10):
+    """Encuentra posiciones válidas dinámicamente en el laberinto actual"""
+    height = len(maze)
+    width = len(maze[0])
+    valid_positions = []
+    
+    # Buscar todas las posiciones válidas (no paredes)
+    for y in range(1, height - 1):  # Evitar bordes
+        for x in range(1, width - 1):  # Evitar bordes
+            if maze[y][x] == 0:  # Camino libre
+                # Evitar posición inicial del jugador
+                if not (x == 1 and y == 1):
+                    # Evitar posición de salida
+                    if maze[y][x] != 2:
+                        valid_positions.append([x, y])
+    
+    # Mezclar y retornar las primeras 'count' posiciones
+    random.shuffle(valid_positions)
+    return valid_positions[:count]
 
 def generate_random_enemies(level):
     """Genera enemigos aleatorios para un nivel específico"""
@@ -495,20 +515,21 @@ def generate_random_enemies(level):
     # Seleccionar tipos aleatorios
     selected_types = random.sample(ALL_ENEMY_TYPES, min(enemy_count, len(ALL_ENEMY_TYPES)))
     
-    # Seleccionar posiciones aleatorias
-    available_positions = SAFE_ENEMY_POSITIONS.copy()
-    random.shuffle(available_positions)
+    # Encontrar posiciones válidas
+    current_maze = levels[level]['maze']
+    valid_positions = find_valid_enemy_positions(current_maze, enemy_count + 5)
+    
+    # Si no hay posiciones, usar respaldo
+    if len(valid_positions) == 0:
+        valid_positions = [[2, 2], [3, 3], [4, 4], [5, 5], [6, 6]]
     
     enemies_config = []
     for i, enemy_type in enumerate(selected_types):
-        if i < len(available_positions):
-            pos = available_positions[i]
-            # Verificar que la posición sea válida en el laberinto actual
-            if pathfinder.is_valid_position(pos[0], pos[1]):
-                enemies_config.append({
-                    'type': enemy_type,
-                    'pos': pos
-                })
+        if i < len(valid_positions):
+            enemies_config.append({
+                'type': enemy_type,
+                'pos': valid_positions[i]
+            })
     
     return enemies_config
 
@@ -572,7 +593,8 @@ def draw_menu():
         global screen
         screen = pygame.display.set_mode((menu_width, menu_height))
     
-    screen.fill(COLOR_BACKGROUND)
+    # Fondo infernal degradado
+    screen.fill((20, 0, 0))
     
     # NUEVO: Mostrar portada si está disponible
     if cover_image:
@@ -582,34 +604,51 @@ def draw_menu():
         screen.blit(cover_image, (cover_x, cover_y))
         title_y = cover_y + cover_image.get_height() + 20
     else:
-        # Si no hay portada, mostrar título normal
-        title = font.render("🐶 PERRO HÉROE - CON AIM BOT", True, COLOR_TEXT)
+        # Título con tema infernal
+        title = font.render("🔥 DIMENSIONES INFERNALES 🔥", True, COLOR_FIRE)
         screen.blit(title, (menu_width // 2 - title.get_width() // 2, 50))
-        title_y = 120
+        subtitle = small_font.render("- Sistema de IA Demoníaca -", True, COLOR_BONUS)
+        screen.blit(subtitle, (menu_width // 2 - subtitle.get_width() // 2, 90))
+        title_y = 150
     
-    # SOLO dibujar las 3 opciones del menú
-    valid_options = ['Nueva Partida', 'Seleccionar Dificultad', 'Salir']
+    # SOLO dibujar las 3 opciones del menú con estilo infernal
+    valid_options = ['🚪 Nueva Partida', '⚙️ Dificultad', '❌ Salir']
     for i, option in enumerate(valid_options):
-        color = (255, 255, 255) if i == menu_idx else (150, 150, 150)
+        if i == menu_idx:
+            color = COLOR_FIRE  # Naranja fuego para opción seleccionada
+            # Efecto de brillo
+            shadow_text = font.render(option, True, (100, 0, 0))
+            screen.blit(shadow_text, (menu_width // 2 - shadow_text.get_width() // 2 + 2, title_y + i * 50 + 2))
+        else:
+            color = (150, 75, 75)  # Rojo oscuro para opciones no seleccionadas
+        
         text = font.render(option, True, color)
         screen.blit(text, (menu_width // 2 - text.get_width() // 2, title_y + i * 50))
     
-    # Información de IA y aim bot
+    # Información de IA infernal
     info_lines = [
-        "🎯 NUEVO: SISTEMA DE AIM BOT INTELIGENTE",
-        "🧠 Enemigos aleatorios por nivel:",
-        "Niveles 1-2: 2 enemigos aleatorios",
-        "Niveles 3-5: 3 enemigos aleatorios",
-        "🎮 Aim Bot: Disparo asistido automático",
-        "⚡ Dificultad balanceada para mejor jugabilidad"
+        "👹 CRIATURAS INFERNALES CON IA:",
+        "Portal de Entrada: 2 criaturas aleatorias",
+        "Cámaras de Tormento: 2 seres del averno", 
+        "Laberinto de Fuego: 3 bestias infernales",
+        "Fortaleza Demoníaca: 3 guardianes élite",
+        "Trono de Lucifer: 3 señores supremos del mal",
+        "Enemigos: 👽👻🧟🦹👺🤡👹 (7 tipos disponibles)"
     ]
     
     start_y = title_y + 200
     for i, line in enumerate(info_lines):
-        color = (255, 255, 0) if i == 0 else (200, 200, 200)
+        color = COLOR_FIRE if i == 0 else COLOR_BONUS
         font_size = font if i == 0 else small_font
         text = font_size.render(line, True, color)
         screen.blit(text, (50, start_y + i * 25))
+    
+    # Efectos de partículas infernales (simulados)
+    import random
+    for _ in range(5):
+        x = random.randint(0, menu_width)
+        y = random.randint(0, menu_height)
+        pygame.draw.circle(screen, (255, 100, 0), (x, y), 2)
     
     pygame.display.flip()
 
@@ -621,55 +660,79 @@ def draw_difficulty_menu():
         global screen
         screen = pygame.display.set_mode((menu_width, menu_height))
     
-    screen.fill(COLOR_BACKGROUND)
-    title = font.render("Elige dificultad:", True, COLOR_TEXT)
+    # Fondo infernal
+    screen.fill((20, 0, 0))
+    
+    title = font.render("🔥 Elige tu nivel de tortura:", True, COLOR_FIRE)
     screen.blit(title, (menu_width // 2 - title.get_width() // 2, 100))
     
-    for i, opt in enumerate(difficulty_options):
-        color = (255, 255, 255) if i == diff_idx else (150, 150, 150)
+    # Opciones de dificultad con tema infernal
+    infernal_options = ['😈 Alma Perdida', '👹 Demonio', '🔥 Señor del Infierno']
+    
+    for i, opt in enumerate(infernal_options):
+        if i == diff_idx:
+            color = COLOR_FIRE
+            # Efecto de brillo para opción seleccionada
+            shadow_text = font.render(opt, True, (100, 0, 0))
+            screen.blit(shadow_text, (menu_width // 2 - shadow_text.get_width() // 2 + 2, 202 + i * 50))
+        else:
+            color = (150, 75, 75)
+        
         txt = font.render(opt, True, color)
         screen.blit(txt, (menu_width // 2 - txt.get_width() // 2, 200 + i * 50))
     
-    # Información de dificultad ACTUALIZADA
+    # Información de dificultad con tema infernal
     fps_info = [
-        f"Fácil: {FPS_levels['Fácil']} FPS - Muy lento, ideal para principiantes",
-        f"Medio: {FPS_levels['Medio']} FPS - Velocidad equilibrada", 
-        f"Difícil: {FPS_levels['Difícil']} FPS - Más rápido, para expertos"
+        f"😈 Alma Perdida: {FPS_levels['Fácil']} FPS - Los demonios se mueven lentamente",
+        f"👹 Demonio: {FPS_levels['Medio']} FPS - Velocidad infernal equilibrada", 
+        f"🔥 Señor del Infierno: {FPS_levels['Difícil']} FPS - Furia demoníaca máxima"
     ]
     
     for i, info in enumerate(fps_info):
-        color = (255, 255, 0) if i == diff_idx else (150, 150, 150)
+        color = COLOR_FIRE if i == diff_idx else (150, 100, 100)
         text = small_font.render(info, True, color)
         screen.blit(text, (menu_width // 2 - text.get_width() // 2, 350 + i * 30))
+    
+    # Advertencia infernal
+    warning = small_font.render("⚠️ Cuanto mayor la dificultad, más rápidos los demonios ⚠️", True, COLOR_BONUS)
+    screen.blit(warning, (menu_width // 2 - warning.get_width() // 2, 480))
     
     pygame.display.flip()
 
 def reset_enemies():
     """Resetea enemigos de forma aleatoria según el nivel actual"""
-    global enemies, enemy_behaviors
+    global enemies, enemy_behaviors, pathfinder
     
-    print(f"🎮 Generando enemigos para nivel {current_level + 1}...")
+    # Asegurar pathfinder
+    current_maze = levels[current_level]['maze']
+    pathfinder = AStar(current_maze)
     
-    # Generar enemigos aleatorios para el nivel actual
+    # Generar enemigos aleatorios
     enemies_config = generate_random_enemies(current_level)
     
-    # Crear lista de enemigos
+    # Crear enemigos
     enemies = []
     for enemy_config in enemies_config:
         enemy = {
             'pos': enemy_config['pos'].copy(),
-            'dir': [0, -1],  # Dirección inicial
+            'dir': [0, -1],
             'type': enemy_config['type']
         }
         enemies.append(enemy)
     
-    # Inicializar comportamientos de IA
+    # Respaldo si no hay enemigos
+    if len(enemies) == 0:
+        enemy = {
+            'pos': [2, 2],
+            'dir': [0, -1],
+            'type': random.choice(ALL_ENEMY_TYPES)
+        }
+        enemies.append(enemy)
+    
+    # Inicializar IA
     initialize_enemy_behaviors()
     
-    print(f"✅ Nivel {current_level + 1}: {len(enemies)} enemigos generados")
-    for enemy in enemies:
-        print(f"   {enemy['type']} en posición {enemy['pos']}")
-
+    print(f"✅ Nivel {current_level + 1}: {len(enemies)} enemigos cargados")
 def reset_game():
     global player_pos, player_lives, current_level, maze, enemies, projectiles, pathfinder
     global player_score, screen
@@ -679,30 +742,47 @@ def reset_game():
     current_level = 0
     player_score = 0
     
+    # Cargar laberinto del nivel inicial
     maze = levels[current_level]['maze']
     projectiles = []
     
+    # Actualizar dimensiones de pantalla
     update_maze_dimensions()
+    
+    # Inicializar pathfinder ANTES de generar enemigos
     pathfinder = AStar(maze)
+    
+    # Generar enemigos DESPUÉS de inicializar pathfinder
     reset_enemies()
+    
+    print(f"🔄 Juego reiniciado - Nivel {current_level + 1}")
 
 def draw_maze():
     for y in range(len(maze)):
         for x in range(len(maze[y])):
             rect = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
             
-            if maze[y][x] == 1:  # Pared
+            if maze[y][x] == 1:  # Paredes infernales
                 pygame.draw.rect(screen, COLOR_WALL, rect)
-            elif maze[y][x] == 2:  # Salida
+                # Agregar borde más oscuro para efecto 3D
+                pygame.draw.rect(screen, (10, 0, 0), rect, 2)
+            elif maze[y][x] == 2:  # Portal de salida
                 pygame.draw.rect(screen, COLOR_PATH, rect)
-                door_emoji = emoji_font.render('🚪', True, (0, 0, 0))
+                # Efecto de portal con gradiente
+                pygame.draw.rect(screen, COLOR_EXIT, rect)
+                door_emoji = emoji_font.render('🚪', True, (255, 215, 0))  # Puerta dorada
                 screen.blit(door_emoji, (x * TILE_SIZE + 4, y * TILE_SIZE))
-            elif maze[y][x] == 3:  # Bonus
+            elif maze[y][x] == 3:  # Tesoros infernales
                 pygame.draw.rect(screen, COLOR_PATH, rect)
-                bonus_emoji = emoji_font.render('⭐', True, (0, 0, 0))
+                # Efecto dorado brillante
+                pygame.draw.rect(screen, COLOR_BONUS, rect, 3)
+                bonus_emoji = emoji_font.render('💎', True, (255, 215, 0))
                 screen.blit(bonus_emoji, (x * TILE_SIZE + 4, y * TILE_SIZE))
-            else:  # Camino libre
+            else:  # Suelo infernal
                 pygame.draw.rect(screen, COLOR_PATH, rect)
+                # Agregar textura sutil al suelo
+                if (x + y) % 4 == 0:
+                    pygame.draw.rect(screen, (90, 45, 45), rect, 1)
 
 def draw_player():
     """Dibuja al protagonista perro (sprite si disponible, sino emoji)"""
@@ -714,7 +794,7 @@ def draw_player():
         screen.blit(dog_sprites[current_direction][0], (x * TILE_SIZE, y * TILE_SIZE))
     else:
         # Usar emoji de perro como respaldo
-        player_emoji = emoji_font.render('🐶', True, (0, 0, 0))
+        player_emoji = emoji_font.render('🐶', True, (255, 255, 0))
         screen.blit(player_emoji, (x * TILE_SIZE + 4, y * TILE_SIZE))
 
 def draw_enemies():
@@ -737,9 +817,8 @@ def draw_enemies():
             screen.blit(enemy_emoji, (x * TILE_SIZE + 4, y * TILE_SIZE))
 
 def draw_aim_bot_indicators():
-    """Dibuja indicadores del aim bot"""
-    if aim_bot.target_enemy:
-        aim_bot.draw_aim_indicator(screen, player_pos, aim_bot.target_enemy['pos'])
+    """NO DIBUJAR indicadores del aim bot"""
+    pass  # Aim bot activo pero sin líneas visuales
 
 def move_enemies():
     global enemy_behaviors, pathfinder
@@ -810,42 +889,41 @@ def check_enemy_collision():
     return any(e['pos'] == player_pos for e in enemies)
 
 def draw_ui():
-    """Dibuja la interfaz de usuario mejorada"""
+    """Dibuja la interfaz de usuario temática infernal"""
     ui_y = MAZE_HEIGHT * TILE_SIZE + 10
     
-    # Información del nivel
-    level_info = f"Nivel: {current_level + 1} - {levels[current_level]['name']}"
-    level_text = small_font.render(level_info, True, COLOR_TEXT)
+    # Información del nivel con tema infernal
+    level_info = f"Dimensión: {current_level + 1} - {levels[current_level]['name']}"
+    level_text = small_font.render(level_info, True, COLOR_BONUS)
     screen.blit(level_text, (10, ui_y))
     
-    # Puntuación
-    score_text = small_font.render(f"Puntuación: {player_score}", True, COLOR_TEXT)
+    # Puntuación de almas
+    score_text = small_font.render(f"Almas Recolectadas: {player_score}", True, COLOR_TEXT)
     screen.blit(score_text, (10, ui_y + 25))
     
-    # Vidas
-    hearts = '❤️' * player_lives
-    lives_text = small_font.render(f"Vidas: {hearts}", True, COLOR_TEXT)
+    # Vidas como corazones ardientes
+    hearts = '💖' * player_lives
+    lives_text = small_font.render(f"Vida: {hearts}", True, COLOR_FIRE)
     screen.blit(lives_text, (200, ui_y))
     
-    # Información de enemigos en el nivel actual
+    # Información de criaturas infernales (SIN advertencias)
     enemy_count = len(enemies)
     enemy_types_current = [e['type'] for e in enemies]
-    enemy_info = f"Enemigos: {enemy_count} {''.join(enemy_types_current) if enemy_types_current else 'Ninguno'}"
+    enemy_info = f"Demonios: {enemy_count} {''.join(enemy_types_current) if enemy_types_current else ''}"
     
-    enemy_text = small_font.render(enemy_info, True, COLOR_TEXT)
+    enemy_text = small_font.render(enemy_info, True, COLOR_FIRE)
     screen.blit(enemy_text, (200, ui_y + 25))
     
-    # Información de aim bot
-    aim_status = "🎯 AIM BOT: ON" if aim_bot.aim_assistance else "🎯 AIM BOT: OFF"
-    aim_color = (0, 255, 0) if aim_bot.aim_assistance else (255, 0, 0)
+    # Información de aim bot infernal
+    aim_status = "🎯 PROYECTIL GUIADO: ON" if aim_bot.aim_assistance else "🎯 PROYECTIL GUIADO: OFF"
+    aim_color = COLOR_FIRE if aim_bot.aim_assistance else (100, 100, 100)
     aim_text = small_font.render(aim_status, True, aim_color)
     screen.blit(aim_text, (200, ui_y + 50))
     
-    # Información de sprites y controles
+    # Información de controles infernales
     sprite_info = [
-        f"Perro: {'✅' if use_sprites else '❌'} | Enemigos: {len(enemy_sprites)}✅ | Caca: {'✅' if poop_sprite else '❌'}",
-        f"Dificultad: {levels[current_level]['difficulty']} | FPS: {FPS}",
-        f"(R=sprites | ESPACIO=disparar | A=aim bot | ESC=menú)"
+        f"Tortura: {levels[current_level]['difficulty']} | Velocidad: {FPS} FPS",
+        f"(R=recargar | ESPACIO=lanzar proyectil | A=guiado | ESC=salir)"
     ]
     
     for i, line in enumerate(sprite_info):
@@ -872,17 +950,24 @@ def next_level():
     
     current_level += 1
     if current_level < len(levels):
+        # Actualizar laberinto
         maze = levels[current_level]['maze']
         update_maze_dimensions()
+        
+        # IMPORTANTE: Reinicializar pathfinder ANTES de generar enemigos
         pathfinder = AStar(maze)
         
+        # Resetear posición del jugador y proyectiles
         player_pos = [1, 1]
         projectiles = []
         
+        # Generar enemigos DESPUÉS de inicializar pathfinder
         reset_enemies()
-        show_message(f"¡Nivel {current_level + 1}: {levels[current_level]['name']}!")
+        
+        show_message(f"🔥 {levels[current_level]['name']} 🔥")
     else:
-        show_message(f"¡Felicidades! ¡Puntuación final: {player_score}!")
+        show_message(f"🏆 ¡Has conquistado todas las dimensiones infernales! 🏆")
+        show_message(f"💎 Almas recolectadas: {player_score} 💎")
         reset_game()
         reset_menu()  # ASEGURAR menú limpio
         game_state = STATE_MENU
@@ -980,7 +1065,7 @@ while running:
         # Toggle aim bot
         if keys[pygame.K_a]:
             aim_bot.aim_assistance = not aim_bot.aim_assistance
-            time.sleep(0.2)  # Evitar toggle múltiple
+            time.sleep(0.3)  # Evitar toggle múltiple
         
         # Recargar sprites si se presiona R
         if keys[pygame.K_r]:
@@ -1004,12 +1089,13 @@ while running:
             projectiles = []
             
             if player_lives <= 0:
-                show_message(f"¡Game Over! Puntuación: {player_score}")
+                show_message(f"💀 Tu alma ha sido devorada 💀")
+                show_message(f"🔥 Almas perdidas: {player_score} 🔥")
                 reset_game()
                 reset_menu()  # ASEGURAR menú limpio
                 game_state = STATE_MENU
             else:
-                show_message(f"¡Te han atrapado! Vidas: {player_lives}")
+                show_message(f"😈 ¡Los demonios te han atrapado! Vida restante: {player_lives} 💖")
         
         # Dibujar todo
         screen.fill(COLOR_BACKGROUND)
