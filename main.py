@@ -64,7 +64,7 @@ levels = [
             [1,0,1,1,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,1,1,0,1],
             [1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1],
             [1,1,1,0,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1,1,1],
-            [1,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,3,0,1],
             [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1],
             [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         ]
@@ -88,7 +88,7 @@ levels = [
             [1,0,1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,1,1,1,0,1,0,1],
             [1,0,1,0,0,0,0,0,0,0,1,3,1,0,0,0,0,0,0,0,0,1,0,1],
             [1,0,1,1,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,1,1,1,0,1],
-            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
+            [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,1],
             [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1],
             [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         ]
@@ -114,7 +114,7 @@ levels = [
             [1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,1,0,1],
             [1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1],
             [1,0,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,0,1],
-            [1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,0,2,1],
+            [1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,3,2,1],
             [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         ]
     },
@@ -139,7 +139,7 @@ levels = [
             [1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,0,1,0,1],
             [1,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,1,0,0,0,1],
             [1,1,1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,1,0,1,0,1,1,1],
-            [1,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,1,0,0,2,1],
+            [1,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,1,0,3,2,1],
             [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         ]
     }
@@ -505,7 +505,15 @@ current_level = 0
 maze = levels[current_level]['maze']
 projectiles = []
 last_direction = [1, 0]
-player_web_slowdown = 0  # NUEVO: Contador de ralentización por telarañas
+
+# NUEVO: Sistema de diamantes obligatorios
+total_diamonds = 0  # Diamantes totales en el nivel actual
+collected_diamonds = 0  # Diamantes recogidos
+
+# NUEVO: Sistema de mensajes temporales
+temp_message = ""  # Mensaje temporal a mostrar
+temp_message_time = 0  # Tiempo cuando se mostró el mensaje
+temp_message_duration = 2.0  # Duración del mensaje en segundos
 
 # ========================================
 # CONFIGURACIÓN ALEATORIA DE ENEMIGOS
@@ -574,96 +582,47 @@ enemies = []
 # Sistema de comportamientos de IA
 enemy_behaviors = []
 
-# ========================================
-# SISTEMA GLOBAL DE TELARAÑAS SIMPLIFICADO Y FUNCIONAL
-# ========================================
-ghost_webs = []  # Lista global de todas las telarañas activas
+def show_temp_message(message):
+    """Muestra un mensaje temporal que no bloquea el juego"""
+    global temp_message, temp_message_time
+    temp_message = message
+    temp_message_time = time.time()
+    print(f"📢 Mensaje temporal: {message}")
 
-def update_ghost_webs():
-    """VERSIÓN SIMPLIFICADA: Actualiza las telarañas globales de todos los fantasmas"""
-    global ghost_webs
-    current_time = time.time()
+def draw_temp_message():
+    """Dibuja el mensaje temporal si está activo"""
+    global temp_message, temp_message_time
     
-    # PASO 1: Limpiar telarañas viejas
-    old_count = len(ghost_webs)
-    ghost_webs = [web for web in ghost_webs 
-                 if current_time - web['time'] < web['duration']]
-    
-    if len(ghost_webs) != old_count:
-        print(f"🕸️ Limpiando telarañas viejas: {old_count} -> {len(ghost_webs)}")
-    
-    # PASO 2: Recopilar telarañas de todos los fantasmas
-    if not enemy_behaviors:
-        return
-    
-    for i, behavior in enumerate(enemy_behaviors):
-        try:
-            # VERIFICAR SI ES UN FANTASMA
-            if hasattr(behavior, 'get_active_webs') and behavior.enemy.get('type') == '👻':
-                webs_from_ghost = behavior.get_active_webs()
-                
-                for web in webs_from_ghost:
-                    # EVITAR DUPLICADOS (comparar posición y tiempo)
-                    web_exists = False
-                    for existing_web in ghost_webs:
-                        if (existing_web['pos'] == web['pos'] and 
-                            abs(existing_web['time'] - web['time']) < 0.5):
-                            web_exists = True
-                            break
-                    
-                    if not web_exists:
-                        ghost_webs.append(web)
-                        print(f"🕸️ NUEVA TELARAÑA AGREGADA: {web['pos']} - Total global: {len(ghost_webs)}")
-                        
-        except Exception as e:
-            print(f"❌ Error procesando fantasma {i}: {e}")
-            continue
-
-def draw_ghost_webs():
-    """VERSIÓN SIMPLIFICADA: Dibuja todas las telarañas activas"""
-    if not ghost_webs:
-        return
+    if temp_message and time.time() - temp_message_time < temp_message_duration:
+        # Calcular transparencia basada en el tiempo restante
+        elapsed = time.time() - temp_message_time
+        alpha = max(0, 1 - (elapsed / temp_message_duration))
         
-    current_time = time.time()
-    
-    for web in ghost_webs:
-        try:
-            x, y = web['pos']
-            age = current_time - web['time']
-            
-            # Efecto de desvanecimiento
-            alpha = max(0, 1 - (age / web['duration']))
-            
-            if alpha > 0:
-                # FONDO GRIS OSCURO
-                web_rect = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-                gray_color = int(60 * alpha)
-                pygame.draw.rect(screen, (gray_color, gray_color, gray_color), web_rect)
-                
-                # EMOJI DE TELARAÑA
-                web_emoji = emoji_font.render('🕸️', True, (200, 200, 200))
-                screen.blit(web_emoji, (x * TILE_SIZE + 4, y * TILE_SIZE))
-                
-        except Exception as e:
-            print(f"❌ Error dibujando telaraña: {e}")
-            continue
-
-def check_web_collision():
-    """VERSIÓN SIMPLIFICADA: Verifica si el jugador está en una telaraña"""
-    if not ghost_webs:
-        return False
+        # Crear superficie para el mensaje
+        message_surface = pygame.Surface((SCREEN_WIDTH, 100))
+        message_surface.fill((0, 0, 0))
+        message_surface.set_alpha(int(200 * alpha))
         
-    player_x, player_y = player_pos
-    
-    for web in ghost_webs:
-        try:
-            web_x, web_y = web['pos']
-            if player_x == web_x and player_y == web_y:
-                return True
-        except:
-            continue
-            
-    return False
+        # Dibujar fondo semi-transparente
+        screen.blit(message_surface, (0, SCREEN_HEIGHT // 2 - 50))
+        
+        # Dibujar texto del mensaje
+        text_color = (255, int(255 * alpha), int(255 * alpha))
+        text = font.render(temp_message, True, text_color)
+        text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+        screen.blit(text, text_rect)
+    elif temp_message and time.time() - temp_message_time >= temp_message_duration:
+        # Limpiar mensaje cuando expire
+        temp_message = ""
+
+def count_diamonds_in_level(maze):
+    """Cuenta los diamantes totales en un nivel"""
+    count = 0
+    for row in maze:
+        for cell in row:
+            if cell == 3:  # 3 = diamante
+                count += 1
+    return count
 
 def get_player_position():
     return player_pos
@@ -685,19 +644,21 @@ def initialize_enemy_behaviors():
         
         # DEBUG: Verificar si se crearon fantasmas
         if enemy['type'] == '👻':
-            print(f"🕸️ FANTASMA CREADO: {enemy['pos']} - Puede crear telarañas")
+            print(f"👻 FANTASMA CREADO: {enemy['pos']} - Puede volverse invisible")
 
 # ========================================
 # FUNCIONES BÁSICAS DEL JUEGO
 # ========================================
 
 def handle_bonus_tile(x, y):
-    """Maneja solo las bonificaciones"""
-    global player_score, maze
+    """Maneja las bonificaciones - DIAMANTES OBLIGATORIOS"""
+    global player_score, maze, collected_diamonds
     
-    if maze[y][x] == 3:  # Bonus
+    if maze[y][x] == 3:  # Diamante
         player_score += 100
-        maze[y][x] = 0  # Eliminar el bonus del mapa
+        collected_diamonds += 1
+        maze[y][x] = 0  # Eliminar el diamante del mapa
+        print(f"💎 Diamante recogido! {collected_diamonds}/{total_diamonds}")
 
 # Actualizar dimensiones del laberinto según el nivel actual
 def update_maze_dimensions():
@@ -764,7 +725,8 @@ def draw_menu():
         "Fortaleza Demoníaca: 3 guardianes élite",
         "Trono de Lucifer: 3 señores supremos del mal",
         "Enemigos: 👽👻🧟🦹👺🤡👹 (7 tipos disponibles)",
-        "👻 Fantasmas dejan telarañas temporales 🕸️",
+        "👻 Fantasmas pueden volverse INVISIBLES (cooldown 4s)",
+        "💎 RECOLECTA TODOS LOS DIAMANTES para abrir portales",
         "🧱 Paredes infernales con bloquerojo.png"
     ]
     
@@ -833,11 +795,12 @@ def draw_difficulty_menu():
 
 def reset_enemies():
     """Resetea enemigos de forma aleatoria según el nivel actual"""
-    global enemies, enemy_behaviors, pathfinder, ghost_webs
+    global enemies, enemy_behaviors, pathfinder, total_diamonds, collected_diamonds
     
-    # LIMPIAR TELARAÑAS AL RESETEAR ENEMIGOS
-    ghost_webs = []
-    print("🕸️ Telarañas limpiadas al resetear enemigos")
+    # RESETEAR SISTEMA DE DIAMANTES
+    total_diamonds = count_diamonds_in_level(levels[current_level]['maze'])
+    collected_diamonds = 0
+    print(f"💎 Nivel {current_level + 1}: {total_diamonds} diamantes totales - TODOS REQUERIDOS")
     
     # Asegurar pathfinder
     current_maze = levels[current_level]['maze']
@@ -872,14 +835,16 @@ def reset_enemies():
 
 def reset_game():
     global player_pos, player_lives, current_level, maze, enemies, projectiles, pathfinder
-    global player_score, screen, ghost_webs, player_web_slowdown
+    global player_score, screen, total_diamonds, collected_diamonds, temp_message, temp_message_time
     
     player_pos = [1, 1]
     player_lives = 3
     current_level = 0
     player_score = 0
-    player_web_slowdown = 0  # NUEVO: Resetear ralentización
-    ghost_webs = []  # NUEVO: Limpiar telarañas
+    
+    # NUEVO: Limpiar mensajes temporales
+    temp_message = ""
+    temp_message_time = 0
     
     # Cargar laberinto del nivel inicial
     maze = levels[current_level]['maze']
@@ -891,7 +856,7 @@ def reset_game():
     # Inicializar pathfinder ANTES de generar enemigos
     pathfinder = AStar(maze)
     
-    # Generar enemigos DESPUÉS de inicializar pathfinder
+    # Generar enemigos DESPUÉS de inicializar pathfinder (esto también resetea diamantes)
     reset_enemies()
     
     print(f"🔄 Juego reiniciado - Nivel {current_level + 1}")
@@ -943,10 +908,21 @@ def draw_player():
         screen.blit(player_emoji, (x * TILE_SIZE + 4, y * TILE_SIZE))
 
 def draw_enemies():
-    """Dibuja enemigos (sprite si disponible, sino emoji)"""
-    for enemy in enemies:
+    """Dibuja enemigos (sprite si disponible, sino emoji) - VERIFICA INVISIBILIDAD DE FANTASMAS"""
+    for i, enemy in enumerate(enemies):
         x, y = enemy["pos"]
         enemy_type = enemy["type"]
+        
+        # VERIFICAR SI EL FANTASMA ESTÁ INVISIBLE
+        is_invisible = False
+        if enemy_type == '👻' and i < len(enemy_behaviors):
+            behavior = enemy_behaviors[i]
+            if hasattr(behavior, 'is_currently_invisible'):
+                is_invisible = behavior.is_currently_invisible()
+        
+        # NO DIBUJAR SI ESTÁ INVISIBLE
+        if is_invisible:
+            continue
         
         # Determinar dirección del enemigo (simple: basado en dirección de movimiento)
         enemy_dir = enemy.get("dir", [1, 0])
@@ -1003,12 +979,21 @@ def move_projectiles():
         hit = False
         for i, e in enumerate(enemies[:]):
             if e['pos'] == [x, y]:
-                enemies.remove(e)
-                if i < len(enemy_behaviors):
-                    enemy_behaviors.pop(i)
-                player_score += 150  # Bonus por eliminar enemigo
-                hit = True
-                break
+                # VERIFICAR SI EL FANTASMA ESTÁ INVISIBLE
+                is_invisible = False
+                if e['type'] == '👻' and i < len(enemy_behaviors):
+                    behavior = enemy_behaviors[i]
+                    if hasattr(behavior, 'is_currently_invisible'):
+                        is_invisible = behavior.is_currently_invisible()
+                
+                # NO PUEDE SER GOLPEADO SI ESTÁ INVISIBLE
+                if not is_invisible:
+                    enemies.remove(e)
+                    if i < len(enemy_behaviors):
+                        enemy_behaviors.pop(i)
+                    player_score += 150  # Bonus por eliminar enemigo
+                    hit = True
+                    break
                     
         if not hit:
             newp.append(p)
@@ -1031,7 +1016,20 @@ def draw_projectiles():
 def check_enemy_collision():
     global player_score, enemies, enemy_behaviors
     
-    return any(e['pos'] == player_pos for e in enemies)
+    for i, e in enumerate(enemies):
+        if e['pos'] == player_pos:
+            # VERIFICAR SI EL FANTASMA ESTÁ INVISIBLE
+            is_invisible = False
+            if e['type'] == '👻' and i < len(enemy_behaviors):
+                behavior = enemy_behaviors[i]
+                if hasattr(behavior, 'is_currently_invisible'):
+                    is_invisible = behavior.is_currently_invisible()
+            
+            # NO PUEDE COLISIONAR SI ESTÁ INVISIBLE
+            if not is_invisible:
+                return True
+    
+    return False
 
 def draw_ui():
     """Dibuja la interfaz de usuario temática infernal"""
@@ -1046,43 +1044,53 @@ def draw_ui():
     score_text = small_font.render(f"Almas Recolectadas: {player_score}", True, COLOR_TEXT)
     screen.blit(score_text, (10, ui_y + 25))
     
+    # NUEVO: Estado de diamantes (OBLIGATORIOS)
+    diamonds_remaining = total_diamonds - collected_diamonds
+    if diamonds_remaining > 0:
+        diamond_color = (255, 100, 100)  # Rojo si faltan diamantes
+        diamond_status = f"💎 DIAMANTES REQUERIDOS: {collected_diamonds}/{total_diamonds} (faltan {diamonds_remaining})"
+    else:
+        diamond_color = (100, 255, 100)  # Verde si están completos
+        diamond_status = f"💎 DIAMANTES COMPLETOS: {collected_diamonds}/{total_diamonds} ✅"
+    
+    diamond_text = small_font.render(diamond_status, True, diamond_color)
+    screen.blit(diamond_text, (10, ui_y + 50))
+    
     # Vidas como corazones ardientes
     hearts = '💖' * player_lives
     lives_text = small_font.render(f"Vida: {hearts}", True, COLOR_FIRE)
     screen.blit(lives_text, (200, ui_y))
     
-    # Información de criaturas infernales
+    # Información de criaturas infernales con estado de invisibilidad
     enemy_count = len(enemies)
-    enemy_types_current = [e['type'] for e in enemies]
+    enemy_types_current = []
+    invisible_count = 0
+    
+    for i, e in enumerate(enemies):
+        enemy_type = e['type']
+        # Verificar si está invisible
+        if enemy_type == '👻' and i < len(enemy_behaviors):
+            behavior = enemy_behaviors[i]
+            if hasattr(behavior, 'is_currently_invisible') and behavior.is_currently_invisible():
+                invisible_count += 1
+                enemy_types_current.append('💨')  # Usar humo para representar invisibilidad
+            else:
+                enemy_types_current.append(enemy_type)
+        else:
+            enemy_types_current.append(enemy_type)
+    
     enemy_info = f"Demonios: {enemy_count} {''.join(enemy_types_current) if enemy_types_current else ''}"
+    if invisible_count > 0:
+        enemy_info += f" ({invisible_count} invisible{'s' if invisible_count > 1 else ''})"
     
     enemy_text = small_font.render(enemy_info, True, COLOR_FIRE)
     screen.blit(enemy_text, (200, ui_y + 25))
-    
-    # NUEVO: Estado de telarañas con debug
-    web_count = len(ghost_webs)
-    in_web = check_web_collision()
-    
-    if in_web:
-        web_status = f"🕸️ ATRAPADO EN TELARAÑA - MOVIMIENTO LENTO (Total: {web_count})"
-        web_color = (255, 100, 100)  # Rojo de advertencia
-        web_text = small_font.render(web_status, True, web_color)
-        screen.blit(web_text, (200, ui_y + 50))
-        ui_y_offset = 25
-    elif web_count > 0:
-        web_status = f"🕸️ Telarañas activas: {web_count}"
-        web_color = (200, 200, 200)  # Gris informativo
-        web_text = small_font.render(web_status, True, web_color)
-        screen.blit(web_text, (200, ui_y + 50))
-        ui_y_offset = 25
-    else:
-        ui_y_offset = 0
     
     # Información de aim bot infernal
     aim_status = "🎯 PROYECTIL GUIADO: ON" if aim_bot.aim_assistance else "🎯 PROYECTIL GUIADO: OFF"
     aim_color = COLOR_FIRE if aim_bot.aim_assistance else (100, 100, 100)
     aim_text = small_font.render(aim_status, True, aim_color)
-    screen.blit(aim_text, (200, ui_y + 50 + ui_y_offset))
+    screen.blit(aim_text, (400, ui_y + 25))
     
     # Información de controles infernales
     sprite_info = [
@@ -1092,7 +1100,7 @@ def draw_ui():
     
     for i, line in enumerate(sprite_info):
         info_text = small_font.render(line, True, COLOR_TEXT)
-        screen.blit(info_text, (400, ui_y + i * 20))
+        screen.blit(info_text, (400, ui_y + 50 + i * 20))
 
 def show_message(message):
     # Crear superficie temporal para el mensaje
@@ -1111,15 +1119,10 @@ def show_message(message):
 
 def next_level():
     global current_level, maze, player_pos, enemies, projectiles, game_state, pathfinder, screen
-    global ghost_webs, player_web_slowdown
+    global total_diamonds, collected_diamonds
     
     current_level += 1
     if current_level < len(levels):
-        # Limpiar telarañas del nivel anterior
-        ghost_webs = []
-        player_web_slowdown = 0
-        print("🕸️ Telarañas limpiadas al cambiar de nivel")
-        
         # Actualizar laberinto
         maze = levels[current_level]['maze']
         update_maze_dimensions()
@@ -1131,10 +1134,11 @@ def next_level():
         player_pos = [1, 1]
         projectiles = []
         
-        # Generar enemigos DESPUÉS de inicializar pathfinder
+        # Generar enemigos DESPUÉS de inicializar pathfinder (esto también resetea diamantes)
         reset_enemies()
         
         show_message(f"🔥 {levels[current_level]['name']} 🔥")
+        show_message(f"💎 Nuevo nivel: {total_diamonds} diamantes requeridos 💎")
     else:
         show_message(f"🏆 ¡Has conquistado todas las dimensiones infernales! 🏆")
         show_message(f"💎 Almas recolectadas: {player_score} 💎")
@@ -1195,40 +1199,25 @@ while running:
         keys = pygame.key.get_pressed()
         new_pos = player_pos.copy()
         
-        # VERIFICAR SI ESTÁ EN TELARAÑA (movimiento más lento)
-        in_web = check_web_collision()
-        
-        # Sistema de ralentización por telarañas
-        move_allowed = True
-        if in_web:
-            player_web_slowdown += 1
-            # Solo se puede mover cada 3 frames cuando está en telaraña
-            if player_web_slowdown % 3 != 0:
-                move_allowed = False
-        else:
-            player_web_slowdown = 0
-        
-        if move_allowed:
-            if keys[pygame.K_UP]:
-                new_pos[1] -= 1
-                last_direction = [0, -1]
-                current_direction = 'up'
-            elif keys[pygame.K_DOWN]:
-                new_pos[1] += 1
-                last_direction = [0, 1]
-                current_direction = 'down'
-            elif keys[pygame.K_LEFT]:
-                new_pos[0] -= 1
-                last_direction = [-1, 0]
-                current_direction = 'left'
-            elif keys[pygame.K_RIGHT]:
-                new_pos[0] += 1
-                last_direction = [1, 0]
-                current_direction = 'right'
+        if keys[pygame.K_UP]:
+            new_pos[1] -= 1
+            last_direction = [0, -1]
+            current_direction = 'up'
+        elif keys[pygame.K_DOWN]:
+            new_pos[1] += 1
+            last_direction = [0, 1]
+            current_direction = 'down'
+        elif keys[pygame.K_LEFT]:
+            new_pos[0] -= 1
+            last_direction = [-1, 0]
+            current_direction = 'left'
+        elif keys[pygame.K_RIGHT]:
+            new_pos[0] += 1
+            last_direction = [1, 0]
+            current_direction = 'right'
         
         # Verificar movimiento válido
-        if (move_allowed and 
-            0 <= new_pos[0] < MAZE_WIDTH and 0 <= new_pos[1] < MAZE_HEIGHT and 
+        if (0 <= new_pos[0] < MAZE_WIDTH and 0 <= new_pos[1] < MAZE_HEIGHT and 
             maze[new_pos[1]][new_pos[0]] != 1):
             
             # Manejar bonificaciones
@@ -1258,16 +1247,17 @@ while running:
             reload_sprites_if_needed()
             show_message("¡Sprites recargados!")
         
-        # Verificar llegada a la salida
+        # Verificar llegada a la salida - SOLO SI SE RECOGIERON TODOS LOS DIAMANTES
         if maze[player_pos[1]][player_pos[0]] == 2:
-            next_level()
+            if collected_diamonds >= total_diamonds:
+                next_level()
+            else:
+                remaining = total_diamonds - collected_diamonds
+                show_temp_message(f"💎 ¡Faltan {remaining} diamantes para abrir el portal! 💎")
         
         # Actualizar enemigos y proyectiles
         move_enemies()
         move_projectiles()
-        
-        # ACTUALIZAR TELARAÑAS DE FANTASMAS (SIMPLIFICADO)
-        update_ghost_webs()
         
         # Verificar colisiones
         if check_enemy_collision():
@@ -1275,8 +1265,10 @@ while running:
             player_pos = [1, 1]
             reset_enemies()
             projectiles = []
-            ghost_webs = []  # LIMPIAR telarañas al morir
-            player_web_slowdown = 0  # Resetear ralentización
+            
+            # NUEVO: Limpiar mensaje temporal
+            temp_message = ""
+            temp_message_time = 0
             
             if player_lives <= 0:
                 show_message(f"💀 Tu alma ha sido devorada 💀")
@@ -1290,14 +1282,17 @@ while running:
         # Dibujar todo
         screen.fill(COLOR_BACKGROUND)
         draw_maze()
-        draw_ghost_webs()  # DIBUJAR TELARAÑAS SIMPLIFICADO
         draw_player()
-        draw_enemies()
+        draw_enemies()  # Ya no dibuja fantasmas invisibles
         draw_projectiles()
         draw_aim_bot_indicators()
         draw_ui()
+        draw_temp_message()  # NUEVO: Dibujar mensaje temporal
 
         if keys[pygame.K_ESCAPE]:
+            # NUEVO: Limpiar mensaje temporal al salir
+            temp_message = ""
+            temp_message_time = 0
             reset_menu()  # ASEGURAR menú limpio
             game_state = STATE_MENU
     

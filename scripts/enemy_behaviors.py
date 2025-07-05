@@ -149,33 +149,51 @@ class AlienBehavior(EnemyBehavior):
 class GhostBehavior(EnemyBehavior):
     """
     Comportamiento del Fantasma (👻)
-    Tipo: Evade al jugador - huye cuando está cerca (BALANCEADO)
+    Tipo: Puede volverse INVISIBLE temporalmente y aparece en lugares inesperados
     """
     
     def __init__(self, enemy_data, pathfinder, player_pos_getter, all_enemies=None):
         super().__init__(enemy_data, pathfinder, player_pos_getter, all_enemies)
         self.last_move_time = 0
         self.move_delay = 0.4  # Más lento para balance
+        
+        # SISTEMA DE INVISIBILIDAD MEJORADO
+        self.is_invisible = False
+        self.invisibility_start_time = 0
+        self.invisibility_duration = 2.5  # Invisible por 2.5 segundos
+        self.invisibility_cooldown = 4.0  # Cooldown de 4 segundos (más frecuente)
+        self.last_invisibility_time = 0
+        
+        print(f"👻 Fantasma inicializado - puede volverse invisible cada {self.invisibility_cooldown}s por {self.invisibility_duration}s")
+        
         self._create_behavior_tree()
         
     def _create_behavior_tree(self):
         """Crea el árbol de comportamiento para el fantasma"""
         
-        # Selector principal con control de velocidad
+        # Selector principal
         root_selector = Selector("GhostMainSelector")
         
-        # Secuencia de huida (cuando el jugador está cerca)
+        # Secuencia de invisibilidad
+        invisibility_sequence = Sequence("InvisibilitySequence")
+        invisibility_sequence.add_child(Condition(self._can_become_invisible, "CanBecomeInvisible"))
+        invisibility_sequence.add_child(Action(self._activate_invisibility, "ActivateInvisibility"))
+        
+        # Secuencia de huida (cuando está visible y jugador cerca)
         flee_sequence = Sequence("FleeSequence")
         flee_sequence.add_child(Condition(self._can_move_now, "CanMoveNow"))
+        flee_sequence.add_child(Condition(self._is_visible, "IsVisible"))
         flee_sequence.add_child(Condition(self._player_nearby, "PlayerNearby"))
         flee_sequence.add_child(Action(self._flee_from_player, "FleeFromPlayer"))
         
-        # Secuencia de vagar (cuando el jugador no está cerca)
+        # Secuencia de vagar (cuando está visible y jugador lejos)
         wander_sequence = Sequence("WanderSequence")
         wander_sequence.add_child(Condition(self._can_move_now, "CanMoveNow"))
+        wander_sequence.add_child(Condition(self._is_visible, "IsVisible"))
         wander_sequence.add_child(Action(self._wander, "Wander"))
         
-        # Ensamblar el árbol
+        # Ensamblar el árbol (prioridad: invisibilidad > huida > vagar)
+        root_selector.add_child(invisibility_sequence)
         root_selector.add_child(flee_sequence)
         root_selector.add_child(wander_sequence)
         
@@ -188,7 +206,67 @@ class GhostBehavior(EnemyBehavior):
         
     def _player_nearby(self, blackboard):
         """Verifica si el jugador está cerca"""
-        return blackboard["distance_to_player"] <= 4.0  # Reducido para mejor balance
+        return blackboard["distance_to_player"] <= 4.0
+    
+    def _is_visible(self, blackboard):
+        """Verifica si el fantasma está visible"""
+        current_time = blackboard["current_time"]
+        
+        # Actualizar estado de invisibilidad
+        if self.is_invisible:
+            if current_time - self.invisibility_start_time >= self.invisibility_duration:
+                self.is_invisible = False
+                print("👻 Fantasma se vuelve VISIBLE")
+                
+        return not self.is_invisible
+    
+    def _can_become_invisible(self, blackboard):
+        """Verifica si puede volverse invisible"""
+        current_time = blackboard["current_time"]
+        distance = blackboard["distance_to_player"]
+        
+        # Puede volverse invisible si ha pasado el cooldown y el jugador está a distancia razonable
+        return (not self.is_invisible and 
+                current_time - self.last_invisibility_time >= self.invisibility_cooldown and 
+                1.5 <= distance <= 8.0)  # Rango más amplio
+    
+    def _activate_invisibility(self, blackboard):
+        """Activa la invisibilidad del fantasma"""
+        current_time = blackboard["current_time"]
+        
+        self.is_invisible = True
+        self.invisibility_start_time = current_time
+        self.last_invisibility_time = current_time
+        
+        print("👻 Fantasma se vuelve INVISIBLE por 3 segundos")
+        
+        # Mientras está invisible, se mueve aleatoriamente
+        self._invisible_teleport(blackboard)
+        
+        return True
+    
+    def _invisible_teleport(self, blackboard):
+        """Teletransporte aleatorio cuando está invisible"""
+        try:
+            # Encontrar una posición aleatoria válida cerca del jugador
+            player_pos = blackboard["player_pos"]
+            
+            for _ in range(10):  # 10 intentos
+                # Posición aleatoria en un radio de 3-7 tiles del jugador
+                angle = random.uniform(0, 2 * math.pi)
+                distance = random.uniform(3, 7)
+                
+                new_x = int(player_pos[0] + distance * math.cos(angle))
+                new_y = int(player_pos[1] + distance * math.sin(angle))
+                
+                if self.pathfinder.is_valid_position(new_x, new_y):
+                    self.enemy["pos"] = [new_x, new_y]
+                    print(f"👻 Fantasma se teletransportó a [{new_x}, {new_y}] mientras estaba invisible")
+                    return True
+            
+            return False
+        except:
+            return False
         
     def _flee_from_player(self, blackboard):
         """Huye del jugador"""
@@ -213,6 +291,17 @@ class GhostBehavior(EnemyBehavior):
             return False
         except:
             return False
+    
+    def is_currently_invisible(self):
+        """Retorna si el fantasma está actualmente invisible (para el main.py)"""
+        current_time = time.time()
+        
+        # Actualizar estado de invisibilidad
+        if self.is_invisible:
+            if current_time - self.invisibility_start_time >= self.invisibility_duration:
+                self.is_invisible = False
+                
+        return self.is_invisible
 
 class ZombieBehavior(EnemyBehavior):
     """
@@ -598,7 +687,7 @@ def create_enemy_behavior(enemy_data, pathfinder, player_pos_getter, all_enemies
     
     if enemy_type == "👽":  # Alien - A* inteligente balanceado
         return AlienBehavior(enemy_data, pathfinder, player_pos_getter, all_enemies)
-    elif enemy_type == "👻":  # Fantasma - Evade al jugador balanceado
+    elif enemy_type == "👻":  # Fantasma - INVISIBILIDAD TEMPORAL
         return GhostBehavior(enemy_data, pathfinder, player_pos_getter, all_enemies)
     elif enemy_type == "🧟":  # Zombie - Movimiento aleatorio lento
         return ZombieBehavior(enemy_data, pathfinder, player_pos_getter, all_enemies)
