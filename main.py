@@ -19,6 +19,9 @@ pygame.init()
 # NUEVO: Inicializar sistema de joysticks/controles
 pygame.joystick.init()
 
+# NUEVO: Variable de pantalla completa
+fullscreen_mode = False
+
 # NUEVO: Sistema de control Xbox 360
 controller = None
 controller_connected = False
@@ -209,16 +212,34 @@ def debug_controller_state():
     else:
         print("🚫 No hay control conectado")
 
+def toggle_fullscreen():
+    """NUEVO: Función para alternar entre pantalla completa y modo ventana"""
+    global fullscreen_mode, screen, SCREEN_WIDTH, SCREEN_HEIGHT
+    
+    if fullscreen_mode:
+        # Cambiar a modo ventana
+        screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
+        fullscreen_mode = False
+        SCREEN_WIDTH = WINDOW_WIDTH
+        SCREEN_HEIGHT = WINDOW_HEIGHT
+        print("🖼️ Modo ventana activado")
+    else:
+        # Cambiar a pantalla completa
+        screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
+        fullscreen_mode = True
+        SCREEN_WIDTH = screen.get_width()
+        SCREEN_HEIGHT = screen.get_height()
+        print(f"🖥️ Pantalla completa activada: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
+
 # Intentar inicializar control al inicio
 init_controller()
 
 # ========================================
-# NIVELES CORREGIDOS - PUERTAS VISIBLES
+# NIVELES CORREGIDOS - PAREDES Y PUERTAS FIJAS
 # ========================================
-# CORREGIDO: Asegurar que todas las puertas (2) estén en posiciones accesibles
 
 levels = [
-    # NIVEL 1 - ENTRADA AL INFIERNO (PUERTA CORREGIDA)
+    # NIVEL 1 - ENTRADA AL INFIERNO (COMPLETAMENTE CORREGIDO)
     {
         'id': 1,
         'name': 'Portal de Entrada',
@@ -237,12 +258,12 @@ levels = [
             [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
             [1,0,1,1,1,1,1,0,1,1,0,0,0,1,1,0,1,1,1,1,1,1,0,1],
             [1,0,0,0,0,0,0,0,1,3,0,0,0,3,1,0,0,0,0,0,0,0,0,1],
-            [1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,1,1,0,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1], # PUERTA EN (22,13)
+            [1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,1,1,2,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         ]
     },
 
-    # NIVEL 2 - CÁMARAS DE TORMENTO (PUERTA CORREGIDA)
+    # NIVEL 2 - CÁMARAS DE TORMENTO (CORREGIDO)
     {
         'id': 2,
         'name': 'Cámaras de Tormento',
@@ -261,12 +282,12 @@ levels = [
             [1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1],
             [1,1,1,0,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1,1,1],
             [1,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,3,0,1],
-            [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1], # PUERTA EN (22,13)
+            [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         ]
     },
 
-    # NIVEL 3 - LABERINTO DE FUEGO (PUERTA CORREGIDA)
+    # NIVEL 3 - LABERINTO DE FUEGO (CORREGIDO)
     {
         'id': 3,
         'name': 'Laberinto de Fuego',
@@ -285,12 +306,12 @@ levels = [
             [1,0,1,0,0,0,0,0,0,0,1,3,1,0,0,0,0,0,0,0,0,1,0,1],
             [1,0,1,1,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,1,1,1,0,1],
             [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1], # PUERTA EN (22,13)
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         ]
     },
 
-    # NIVEL 4 - FORTALEZA DEMONÍACA (PUERTA CORREGIDA)
+    # NIVEL 4 - FORTALEZA DEMONÍACA (CORREGIDO)
     {
         'id': 4,
         'name': 'Fortaleza Demoníaca',
@@ -309,12 +330,12 @@ levels = [
             [1,0,0,0,1,0,0,0,1,0,0,0,0,0,1,0,0,0,1,0,0,0,0,1],
             [1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,1,0,1],
             [1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1],
-            [1,0,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,0,1],
-            [1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,3,2,1], # PUERTA EN (22,13)
+            [1,0,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,2,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         ]
     },
 
-    # NIVEL 5 - TRONO DE LUCIFER (PUERTA CORREGIDA)
+    # NIVEL 5 - TRONO DE LUCIFER (CORREGIDO)
     {
         'id': 5,
         'name': 'Trono de Lucifer',
@@ -333,8 +354,8 @@ levels = [
             [1,0,1,0,0,0,0,0,1,3,0,0,0,3,1,0,0,0,0,0,0,1,0,1],
             [1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,0,1,0,1],
             [1,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,1,0,0,0,1],
-            [1,1,1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,1,0,1,0,1,1,1],
-            [1,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,1,0,3,2,1], # PUERTA EN (22,13)
+            [1,1,1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,1,0,1,0,1,2,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
         ]
     }
 ]
@@ -342,13 +363,18 @@ levels = [
 # Configuración de la pantalla
 TILE_SIZE = 40  # Tamaño de cada celda
 
-# Configuración inicial de dimensiones (serán actualizadas dinámicamente)
+# NUEVO: Ventana extendida (más grande pero no fullscreen)
+WINDOW_WIDTH = 1400  # Ventana más grande
+WINDOW_HEIGHT = 900  # Ventana más grande
+
+# Configuración inicial de dimensiones
 initial_maze = levels[0]['maze']
 MAZE_WIDTH = len(initial_maze[0])
 MAZE_HEIGHT = len(initial_maze)
-SCREEN_WIDTH = TILE_SIZE * MAZE_WIDTH
-SCREEN_HEIGHT = TILE_SIZE * MAZE_HEIGHT + 100
 
+# Crear ventana extendida
+SCREEN_WIDTH = WINDOW_WIDTH
+SCREEN_HEIGHT = WINDOW_HEIGHT
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("🔥 Dimensiones Infernales - Sistema de IA Avanzado")
 
@@ -402,6 +428,10 @@ enemy_sprites = {}  # Sprites de enemigos
 poop_sprite = None  # Sprite de caca
 cover_image = None  # Portada del juego
 wall_sprite = None  # NUEVO: Sprite de pared infernal
+# NUEVOS SPRITES
+heart_sprite = None  # NUEVO: Sprite de corazón
+diamond_sprite = None  # NUEVO: Sprite de diamante
+door_sprite = None  # NUEVO: Sprite de puerta
 current_direction = 'right'
 
 # ========================================
@@ -652,12 +682,100 @@ def load_wall_sprite():
         print(f"❌ Error cargando sprite de pared: {e}")
         return False
 
+def load_heart_sprite():
+    """CORREGIDO: Función para cargar el sprite de corazón más grande"""
+    global heart_sprite
+    
+    sprite_path = 'assets/images/corazon.png'
+    
+    try:
+        import os
+        if os.path.exists(sprite_path):
+            print(f"💖 ¡Sprite de corazón encontrado! Cargando desde: {sprite_path}")
+            
+            # Cargar el sprite
+            heart_image = pygame.image.load(sprite_path)
+            
+            # CORREGIDO: Escalar a tamaño más grande para UI (35x35 en lugar de 25x25)
+            heart_sprite = pygame.transform.scale(heart_image, (35, 35))
+            
+            print("💖 ¡Sprite de corazón cargado exitosamente! (tamaño aumentado)")
+            return True
+        else:
+            print(f"📁 No se encontró sprite de corazón en: {sprite_path}")
+            print("💡 Tip: Agrega 'corazon.png' en assets/images/")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error cargando sprite de corazón: {e}")
+        return False
+
+def load_diamond_sprite():
+    """NUEVO: Función para cargar el sprite de diamante"""
+    global diamond_sprite
+    
+    sprite_path = 'assets/images/diamante.png'
+    
+    try:
+        import os
+        if os.path.exists(sprite_path):
+            print(f"💎 ¡Sprite de diamante encontrado! Cargando desde: {sprite_path}")
+            
+            # Cargar el sprite
+            diamond_image = pygame.image.load(sprite_path)
+            
+            # Escalar al tamaño de celda
+            diamond_sprite = pygame.transform.scale(diamond_image, (TILE_SIZE, TILE_SIZE))
+            
+            print("💎 ¡Sprite de diamante cargado exitosamente!")
+            return True
+        else:
+            print(f"📁 No se encontró sprite de diamante en: {sprite_path}")
+            print("💡 Tip: Agrega 'diamante.png' en assets/images/")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error cargando sprite de diamante: {e}")
+        return False
+
+def load_door_sprite():
+    """NUEVO: Función para cargar el sprite de puerta"""
+    global door_sprite
+    
+    sprite_path = 'assets/images/puerta.png'
+    
+    try:
+        import os
+        if os.path.exists(sprite_path):
+            print(f"🚪 ¡Sprite de puerta encontrado! Cargando desde: {sprite_path}")
+            
+            # Cargar el sprite
+            door_image = pygame.image.load(sprite_path)
+            
+            # Escalar al tamaño de celda
+            door_sprite = pygame.transform.scale(door_image, (TILE_SIZE, TILE_SIZE))
+            
+            print("🚪 ¡Sprite de puerta cargado exitosamente!")
+            return True
+        else:
+            print(f"📁 No se encontró sprite de puerta en: {sprite_path}")
+            print("💡 Tip: Agrega 'puerta.png' en assets/images/")
+            return False
+            
+    except Exception as e:
+        print(f"❌ Error cargando sprite de puerta: {e}")
+        return False
+
 # Intentar cargar sprites al iniciar
 load_dog_sprite()
 load_enemy_sprites()
 load_poop_sprite()
 load_cover_image()
 load_wall_sprite()  # NUEVO: Cargar sprite de pared
+# CARGAR NUEVOS SPRITES
+load_heart_sprite()
+load_diamond_sprite()
+load_door_sprite()
 
 # Función para recargar sprites durante el juego (opcional)
 def reload_sprites_if_needed():
@@ -680,6 +798,16 @@ def reload_sprites_if_needed():
     # NUEVO: Recargar sprite de pared
     if wall_sprite is None:
         load_wall_sprite()
+    
+    # NUEVOS: Recargar sprites adicionales
+    if heart_sprite is None:
+        load_heart_sprite()
+    
+    if diamond_sprite is None:
+        load_diamond_sprite()
+    
+    if door_sprite is None:
+        load_door_sprite()
 
 # Símbolos para elementos del juego (simplificados)
 GAME_SYMBOLS = {
@@ -726,22 +854,43 @@ ENEMIES_PER_LEVEL = {
 }
 
 def find_valid_enemy_positions(maze, count=10):
-    """Encuentra posiciones válidas dinámicamente en el laberinto actual"""
+    """CORREGIDO: Encuentra posiciones válidas con zona de seguridad alrededor del jugador"""
     height = len(maze)
     width = len(maze[0])
     valid_positions = []
     
+    # ZONA DE SEGURIDAD: 3x3 alrededor del jugador inicial [1,1]
+    player_safe_zone = [
+        [0, 0], [1, 0], [2, 0],
+        [0, 1], [1, 1], [2, 1], 
+        [0, 2], [1, 2], [2, 2]
+    ]
+    
     # Buscar todas las posiciones válidas (no paredes)
-    for y in range(1, height - 1):  # Evitar bordes
-        for x in range(1, width - 1):  # Evitar bordes
+    for y in range(2, height - 2):  # AUMENTADO: Evitar más bordes
+        for x in range(2, width - 2):  # AUMENTADO: Evitar más bordes
             if maze[y][x] == 0:  # Camino libre
-                # Evitar posición inicial del jugador
-                if not (x == 1 and y == 1):
-                    # Evitar posición de salida
-                    if maze[y][x] != 2:
+                # NUEVO: Verificar que no esté en la zona de seguridad del jugador
+                if [x, y] not in player_safe_zone:
+                    # NUEVO: Verificar que no esté cerca de la salida
+                    is_near_exit = False
+                    for exit_y in range(height):
+                        for exit_x in range(width):
+                            if maze[exit_y][exit_x] == 2:  # Salida encontrada
+                                distance_to_exit = abs(x - exit_x) + abs(y - exit_y)
+                                if distance_to_exit < 3:  # Zona de seguridad de la salida
+                                    is_near_exit = True
+                                    break
+                        if is_near_exit:
+                            break
+                    
+                    if not is_near_exit:
                         valid_positions.append([x, y])
     
+    print(f"🎯 Posiciones seguras encontradas: {len(valid_positions)}")
+    
     # Mezclar y retornar las primeras 'count' posiciones
+    import random
     random.shuffle(valid_positions)
     return valid_positions[:count]
 
@@ -777,14 +926,14 @@ enemies = []
 enemy_behaviors = []
 
 def show_temp_message(message):
-    """Muestra un mensaje temporal que no bloquea el juego"""
+    """CORREGIDO: Muestra un mensaje temporal que no bloquea el juego"""
     global temp_message, temp_message_time
     temp_message = message
     temp_message_time = time.time()
-    print(f"📢 Mensaje temporal: {message}")
+    print(f"📢 Mensaje: {message}")
 
 def draw_temp_message():
-    """Dibuja el mensaje temporal si está activo"""
+    """ACTUALIZADO: Dibujar mensaje temporal centrado en cualquier resolución"""
     global temp_message, temp_message_time
     
     if temp_message and time.time() - temp_message_time < temp_message_duration:
@@ -792,374 +941,48 @@ def draw_temp_message():
         elapsed = time.time() - temp_message_time
         alpha = max(0, 1 - (elapsed / temp_message_duration))
         
-        # Crear superficie para el mensaje
-        message_surface = pygame.Surface((SCREEN_WIDTH, 100))
+        # NUEVO: Adaptable a pantalla completa
+        if fullscreen_mode:
+            # En pantalla completa, centrar en toda la pantalla
+            message_width = SCREEN_WIDTH - 80
+            message_height = 100
+            message_x = 40
+            message_y = (SCREEN_HEIGHT // 2) - (message_height // 2)
+            
+            # Fuente escalada
+            font_scale = max(1.0, min(2.5, SCREEN_WIDTH / 800))
+            message_font_size = int(30 * font_scale)
+            message_font = pygame.font.SysFont('Arial', message_font_size)
+        else:
+            # Modo ventana normal
+            message_width = SCREEN_WIDTH - 40
+            message_height = 80
+            message_x = 20
+            message_y = (MAZE_HEIGHT * TILE_SIZE // 2) - (message_height // 2)
+            message_font = font
+        
+        # Fondo semi-transparente con borde
+        message_surface = pygame.Surface((message_width, message_height))
         message_surface.fill((0, 0, 0))
-        message_surface.set_alpha(int(200 * alpha))
+        message_surface.set_alpha(int(180 * alpha))
         
-        # Dibujar fondo semi-transparente
-        screen.blit(message_surface, (0, SCREEN_HEIGHT // 2 - 50))
+        # Dibujar fondo con borde dorado
+        screen.blit(message_surface, (message_x, message_y))
+        border_thickness = max(2, int(3 * (SCREEN_WIDTH / 800)))
+        pygame.draw.rect(screen, (255, 215, 0), (message_x - border_thickness, message_y - border_thickness, 
+                        message_width + border_thickness * 2, message_height + border_thickness * 2), border_thickness)
         
-        # Dibujar texto del mensaje
+        # Dibujar texto del mensaje centrado
         text_color = (255, int(255 * alpha), int(255 * alpha))
-        text = font.render(temp_message, True, text_color)
-        text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+        text = message_font.render(temp_message, True, text_color)
+        text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, message_y + message_height // 2))
         screen.blit(text, text_rect)
     elif temp_message and time.time() - temp_message_time >= temp_message_duration:
         # Limpiar mensaje cuando expire
         temp_message = ""
 
-def count_diamonds_in_level(maze):
-    """Cuenta los diamantes totales en un nivel"""
-    count = 0
-    for row in maze:
-        for cell in row:
-            if cell == 3:  # 3 = diamante
-                count += 1
-    return count
-
-def get_player_position():
-    return player_pos
-
-# Función para inicializar comportamientos de enemigos
-def initialize_enemy_behaviors():
-    """Inicializa los comportamientos de IA para todos los enemigos"""
-    global enemy_behaviors
-    enemy_behaviors = []
-    
-    for enemy in enemies:
-        behavior = create_enemy_behavior(
-            enemy_data=enemy,
-            pathfinder=pathfinder,
-            player_pos_getter=get_player_position,
-            all_enemies=enemies
-        )
-        enemy_behaviors.append(behavior)
-        
-        # DEBUG: Verificar si se crearon fantasmas
-        if enemy['type'] == '👻':
-            print(f"👻 FANTASMA CREADO: {enemy['pos']} - Puede volverse invisible")
-
-# ========================================
-# FUNCIONES BÁSICAS DEL JUEGO
-# ========================================
-
-def handle_bonus_tile(x, y):
-    """Maneja las bonificaciones - DIAMANTES OBLIGATORIOS"""
-    global player_score, maze, collected_diamonds
-    
-    if maze[y][x] == 3:  # Diamante
-        player_score += 100
-        collected_diamonds += 1
-        maze[y][x] = 0  # Eliminar el diamante del mapa
-        print(f"💎 Diamante recogido! {collected_diamonds}/{total_diamonds}")
-
-# Actualizar dimensiones del laberinto según el nivel actual
-def update_maze_dimensions():
-    global MAZE_WIDTH, MAZE_HEIGHT, SCREEN_WIDTH, SCREEN_HEIGHT, screen
-    current_maze = levels[current_level]['maze']
-    MAZE_HEIGHT = len(current_maze)
-    MAZE_WIDTH = len(current_maze[0])
-    SCREEN_WIDTH = TILE_SIZE * MAZE_WIDTH
-    SCREEN_HEIGHT = TILE_SIZE * MAZE_HEIGHT + 100
-    
-    # Actualizar el tamaño de la pantalla
-    screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
-
-# Inicializar pathfinder A*
-pathfinder = AStar(maze)
-
-# Funciones de dibujo actualizadas
-def draw_menu():
-    # Asegurar que la pantalla tenga el tamaño correcto para el menú
-    menu_width = 800
-    menu_height = 600
-    if SCREEN_WIDTH != menu_width or SCREEN_HEIGHT != menu_height:
-        global screen
-        screen = pygame.display.set_mode((menu_width, menu_height))
-    
-    # Fondo infernal degradado
-    screen.fill((20, 0, 0))
-    
-    # Mostrar portada si está disponible
-    if cover_image:
-        # Centrar la portada en la parte superior
-        cover_x = (menu_width - cover_image.get_width()) // 2
-        cover_y = 20
-        screen.blit(cover_image, (cover_x, cover_y))
-        title_y = cover_y + cover_image.get_height() + 20
-    else:
-        # Título con tema infernal
-        title = font.render("🔥 DIMENSIONES INFERNALES 🔥", True, COLOR_FIRE)
-        screen.blit(title, (menu_width // 2 - title.get_width() // 2, 50))
-        subtitle = small_font.render("- Sistema de IA Demoníaca -", True, COLOR_BONUS)
-        screen.blit(subtitle, (menu_width // 2 - subtitle.get_width() // 2, 90))
-        title_y = 150
-    
-    # SOLO dibujar las 3 opciones del menú con estilo infernal
-    valid_options = ['🚪 Nueva Partida', '⚙️ Dificultad', '❌ Salir']
-    for i, option in enumerate(valid_options):
-        if i == menu_idx:
-            color = COLOR_FIRE  # Naranja fuego para opción seleccionada
-            # Efecto de brillo
-            shadow_text = font.render(option, True, (100, 0, 0))
-            screen.blit(shadow_text, (menu_width // 2 - shadow_text.get_width() // 2 + 2, title_y + i * 50 + 2))
-        else:
-            color = (150, 75, 75)  # Rojo oscuro para opciones no seleccionadas
-        
-        text = font.render(option, True, color)
-        screen.blit(text, (menu_width // 2 - text.get_width() // 2, title_y + i * 50))
-    
-    # Información de IA infernal
-    info_lines = [
-        "🎮 CONTROL XBOX 360: A=aceptar | B=atrás | Joystick/D-pad=navegar",
-        "⌨️ TECLADO: Enter=aceptar | ESC=atrás | Flechas=navegar",
-        "👹 CRIATURAS INFERNALES CON IA:",
-        "Portal de Entrada: 3 criaturas aleatorias",
-        "Cámaras de Tormento: 3 seres del averno", 
-        "Laberinto de Fuego: 3 bestias infernales",
-        "Fortaleza Demoníaca: 3 guardianes élite",
-        "Trono de Lucifer: 3 señores supremos del mal",
-        "Enemigos: 👽👻🧟🦹👺🤡👹 (7 tipos disponibles)",
-        "👻 Fantasmas pueden volverse INVISIBLES (cooldown 4s)",
-        "💎 RECOLECTA TODOS LOS DIAMANTES para abrir portales",
-        "🚪 PUERTAS INFERNALES aparecen cuando completes todos los diamantes"
-    ]
-    
-    start_y = title_y + 200
-    for i, line in enumerate(info_lines):
-        color = COLOR_FIRE if i == 2 else COLOR_BONUS
-        font_size = font if i == 2 else small_font
-        text = font_size.render(line, True, color)
-        screen.blit(text, (50, start_y + i * 25))
-    
-    # Efectos de partículas infernales (simulados)
-    import random
-    for _ in range(5):
-        x = random.randint(0, menu_width)
-        y = random.randint(0, menu_height)
-        pygame.draw.circle(screen, (255, 100, 0), (x, y), 2)
-    
-    pygame.display.flip()
-
-def draw_difficulty_menu():
-    # Asegurar tamaño correcto de pantalla
-    menu_width = 800
-    menu_height = 600
-    if SCREEN_WIDTH != menu_width or SCREEN_HEIGHT != menu_height:
-        global screen
-        screen = pygame.display.set_mode((menu_width, menu_height))
-    
-    # Fondo infernal
-    screen.fill((20, 0, 0))
-    
-    title = font.render("🔥 Elige tu nivel de tortura:", True, COLOR_FIRE)
-    screen.blit(title, (menu_width // 2 - title.get_width() // 2, 100))
-    
-    # Opciones de dificultad con tema infernal
-    infernal_options = ['😈 Alma Perdida', '👹 Demonio', '🔥 Señor del Infierno']
-    
-    for i, opt in enumerate(infernal_options):
-        if i == diff_idx:
-            color = COLOR_FIRE
-            # Efecto de brillo para opción seleccionada
-            shadow_text = font.render(opt, True, (100, 0, 0))
-            screen.blit(shadow_text, (menu_width // 2 - shadow_text.get_width() // 2 + 2, 202 + i * 50))
-        else:
-            color = (150, 75, 75)
-        
-        txt = font.render(opt, True, color)
-        screen.blit(txt, (menu_width // 2 - txt.get_width() // 2, 200 + i * 50))
-    
-    # Información de dificultad con tema infernal
-    fps_info = [
-        f"😈 Alma Perdida: {FPS_levels['Fácil']} FPS - Los demonios se mueven lentamente",
-        f"👹 Demonio: {FPS_levels['Medio']} FPS - Velocidad infernal equilibrada", 
-        f"🔥 Señor del Infierno: {FPS_levels['Difícil']} FPS - Furia demoníaca máxima"
-    ]
-    
-    for i, info in enumerate(fps_info):
-        color = COLOR_FIRE if i == diff_idx else (150, 100, 100)
-        text = small_font.render(info, True, color)
-        screen.blit(text, (menu_width // 2 - text.get_width() // 2, 350 + i * 30))
-    
-    # Advertencia infernal
-    warning = small_font.render("⚠️ Cuanto mayor la dificultad, más rápidos los demonios ⚠️", True, COLOR_BONUS)
-    screen.blit(warning, (menu_width // 2 - warning.get_width() // 2, 480))
-    
-    pygame.display.flip()
-
-def reset_enemies():
-    """Resetea enemigos de forma aleatoria según el nivel actual"""
-    global enemies, enemy_behaviors, pathfinder, total_diamonds, collected_diamonds
-    
-    # RESETEAR SISTEMA DE DIAMANTES
-    total_diamonds = count_diamonds_in_level(levels[current_level]['maze'])
-    collected_diamonds = 0
-    print(f"💎 Nivel {current_level + 1}: {total_diamonds} diamantes totales - TODOS REQUERIDOS")
-    
-    # Asegurar pathfinder
-    current_maze = levels[current_level]['maze']
-    pathfinder = AStar(current_maze)
-    
-    # Generar enemigos aleatorios
-    enemies_config = generate_random_enemies(current_level)
-    
-    # Crear enemigos
-    enemies = []
-    for enemy_config in enemies_config:
-        enemy = {
-            'pos': enemy_config['pos'].copy(),
-            'dir': [0, -1],
-            'type': enemy_config['type']
-        }
-        enemies.append(enemy)
-    
-    # Respaldo si no hay enemigos
-    if len(enemies) == 0:
-        enemy = {
-            'pos': [2, 2],
-            'dir': [0, -1],
-            'type': random.choice(ALL_ENEMY_TYPES)
-        }
-        enemies.append(enemy)
-    
-    # Inicializar IA
-    initialize_enemy_behaviors()
-    
-    print(f"✅ Nivel {current_level + 1}: {len(enemies)} enemigos cargados")
-
-def reset_game():
-    global player_pos, player_lives, current_level, maze, enemies, projectiles, pathfinder
-    global player_score, screen, total_diamonds, collected_diamonds, temp_message, temp_message_time
-    global last_button_a_state, last_button_b_state, last_space_state
-    
-    player_pos = [1, 1]
-    player_lives = 3
-    current_level = 0
-    player_score = 0
-    
-    # NUEVO: Limpiar mensajes temporales y estados de control
-    temp_message = ""
-    temp_message_time = 0
-    last_button_a_state = False
-    last_button_b_state = False
-    last_space_state = False
-    
-    # Cargar laberinto del nivel inicial
-    maze = levels[current_level]['maze']
-    projectiles = []
-    
-    # Actualizar dimensiones de pantalla
-    update_maze_dimensions()
-    
-    # Inicializar pathfinder ANTES de generar enemigos
-    pathfinder = AStar(maze)
-    
-    # Generar enemigos DESPUÉS de inicializar pathfinder (esto también resetea diamantes)
-    reset_enemies()
-    
-    print(f"🔄 Juego reiniciado - Nivel {current_level + 1}")
-
-def draw_maze():
-    """MEJORADO: Dibuja el laberinto con puertas más visibles"""
-    for y in range(len(maze)):
-        for x in range(len(maze[y])):
-            rect = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
-            
-            if maze[y][x] == 1:  # Paredes infernales
-                # NUEVO: Usar sprite de pared si está disponible
-                if wall_sprite:
-                    screen.blit(wall_sprite, (x * TILE_SIZE, y * TILE_SIZE))
-                else:
-                    # Usar color sólido como respaldo
-                    pygame.draw.rect(screen, COLOR_WALL, rect)
-                    # Agregar borde más oscuro para efecto 3D
-                    pygame.draw.rect(screen, (10, 0, 0), rect, 2)
-            elif maze[y][x] == 2:  # Portal de salida - MEJORADO
-                pygame.draw.rect(screen, COLOR_PATH, rect)
-                # MEJORADO: Puerta más visible con animación
-                pygame.draw.rect(screen, (255, 215, 0), rect, 3)  # Borde dorado
-                
-                # VERIFICAR si se pueden abrir las puertas
-                if collected_diamonds >= total_diamonds:
-                    # Puerta abierta - Verde brillante
-                    pygame.draw.rect(screen, (0, 255, 0), rect)
-                    door_emoji = emoji_font.render('🚪', True, (255, 255, 255))
-                    screen.blit(door_emoji, (x * TILE_SIZE + 4, y * TILE_SIZE))
-                    
-                    # Efecto de brillo
-                    import math
-                    alpha = int(128 + 127 * math.sin(time.time() * 5))
-                    glow_surface = pygame.Surface((TILE_SIZE, TILE_SIZE))
-                    glow_surface.fill((0, 255, 0))
-                    glow_surface.set_alpha(alpha)
-                    screen.blit(glow_surface, (x * TILE_SIZE, y * TILE_SIZE))
-                else:
-                    # Puerta cerrada - Rojo brillante
-                    pygame.draw.rect(screen, (255, 0, 0), rect)
-                    door_emoji = emoji_font.render('🔒', True, (255, 255, 255))
-                    screen.blit(door_emoji, (x * TILE_SIZE + 4, y * TILE_SIZE))
-            elif maze[y][x] == 3:  # Tesoros infernales
-                pygame.draw.rect(screen, COLOR_PATH, rect)
-                # Efecto dorado brillante
-                pygame.draw.rect(screen, COLOR_BONUS, rect, 3)
-                bonus_emoji = emoji_font.render('💎', True, (255, 215, 0))
-                screen.blit(bonus_emoji, (x * TILE_SIZE + 4, y * TILE_SIZE))
-            else:  # Suelo infernal
-                pygame.draw.rect(screen, COLOR_PATH, rect)
-                # Agregar textura sutil al suelo
-                if (x + y) % 4 == 0:
-                    pygame.draw.rect(screen, (90, 45, 45), rect, 1)
-
-def draw_player():
-    """Dibuja al protagonista perro (sprite si disponible, sino emoji)"""
-    x, y = player_pos
-    
-    # Usar sprite si está cargado, sino emoji de respaldo
-    if use_sprites and dog_sprites:
-        # Dibujar sprite del perro según la dirección
-        screen.blit(dog_sprites[current_direction][0], (x * TILE_SIZE, y * TILE_SIZE))
-    else:
-        # Usar emoji de perro como respaldo
-        player_emoji = emoji_font.render('🐶', True, (255, 255, 0))
-        screen.blit(player_emoji, (x * TILE_SIZE + 4, y * TILE_SIZE))
-
-def draw_enemies():
-    """Dibuja enemigos (sprite si disponible, sino emoji) - VERIFICA INVISIBILIDAD DE FANTASMAS"""
-    for i, enemy in enumerate(enemies):
-        x, y = enemy["pos"]
-        enemy_type = enemy["type"]
-        
-        # VERIFICAR SI EL FANTASMA ESTÁ INVISIBLE
-        is_invisible = False
-        if enemy_type == '👻' and i < len(enemy_behaviors):
-            behavior = enemy_behaviors[i]
-            if hasattr(behavior, 'is_currently_invisible'):
-                is_invisible = behavior.is_currently_invisible()
-        
-        # NO DIBUJAR SI ESTÁ INVISIBLE
-        if is_invisible:
-            continue
-        
-        # Determinar dirección del enemigo (simple: basado en dirección de movimiento)
-        enemy_dir = enemy.get("dir", [1, 0])
-        sprite_direction = 'left' if enemy_dir[0] < 0 else 'right'
-        
-        # Usar sprite si está disponible, sino emoji
-        if enemy_type in enemy_sprites:
-            # Dibujar sprite del enemigo
-            screen.blit(enemy_sprites[enemy_type][sprite_direction], (x * TILE_SIZE, y * TILE_SIZE))
-        else:
-            # Usar emoji como respaldo
-            enemy_emoji = emoji_font.render(enemy_type, True, (0, 0, 0))
-            screen.blit(enemy_emoji, (x * TILE_SIZE + 4, y * TILE_SIZE))
-
-def draw_aim_bot_indicators():
-    """NO DIBUJAR indicadores del aim bot"""
-    pass  # Aim bot activo pero sin líneas visuales
-
 def move_enemies():
+    """Mueve enemigos usando IA"""
     global enemy_behaviors, pathfinder
     
     for behavior in enemy_behaviors:
@@ -1229,20 +1052,8 @@ def move_projectiles():
     
     projectiles = newp
 
-def draw_projectiles():
-    """Dibuja proyectiles (sprite si disponible, sino emoji)"""
-    for p in projectiles:
-        x, y = p['pos']
-        
-        # Usar sprite de caca si está disponible, sino emoji
-        if poop_sprite:
-            screen.blit(poop_sprite, (x * TILE_SIZE, y * TILE_SIZE))
-        else:
-            # Usar emoji como respaldo
-            poop = emoji_font.render('💩', True, (0, 0, 0))
-            screen.blit(poop, (x * TILE_SIZE + 4, y * TILE_SIZE))
-
 def check_enemy_collision():
+    """Verifica colisiones con enemigos"""
     global player_score, enemies, enemy_behaviors
     
     for i, e in enumerate(enemies):
@@ -1260,37 +1071,306 @@ def check_enemy_collision():
     
     return False
 
-def draw_ui():
-    """Dibuja la interfaz de usuario temática infernal"""
-    ui_y = MAZE_HEIGHT * TILE_SIZE + 10
+def count_diamonds_in_level(maze):
+    """Cuenta los diamantes totales en un nivel"""
+    count = 0
+    for row in maze:
+        for cell in row:
+            if cell == 3:  # 3 = diamante
+                count += 1
+    return count
+
+def get_player_position():
+    return player_pos
+
+# Función para inicializar comportamientos de enemigos
+def initialize_enemy_behaviors():
+    """Inicializa los comportamientos de IA para todos los enemigos"""
+    global enemy_behaviors
+    enemy_behaviors = []
     
-    # Información del nivel con tema infernal
+    for enemy in enemies:
+        behavior = create_enemy_behavior(
+            enemy_data=enemy,
+            pathfinder=pathfinder,
+            player_pos_getter=get_player_position,
+            all_enemies=enemies
+        )
+        enemy_behaviors.append(behavior)
+        
+        # DEBUG: Verificar si se crearon fantasmas
+        if enemy['type'] == '👻':
+            print(f"👻 FANTASMA CREADO: {enemy['pos']} - Puede volverse invisible")
+
+def debug_enemy_spawn_positions(maze):
+    """NUEVO: Función de debug para verificar posiciones de spawn"""
+    print("🔍 DEBUG: Verificando posiciones de spawn de enemigos...")
+    
+    valid_positions = find_valid_enemy_positions(maze, 20)
+    
+    print(f"📍 Posiciones válidas encontradas: {len(valid_positions)}")
+    print(f"🎯 Primeras 10 posiciones: {valid_positions[:10]}")
+    
+    # Verificar distancia mínima al jugador
+    player_start = [1, 1]
+    min_distance = float('inf')
+    closest_pos = None
+    
+    for pos in valid_positions:
+        distance = abs(pos[0] - player_start[0]) + abs(pos[1] - player_start[1])
+        if distance < min_distance:
+            min_distance = distance
+            closest_pos = pos
+    
+    print(f"📏 Posición más cercana al jugador: {closest_pos} (distancia: {min_distance})")
+    print(f"✅ Zona de seguridad: {'OK' if min_distance >= 3 else 'PROBLEMA'}")
+
+# ========================================
+# FUNCIONES BÁSICAS DEL JUEGO
+# ========================================
+
+def handle_bonus_tile(x, y):
+    """Maneja las bonificaciones - DIAMANTES OBLIGATORIOS"""
+    global player_score, maze, collected_diamonds
+    
+    if maze[y][x] == 3:  # Diamante
+        player_score += 100
+        collected_diamonds += 1
+        maze[y][x] = 0  # Eliminar el diamante del mapa
+        print(f"💎 Diamante recogido! {collected_diamonds}/{total_diamonds}")
+
+# Actualizar dimensiones del laberinto según el nivel actual
+def update_maze_dimensions():
+    """Actualiza dimensiones - Solo para compatibilidad"""
+    global MAZE_WIDTH, MAZE_HEIGHT
+    current_maze = levels[current_level]['maze']
+    MAZE_HEIGHT = len(current_maze)
+    MAZE_WIDTH = len(current_maze[0])
+    print(f"🎮 Nivel actualizado: {MAZE_WIDTH}x{MAZE_HEIGHT}")
+
+def draw_maze():
+    """Dibuja el laberinto centrado en ventana extendida"""
+    # Calcular offset para centrar en ventana extendida
+    maze_pixel_width = MAZE_WIDTH * TILE_SIZE
+    maze_pixel_height = MAZE_HEIGHT * TILE_SIZE
+    offset_x = (SCREEN_WIDTH - maze_pixel_width) // 2
+    offset_y = (SCREEN_HEIGHT - maze_pixel_height - 100) // 2
+    
+    # Asegurar que el laberinto esté visible
+    offset_x = max(0, offset_x)
+    offset_y = max(0, offset_y)
+    
+    for y in range(len(maze)):
+        for x in range(len(maze[y])):
+            screen_x = x * TILE_SIZE + offset_x
+            screen_y = y * TILE_SIZE + offset_y
+            rect = pygame.Rect(screen_x, screen_y, TILE_SIZE, TILE_SIZE)
+            
+            if maze[y][x] == 1:  # Paredes infernales
+                if wall_sprite:
+                    scaled_wall = pygame.transform.scale(wall_sprite, (TILE_SIZE, TILE_SIZE))
+                    screen.blit(scaled_wall, (screen_x, screen_y))
+                else:
+                    pygame.draw.rect(screen, COLOR_WALL, rect)
+                    pygame.draw.rect(screen, (10, 0, 0), rect, 2)
+            elif maze[y][x] == 2:  # Portal de salida
+                pygame.draw.rect(screen, COLOR_PATH, rect)
+                
+                if collected_diamonds >= total_diamonds:
+                    # Puerta abierta
+                    if door_sprite:
+                        scaled_door = pygame.transform.scale(door_sprite, (TILE_SIZE, TILE_SIZE))
+                        screen.blit(scaled_door, (screen_x, screen_y))
+                        # Efecto de brillo verde
+                        import math
+                        alpha = int(64 + 63 * math.sin(time.time() * 5))
+                        glow_surface = pygame.Surface((TILE_SIZE, TILE_SIZE))
+                        glow_surface.fill((0, 255, 0))
+                        glow_surface.set_alpha(alpha)
+                        screen.blit(glow_surface, (screen_x, screen_y))
+                    else:
+                        pygame.draw.rect(screen, (0, 255, 0), rect)
+                        door_emoji = emoji_font.render('🚪', True, (255, 255, 255))
+                        screen.blit(door_emoji, (screen_x + 4, screen_y))
+                else:
+                    # Puerta cerrada
+                    if door_sprite:
+                        scaled_door = pygame.transform.scale(door_sprite, (TILE_SIZE, TILE_SIZE))
+                        tinted_door = scaled_door.copy()
+                        red_overlay = pygame.Surface((TILE_SIZE, TILE_SIZE))
+                        red_overlay.fill((255, 0, 0))
+                        red_overlay.set_alpha(100)
+                        tinted_door.blit(red_overlay, (0, 0))
+                        screen.blit(tinted_door, (screen_x, screen_y))
+                    else:
+                        pygame.draw.rect(screen, (255, 0, 0), rect)
+                        door_emoji = emoji_font.render('🔒', True, (255, 255, 255))
+                        screen.blit(door_emoji, (screen_x + 4, screen_y))
+                        
+            elif maze[y][x] == 3:  # Tesoros infernales
+                pygame.draw.rect(screen, COLOR_PATH, rect)
+                
+                if diamond_sprite:
+                    scaled_diamond = pygame.transform.scale(diamond_sprite, (TILE_SIZE, TILE_SIZE))
+                    screen.blit(scaled_diamond, (screen_x, screen_y))
+                    # Efecto de brillo dorado
+                    import math
+                    alpha = int(64 + 63 * math.sin(time.time() * 3))
+                    glow_surface = pygame.Surface((TILE_SIZE, TILE_SIZE))
+                    glow_surface.fill((255, 215, 0))
+                    glow_surface.set_alpha(alpha)
+                    screen.blit(glow_surface, (screen_x, screen_y))
+                else:
+                    pygame.draw.rect(screen, COLOR_BONUS, rect, 3)
+                    bonus_emoji = emoji_font.render('💎', True, (255, 215, 0))
+                    screen.blit(bonus_emoji, (screen_x + 4, screen_y))
+            else:  # Suelo infernal
+                pygame.draw.rect(screen, COLOR_PATH, rect)
+                if (x + y) % 4 == 0:
+                    pygame.draw.rect(screen, (90, 45, 45), rect, 1)
+
+def draw_player():
+    """Dibuja al jugador centrado en ventana extendida"""
+    x, y = player_pos
+    
+    # Calcular offset igual que en draw_maze
+    maze_pixel_width = MAZE_WIDTH * TILE_SIZE
+    maze_pixel_height = MAZE_HEIGHT * TILE_SIZE
+    offset_x = (SCREEN_WIDTH - maze_pixel_width) // 2
+    offset_y = (SCREEN_HEIGHT - maze_pixel_height - 100) // 2
+    offset_x = max(0, offset_x)
+    offset_y = max(0, offset_y)
+    
+    screen_x = x * TILE_SIZE + offset_x
+    screen_y = y * TILE_SIZE + offset_y
+    
+    if use_sprites and dog_sprites:
+        scaled_dog = pygame.transform.scale(dog_sprites[current_direction][0], (TILE_SIZE, TILE_SIZE))
+        screen.blit(scaled_dog, (screen_x, screen_y))
+    else:
+        player_emoji = emoji_font.render('🐶', True, (255, 255, 0))
+        screen.blit(player_emoji, (screen_x + 4, screen_y))
+
+def draw_enemies():
+    """Dibuja enemigos centrados en ventana extendida"""
+    # Calcular offset igual que en draw_maze
+    maze_pixel_width = MAZE_WIDTH * TILE_SIZE
+    maze_pixel_height = MAZE_HEIGHT * TILE_SIZE
+    offset_x = (SCREEN_WIDTH - maze_pixel_width) // 2
+    offset_y = (SCREEN_HEIGHT - maze_pixel_height - 100) // 2
+    offset_x = max(0, offset_x)
+    offset_y = max(0, offset_y)
+    
+    for i, enemy in enumerate(enemies):
+        x, y = enemy["pos"]
+        enemy_type = enemy["type"]
+        
+        # Verificar invisibilidad
+        is_invisible = False
+        if enemy_type == '👻' and i < len(enemy_behaviors):
+            behavior = enemy_behaviors[i]
+            if hasattr(behavior, 'is_currently_invisible'):
+                is_invisible = behavior.is_currently_invisible()
+        
+        if is_invisible:
+            continue
+        
+        screen_x = x * TILE_SIZE + offset_x
+        screen_y = y * TILE_SIZE + offset_y
+        
+        enemy_dir = enemy.get("dir", [1, 0])
+        sprite_direction = 'left' if enemy_dir[0] < 0 else 'right'
+        
+        if enemy_type in enemy_sprites:
+            scaled_enemy = pygame.transform.scale(enemy_sprites[enemy_type][sprite_direction], (TILE_SIZE, TILE_SIZE))
+            screen.blit(scaled_enemy, (screen_x, screen_y))
+        else:
+            enemy_emoji = emoji_font.render(enemy_type, True, (0, 0, 0))
+            screen.blit(enemy_emoji, (screen_x + 4, screen_y))
+
+def draw_projectiles():
+    """Dibuja proyectiles centrados en ventana extendida"""
+    # Calcular offset igual que en draw_maze
+    maze_pixel_width = MAZE_WIDTH * TILE_SIZE
+    maze_pixel_height = MAZE_HEIGHT * TILE_SIZE
+    offset_x = (SCREEN_WIDTH - maze_pixel_width) // 2
+    offset_y = (SCREEN_HEIGHT - maze_pixel_height - 100) // 2
+    offset_x = max(0, offset_x)
+    offset_y = max(0, offset_y)
+    
+    for p in projectiles:
+        x, y = p['pos']
+        screen_x = x * TILE_SIZE + offset_x
+        screen_y = y * TILE_SIZE + offset_y
+        
+        if poop_sprite:
+            scaled_poop = pygame.transform.scale(poop_sprite, (TILE_SIZE, TILE_SIZE))
+            screen.blit(scaled_poop, (screen_x, screen_y))
+        else:
+            poop = emoji_font.render('💩', True, (0, 0, 0))
+            screen.blit(poop, (screen_x + 4, screen_y))
+
+def draw_ui():
+    """UI en ventana extendida"""
+    # UI en la parte inferior de la ventana extendida
+    ui_start_y = SCREEN_HEIGHT - 90
+    
+    # ========================================
+    # SECCIÓN SUPERIOR: INFORMACIÓN BÁSICA
+    # ========================================
+    
+    # Información del nivel (esquina superior izquierda)
     level_info = f"Dimensión: {current_level + 1} - {levels[current_level]['name']}"
     level_text = small_font.render(level_info, True, COLOR_BONUS)
-    screen.blit(level_text, (10, ui_y))
+    screen.blit(level_text, (10, ui_start_y))
     
-    # Puntuación de almas
-    score_text = small_font.render(f"Almas Recolectadas: {player_score}", True, COLOR_TEXT)
-    screen.blit(score_text, (10, ui_y + 25))
+    # ========================================
+    # SECCIÓN CORAZONES: MÁS GRANDES Y PROMINENTES
+    # ========================================
     
-    # NUEVO: Estado de diamantes (OBLIGATORIOS)
+    # Corazones más grandes en la esquina superior derecha
+    hearts_x = SCREEN_WIDTH - 150
+    hearts_y = ui_start_y
+    
+    # Texto "Vida:" 
+    lives_label = small_font.render("Vida:", True, COLOR_FIRE)
+    screen.blit(lives_label, (hearts_x - 50, hearts_y + 8))
+    
+    if heart_sprite:
+        # Usar sprites de corazón MÁS GRANDES (35x35)
+        large_heart_sprite = pygame.transform.scale(heart_sprite, (35, 35))
+        for i in range(player_lives):
+            screen.blit(large_heart_sprite, (hearts_x + i * 40, hearts_y))
+    else:
+        # Respaldo con emojis más grandes
+        large_emoji_font = pygame.font.SysFont('Segoe UI Emoji', 35)
+        for i in range(player_lives):
+            heart_emoji = large_emoji_font.render('💖', True, COLOR_FIRE)
+            screen.blit(heart_emoji, (hearts_x + i * 40, hearts_y))
+    
+    # ========================================
+    # SECCIÓN MEDIA: ESTADÍSTICAS PRINCIPALES
+    # ========================================
+    
+    section_y = ui_start_y + 30  # Más espacio después de los corazones
+    
+    # Puntuación de almas (izquierda)
+    score_text = small_font.render(f"Almas: {player_score}", True, COLOR_TEXT)
+    screen.blit(score_text, (10, section_y))
+    
+    # Estado de diamantes (centro)
     diamonds_remaining = total_diamonds - collected_diamonds
     if diamonds_remaining > 0:
         diamond_color = (255, 100, 100)  # Rojo si faltan diamantes
-        diamond_status = f"💎 DIAMANTES REQUERIDOS: {collected_diamonds}/{total_diamonds} (faltan {diamonds_remaining}) - 🔒 PUERTA CERRADA"
+        diamond_status = f"💎 {collected_diamonds}/{total_diamonds} (faltan {diamonds_remaining}) 🔒"
     else:
         diamond_color = (100, 255, 100)  # Verde si están completos
-        diamond_status = f"💎 DIAMANTES COMPLETOS: {collected_diamonds}/{total_diamonds} ✅ - 🚪 PUERTA ABIERTA"
+        diamond_status = f"💎 {collected_diamonds}/{total_diamonds} ✅ 🚪 ABIERTA"
     
     diamond_text = small_font.render(diamond_status, True, diamond_color)
-    screen.blit(diamond_text, (10, ui_y + 50))
+    screen.blit(diamond_text, (200, section_y))
     
-    # Vidas como corazones ardientes
-    hearts = '💖' * player_lives
-    lives_text = small_font.render(f"Vida: {hearts}", True, COLOR_FIRE)
-    screen.blit(lives_text, (200, ui_y))
-    
-    # Información de criaturas infernales con estado de invisibilidad
+    # Información de enemigos
     enemy_count = len(enemies)
     enemy_types_current = []
     invisible_count = 0
@@ -1310,40 +1390,299 @@ def draw_ui():
     
     enemy_info = f"Demonios: {enemy_count} {''.join(enemy_types_current) if enemy_types_current else ''}"
     if invisible_count > 0:
-        enemy_info += f" ({invisible_count} invisible{'s' if invisible_count > 1 else ''})"
+        enemy_info += f" ({invisible_count} 💨)"
     
     enemy_text = small_font.render(enemy_info, True, COLOR_FIRE)
-    screen.blit(enemy_text, (200, ui_y + 25))
+    screen.blit(enemy_text, (600, section_y))
     
-    # Información de aim bot infernal
-    aim_status = "🎯 PROYECTIL GUIADO: ON" if aim_bot.aim_assistance else "🎯 PROYECTIL GUIADO: OFF"
-    aim_color = COLOR_FIRE if aim_bot.aim_assistance else (100, 100, 100)
-    aim_text = small_font.render(aim_status, True, aim_color)
-    screen.blit(aim_text, (400, ui_y + 25))
+    # ========================================
+    # SECCIÓN INFERIOR: INFORMACIÓN DE COMBATE
+    # ========================================
     
-    # MEJORADO: Información de proyectiles
-    projectile_info = f"💩 Proyectiles: {len(projectiles)}/3 (Velocidad: 2x)"
+    combat_y = section_y + 25
+    
+    # Información de proyectiles (centro)
+    projectile_info = f"💩 Proyectiles: {len(projectiles)}/3"
     projectile_color = COLOR_FIRE if len(projectiles) < 3 else (255, 100, 100)
     projectile_text = small_font.render(projectile_info, True, projectile_color)
-    screen.blit(projectile_text, (400, ui_y + 50))
+    screen.blit(projectile_text, (10, combat_y))
     
-    # Información de controles infernales
-    control_info = []
+    # Información de aim bot (derecha)
+    aim_status = "🎯 GUIADO" if aim_bot.aim_assistance else "🎯 MANUAL"
+    aim_color = COLOR_FIRE if aim_bot.aim_assistance else (100, 100, 100)
+    aim_text = small_font.render(aim_status, True, aim_color)
+    screen.blit(aim_text, (200, combat_y))
+    
+    # ========================================
+    # SECCIÓN CONTROLES: INFORMACIÓN COMPACTA
+    # ========================================
+    
+    # Información de controles más compacta
     if controller_connected:
-        control_info = [
-            f"🎮 CONTROL XBOX 360 | {levels[current_level]['difficulty']} | {FPS} FPS",
-            f"🕹️ Joystick/D-pad=mover | A=disparar (MEJORADO) | B=salir"
-        ]
+        control_text = f"🎮 Xbox360 | {levels[current_level]['difficulty']} | {FPS}FPS | A=disparar B=salir"
     else:
-        control_info = [
-            f"⌨️ SOLO TECLADO | {levels[current_level]['difficulty']} | {FPS} FPS",
-            f"🔄 Flechas=mover | ESPACIO=disparar (MEJORADO) | A=guiado | ESC=salir"
-        ]
+        control_text = f"⌨️ Teclado | {levels[current_level]['difficulty']} | {FPS}FPS | ESPACIO=disparar A=guiado ESC=salir"
     
-    for i, line in enumerate(control_info):
-        info_color = COLOR_FIRE if controller_connected else COLOR_TEXT
-        info_text = small_font.render(line, True, info_color)
-        screen.blit(info_text, (400, ui_y + 70 + i * 20))
+    info_color = COLOR_FIRE if controller_connected else COLOR_TEXT
+    info_text_surface = small_font.render(control_text, True, info_color)
+    screen.blit(info_text_surface, (400, combat_y))
+
+def draw_menu():
+    """Menú principal con ventana extendida"""
+    # Fondo infernal degradado
+    screen.fill((20, 0, 0))
+    
+    # Mostrar portada si está disponible
+    if cover_image:
+        # Centrar la portada en la parte superior
+        cover_x = (SCREEN_WIDTH - cover_image.get_width()) // 2
+        cover_y = 30
+        screen.blit(cover_image, (cover_x, cover_y))
+        title_y = cover_y + cover_image.get_height() + 30
+    else:
+        # Título con tema infernal
+        title = font.render("🔥 DIMENSIONES INFERNALES 🔥", True, COLOR_FIRE)
+        screen.blit(title, (SCREEN_WIDTH // 2 - title.get_width() // 2, 40))
+        subtitle = small_font.render("- Sistema de IA Demoníaca -", True, COLOR_BONUS)
+        screen.blit(subtitle, (SCREEN_WIDTH // 2 - subtitle.get_width() // 2, 80))
+        title_y = 130
+    
+    # ========================================
+    # SECCIÓN OPCIONES DEL MENÚ
+    # ========================================
+    
+    # SOLO dibujar las 3 opciones del menú con estilo infernal
+    valid_options = ['🚪 Nueva Partida', '⚙️ Dificultad', '❌ Salir']
+    for i, option in enumerate(valid_options):
+        option_y = title_y + i * 50
+        
+        if i == menu_idx:
+            color = COLOR_FIRE  # Naranja fuego para opción seleccionada
+            # Efecto de brillo para opción seleccionada
+            shadow_text = font.render(option, True, (100, 0, 0))
+            screen.blit(shadow_text, (SCREEN_WIDTH // 2 - shadow_text.get_width() // 2 + 2, option_y + 2))
+            
+            # Indicador de selección
+            indicator = "► "
+            indicator_text = font.render(indicator, True, COLOR_FIRE)
+            screen.blit(indicator_text, (SCREEN_WIDTH // 2 - font.size(option)[0] // 2 - 40, option_y))
+        else:
+            color = (150, 75, 75)  # Rojo oscuro para opciones no seleccionadas
+        
+        text = font.render(option, True, color)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, option_y))
+    
+    # ========================================
+    # SECCIÓN INFORMACIÓN DE CONTROLES (SIMPLIFICADA)
+    # ========================================
+    
+    controls_y = title_y + 200  # Más espacio después de las opciones
+    
+    # Información de controles más simple y clara
+    control_lines = [
+        "🎮 CONTROLES:",
+        "Xbox 360: A=aceptar | B=atrás | Joystick=navegar",
+        "Teclado: Enter=aceptar | ESC=atrás | Flechas=navegar"
+    ]
+    
+    for i, line in enumerate(control_lines):
+        color = COLOR_FIRE if i == 0 else COLOR_TEXT
+        font_to_use = small_font if i > 0 else font
+        text = font_to_use.render(line, True, color)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, controls_y + i * 30))
+    
+    # ========================================
+    # SECCIÓN INFORMACIÓN DEL JUEGO (COMPACTA)
+    # ========================================
+    
+    info_y = controls_y + 120
+    
+    # Información más compacta del juego
+    game_info = [
+        "🎯 OBJETIVO: Recolecta TODOS los diamantes 💎 para abrir las puertas 🚪",
+        "👹 ENEMIGOS: 7 tipos de criaturas infernales con IA única",
+        "👻 Los fantasmas pueden volverse INVISIBLES temporalmente",
+        "🎮 Sprites personalizados para mejor experiencia visual"
+    ]
+    
+    for i, info in enumerate(game_info):
+        color = COLOR_BONUS if i == 0 else (200, 150, 100)
+        text = small_font.render(info, True, color)
+        # Centrar cada línea
+        text_x = (SCREEN_WIDTH - text.get_width()) // 2
+        screen.blit(text, (text_x, info_y + i * 25))
+    
+    # ========================================
+    # EFECTOS VISUALES SUTILES
+    # ========================================
+    
+    # Efectos de partículas infernales más sutiles
+    import random
+    for _ in range(3):  # Menos partículas para no distraer
+        x = random.randint(50, SCREEN_WIDTH - 50)
+        y = random.randint(50, SCREEN_HEIGHT - 50)
+        alpha = random.randint(50, 150)
+        
+        # Crear superficie con transparencia
+        particle_surface = pygame.Surface((4, 4))
+        particle_surface.fill((255, 100, 0))
+        particle_surface.set_alpha(alpha)
+        screen.blit(particle_surface, (x, y))
+    
+    pygame.display.flip()
+
+def draw_difficulty_menu():
+    """Menú de dificultad"""
+    # Fondo infernal
+    screen.fill((20, 0, 0))
+    
+    # ========================================
+    # TÍTULO
+    # ========================================
+    
+    title = font.render("🔥 Elige tu nivel de tortura:", True, COLOR_FIRE)
+    screen.blit(title, (SCREEN_WIDTH // 2 - title.get_width() // 2, 80))
+    
+    # ========================================
+    # OPCIONES DE DIFICULTAD
+    # ========================================
+    
+    # Opciones de dificultad con tema infernal
+    infernal_options = ['😈 Alma Perdida (Fácil)', '👹 Demonio (Medio)', '🔥 Señor del Infierno (Difícil)']
+    
+    for i, opt in enumerate(infernal_options):
+        option_y = 180 + i * 60
+        
+        if i == diff_idx:
+            color = COLOR_FIRE
+            # Efecto de brillo para opción seleccionada
+            shadow_text = font.render(opt, True, (100, 0, 0))
+            screen.blit(shadow_text, (SCREEN_WIDTH // 2 - shadow_text.get_width() // 2 + 2, option_y + 2))
+            
+            # Indicador de selección
+            indicator = "► "
+            indicator_text = font.render(indicator, True, COLOR_FIRE)
+            screen.blit(indicator_text, (SCREEN_WIDTH // 2 - font.size(opt)[0] // 2 - 40, option_y))
+        else:
+            color = (150, 75, 75)
+        
+        txt = font.render(opt, True, color)
+        screen.blit(txt, (SCREEN_WIDTH // 2 - txt.get_width() // 2, option_y))
+    
+    # ========================================
+    # INFORMACIÓN DE VELOCIDAD
+    # ========================================
+    
+    speed_y = 400
+    
+    # Información de velocidad más clara
+    speed_info = [
+        f"⚡ VELOCIDADES:",
+        f"😈 Alma Perdida: {FPS_levels['Fácil']} FPS - Demonios lentos",
+        f"👹 Demonio: {FPS_levels['Medio']} FPS - Velocidad equilibrada", 
+        f"🔥 Señor del Infierno: {FPS_levels['Difícil']} FPS - Máxima furia"
+    ]
+    
+    for i, info in enumerate(speed_info):
+        if i == 0:
+            color = COLOR_FIRE
+            font_to_use = font
+        elif i == diff_idx + 1:
+            color = COLOR_FIRE  # Resaltar la opción seleccionada
+            font_to_use = small_font
+        else:
+            color = (150, 100, 100)
+            font_to_use = small_font
+            
+        text = font_to_use.render(info, True, color)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, speed_y + i * 30))
+    
+    # ========================================
+    # INSTRUCCIONES
+    # ========================================
+    
+    instructions_y = speed_y + 150
+    
+    # Instrucciones de navegación
+    back_text = small_font.render("Enter=aceptar | ESC/B=volver | Flechas=navegar", True, COLOR_BONUS)
+    screen.blit(back_text, (SCREEN_WIDTH // 2 - back_text.get_width() // 2, instructions_y))
+    
+    pygame.display.flip()
+
+def reset_enemies():
+    """Resetea enemigos de forma aleatoria según el nivel actual"""
+    global enemies, enemy_behaviors, pathfinder, total_diamonds, collected_diamonds
+    
+    # RESETEAR SISTEMA DE DIAMANTES
+    total_diamonds = count_diamonds_in_level(levels[current_level]['maze'])
+    collected_diamonds = 0
+    print(f"💎 Nivel {current_level + 1}: {total_diamonds} diamantes totales - TODOS REQUERIDOS")
+    
+    # Asegurar pathfinder
+    current_maze = levels[current_level]['maze']
+    pathfinder = AStar(current_maze)
+    
+    # NUEVO: Debug de posiciones antes de generar enemigos
+    debug_enemy_spawn_positions(current_maze)
+    
+    # Generar enemigos aleatorios
+    enemies_config = generate_random_enemies(current_level)
+    
+    # Crear enemigos
+    enemies = []
+    for enemy_config in enemies_config:
+        enemy = {
+            'pos': enemy_config['pos'].copy(),
+            'dir': [0, -1],
+            'type': enemy_config['type']
+        }
+        enemies.append(enemy)
+    
+    # Respaldo si no hay enemigos
+    if len(enemies) == 0:
+        enemy = {
+            'pos': [2, 2],
+            'dir': [0, -1],
+            'type': random.choice(ALL_ENEMY_TYPES)
+        }
+        enemies.append(enemy)
+    
+    # Inicializar IA
+    initialize_enemy_behaviors()
+    
+    print(f"✅ Nivel {current_level + 1}: {len(enemies)} enemigos cargados")
+
+def reset_game():
+    global player_pos, player_lives, current_level, maze, enemies, projectiles, pathfinder
+    global player_score, screen, total_diamonds, collected_diamonds, temp_message, temp_message_time
+    global last_button_a_state, last_button_b_state, last_space_state
+    
+    player_pos = [1, 1]
+    player_lives = 3
+    current_level = 0
+    player_score = 0
+    
+    # NUEVO: Limpiar mensajes temporales y estados de control
+    temp_message = ""
+    temp_message_time = 0
+    last_button_a_state = False
+    last_button_b_state = False
+    last_space_state = False
+    
+    # Cargar laberinto del nivel inicial
+    maze = levels[current_level]['maze']
+    projectiles = []
+    
+    # Actualizar dimensiones de pantalla
+    update_maze_dimensions()
+    
+    # Inicializar pathfinder ANTES de generar enemigos
+    pathfinder = AStar(maze)
+    
+    # Generar enemigos DESPUÉS de inicializar pathfinder (esto también resetea diamantes)
+    reset_enemies()
+    
+    print(f"🔄 Juego reiniciado - Nivel {current_level + 1}")
 
 def show_message(message):
     # Crear superficie temporal para el mensaje
@@ -1392,7 +1731,8 @@ def next_level():
 
 # Inicialización
 clock = pygame.time.Clock()
-initialize_enemy_behaviors()
+if 'enemies' in globals() and enemies:
+    initialize_enemy_behaviors()
 
 # Loop principal
 running = True
@@ -1415,6 +1755,13 @@ while running:
             controller_connected = False
         
         if event.type == pygame.KEYDOWN:
+            # NUEVO: Control de pantalla completa (funciona en todos los estados)
+            if event.key == pygame.K_F11:
+                toggle_fullscreen()
+            elif event.key == pygame.K_F4 and fullscreen_mode:
+                # F4 para salir de pantalla completa
+                toggle_fullscreen()
+            
             # Manejo ESTRICTO del menú (SOLO 3 opciones válidas)
             if game_state == STATE_MENU:
                 # Limitar navegación a SOLO 3 opciones
@@ -1632,12 +1979,11 @@ while running:
         
         # Dibujar todo
         screen.fill(COLOR_BACKGROUND)
-        draw_maze()  # Ahora con puertas más visibles
+        draw_maze()  # Ahora con sprites personalizados
         draw_player()
         draw_enemies()  # Ya no dibuja fantasmas invisibles
         draw_projectiles()
-        draw_aim_bot_indicators()
-        draw_ui()  # UI mejorada
+        draw_ui()  # UI mejorada con sprites
         draw_temp_message()  # NUEVO: Dibujar mensaje temporal
 
         # NUEVO: Salir del juego también con botón B del control
