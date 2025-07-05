@@ -16,13 +16,209 @@ from scripts import AStar, create_enemy_behavior, GhostBehavior
 # Inicializar Pygame
 pygame.init()
 
+# NUEVO: Inicializar sistema de joysticks/controles
+pygame.joystick.init()
+
+# NUEVO: Sistema de control Xbox 360
+controller = None
+controller_connected = False
+last_button_a_state = False  # Para evitar disparos múltiples con botón A
+last_button_b_state = False  # NUEVO: Para evitar navegación múltiple con botón B
+last_space_state = False  # Para evitar disparos múltiples con teclado
+
+def init_controller():
+    """Inicializa el control Xbox 360 con mejor detección"""
+    global controller, controller_connected
+    
+    # Detectar controles conectados
+    joystick_count = pygame.joystick.get_count()
+    
+    if joystick_count > 0:
+        controller = pygame.joystick.Joystick(0)
+        controller.init()
+        controller_connected = True
+        print(f"🎮 Control detectado: {controller.get_name()}")
+        print(f"🕹️ Ejes: {controller.get_numaxes()}")
+        print(f"🔘 Botones: {controller.get_numbuttons()}")
+        
+        # NUEVO: Verificar que el botón A existe
+        if controller.get_numbuttons() > 0:
+            print("✅ Botón A (botón 0) disponible")
+        else:
+            print("⚠️ No se detectaron botones en el control")
+    else:
+        controller_connected = False
+        print("🚫 No se detectó ningún control")
+
+def get_controller_movement():
+    """Obtiene el movimiento del joystick izquierdo y D-pad"""
+    if not controller_connected:
+        return [0, 0]
+    
+    try:
+        # Leer joystick izquierdo (ejes 0 y 1)
+        stick_x = controller.get_axis(0)  # Eje X del joystick izquierdo
+        stick_y = controller.get_axis(1)  # Eje Y del joystick izquierdo
+        
+        # Leer D-pad (sombrero 0)
+        if controller.get_numhats() > 0:
+            hat_x, hat_y = controller.get_hat(0)
+        else:
+            hat_x, hat_y = 0, 0
+        
+        # Zona muerta para el joystick
+        deadzone = 0.3
+        if abs(stick_x) < deadzone:
+            stick_x = 0
+        if abs(stick_y) < deadzone:
+            stick_y = 0
+        
+        # Combinar joystick y D-pad (prioridad al D-pad)
+        if hat_x != 0 or hat_y != 0:
+            return [hat_x, -hat_y]  # Invertir Y del D-pad
+        else:
+            return [stick_x, stick_y]
+            
+    except Exception as e:
+        print(f"Error leyendo control: {e}")
+        return [0, 0]
+
+def get_controller_shoot():
+    """MEJORADO: Detecta si se presiona el botón A - MÁS RESPONSIVO"""
+    global last_button_a_state
+    
+    if not controller_connected:
+        return False
+    
+    try:
+        # Botón A es el botón 0 en Xbox 360
+        button_a_pressed = controller.get_button(0)
+        
+        # MEJORADO: Sistema de detección más responsivo
+        if button_a_pressed and not last_button_a_state:
+            last_button_a_state = True
+            print("🎮 ¡Botón A presionado! Disparando...")
+            return True
+        elif not button_a_pressed:
+            last_button_a_state = False
+            
+        return False
+    except Exception as e:
+        print(f"❌ Error leyendo botón A: {e}")
+        return False
+
+# NUEVO: Función para detectar botón B en menús
+def get_controller_button_b():
+    """Detecta si se presiona el botón B - PARA NAVEGACIÓN EN MENÚS"""
+    global last_button_b_state
+    
+    if not controller_connected:
+        return False
+    
+    try:
+        # Botón B es el botón 1 en Xbox 360
+        button_b_pressed = controller.get_button(1)
+        
+        # Solo activar en el momento que se presiona (no mantener)
+        if button_b_pressed and not last_button_b_state:
+            last_button_b_state = True
+            return True
+        elif not button_b_pressed:
+            last_button_b_state = False
+            
+        return False
+    except Exception as e:
+        return False
+
+# NUEVO: Función para detectar botón A en menús (separada del disparo)
+def get_controller_button_a_menu():
+    """Detecta si se presiona el botón A - PARA NAVEGACIÓN EN MENÚS"""
+    global last_button_a_state
+    
+    if not controller_connected:
+        return False
+    
+    try:
+        # Botón A es el botón 0 en Xbox 360
+        button_a_pressed = controller.get_button(0)
+        
+        # Solo activar en el momento que se presiona (no mantener)
+        if button_a_pressed and not last_button_a_state:
+            last_button_a_state = True
+            return True
+        elif not button_a_pressed:
+            last_button_a_state = False
+            
+        return False
+    except Exception as e:
+        return False
+
+def normalize_direction(dx, dy):
+    """Normaliza una dirección a 4 direcciones cardinales: ↑↓←→ (SIN diagonales)"""
+    if dx == 0 and dy == 0:
+        return [0, 0]
+    
+    # Convertir a direcciones discretas (SOLO 4 direcciones como antes)
+    if abs(dx) > abs(dy):
+        # Principalmente horizontal
+        if dx > 0:
+            return [1, 0]  # Derecha →
+        else:
+            return [-1, 0]  # Izquierda ←
+    else:
+        # Principalmente vertical
+        if dy > 0:
+            return [0, 1]  # Abajo ↓
+        else:
+            return [0, -1]  # Arriba ↑
+
+def ensure_valid_shooting_direction():
+    """Asegura que siempre haya una dirección válida para disparar"""
+    global last_direction, current_direction
+    
+    # Si last_direction es [0,0], usar la dirección del sprite actual
+    if last_direction == [0, 0]:
+        if current_direction == 'up':
+            last_direction = [0, -1]
+        elif current_direction == 'down':
+            last_direction = [0, 1]
+        elif current_direction == 'left':
+            last_direction = [-1, 0]
+        elif current_direction == 'right':
+            last_direction = [1, 0]
+        else:
+            last_direction = [1, 0]  # Derecha por defecto
+
+def debug_controller_state():
+    """Función de debug para verificar el estado del control"""
+    if controller_connected and controller:
+        try:
+            print(f"🎮 DEBUG CONTROL:")
+            print(f"   - Nombre: {controller.get_name()}")
+            print(f"   - Botones disponibles: {controller.get_numbuttons()}")
+            
+            # Verificar estado del botón A específicamente
+            if controller.get_numbuttons() > 0:
+                button_a_state = controller.get_button(0)
+                print(f"   - Botón A (0): {'PRESIONADO' if button_a_state else 'liberado'}")
+            else:
+                print("   - ¡NO HAY BOTONES DETECTADOS!")
+                
+        except Exception as e:
+            print(f"❌ Error en debug del control: {e}")
+    else:
+        print("🚫 No hay control conectado")
+
+# Intentar inicializar control al inicio
+init_controller()
+
 # ========================================
-# NIVELES SIMPLIFICADOS - 5 NIVELES FUNCIONALES
+# NIVELES CORREGIDOS - PUERTAS VISIBLES
 # ========================================
-# Solo elementos básicos: 0=camino, 1=pared, 2=salida, 3=bonus
+# CORREGIDO: Asegurar que todas las puertas (2) estén en posiciones accesibles
 
 levels = [
-    # NIVEL 1 - ENTRADA AL INFIERNO
+    # NIVEL 1 - ENTRADA AL INFIERNO (PUERTA CORREGIDA)
     {
         'id': 1,
         'name': 'Portal de Entrada',
@@ -41,12 +237,12 @@ levels = [
             [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,1],
             [1,0,1,1,1,1,1,0,1,1,0,0,0,1,1,0,1,1,1,1,1,1,0,1],
             [1,0,0,0,0,0,0,0,1,3,0,0,0,3,1,0,0,0,0,0,0,0,0,1],
-            [1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,1,1,2,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,1,1,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,1,1,0,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1], # PUERTA EN (22,13)
         ]
     },
 
-    # NIVEL 2 - CÁMARAS DE TORMENTO
+    # NIVEL 2 - CÁMARAS DE TORMENTO (PUERTA CORREGIDA)
     {
         'id': 2,
         'name': 'Cámaras de Tormento',
@@ -65,12 +261,12 @@ levels = [
             [1,0,0,0,0,0,0,0,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,1],
             [1,1,1,0,1,1,1,1,1,1,0,1,0,1,1,1,1,1,1,1,0,1,1,1],
             [1,0,0,0,0,0,0,0,0,0,0,3,0,0,0,0,0,0,0,0,0,3,0,1],
-            [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1], # PUERTA EN (22,13)
         ]
     },
 
-    # NIVEL 3 - LABERINTO DE FUEGO (CORREGIDO - diamantes accesibles)
+    # NIVEL 3 - LABERINTO DE FUEGO (PUERTA CORREGIDA)
     {
         'id': 3,
         'name': 'Laberinto de Fuego',
@@ -89,12 +285,12 @@ levels = [
             [1,0,1,0,0,0,0,0,0,0,1,3,1,0,0,0,0,0,0,0,0,1,0,1],
             [1,0,1,1,1,1,1,1,1,0,1,0,1,0,1,1,1,1,1,1,1,1,0,1],
             [1,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,3,0,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,0,1],
+            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,2,1], # PUERTA EN (22,13)
         ]
     },
 
-    # NIVEL 4 - FORTALEZA DEMONÍACA (CORREGIDO - diamantes accesibles)
+    # NIVEL 4 - FORTALEZA DEMONÍACA (PUERTA CORREGIDA)
     {
         'id': 4,
         'name': 'Fortaleza Demoníaca',
@@ -114,12 +310,11 @@ levels = [
             [1,0,1,1,1,0,1,0,1,1,1,0,1,1,1,0,1,0,1,1,1,1,0,1],
             [1,0,1,0,0,0,1,0,0,0,0,0,0,0,0,0,1,0,0,0,0,1,0,1],
             [1,0,1,0,1,1,1,1,1,1,1,0,1,1,1,1,1,1,1,0,1,1,0,1],
-            [1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,3,2,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,1,0,0,0,0,0,0,0,0,0,0,0,0,0,1,0,0,3,2,1], # PUERTA EN (22,13)
         ]
     },
 
-    # NIVEL 5 - TRONO DE LUCIFER
+    # NIVEL 5 - TRONO DE LUCIFER (PUERTA CORREGIDA)
     {
         'id': 5,
         'name': 'Trono de Lucifer',
@@ -139,8 +334,7 @@ levels = [
             [1,0,1,0,1,1,1,0,1,1,1,0,1,1,1,0,1,1,1,1,0,1,0,1],
             [1,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,1,0,0,0,1],
             [1,1,1,0,1,0,1,1,1,0,1,0,1,0,1,1,1,1,0,1,0,1,1,1],
-            [1,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,1,0,3,2,1],
-            [1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1,1],
+            [1,0,0,0,1,0,0,0,0,0,1,0,1,0,0,0,0,0,0,1,0,3,2,1], # PUERTA EN (22,13)
         ]
     }
 ]
@@ -185,7 +379,7 @@ STATE_PLAY = 'PLAY'
 # Menú principal simplificado (SOLO 3 OPCIONES)
 menu_options = ['Nueva Partida', 'Seleccionar Dificultad', 'Salir']
 difficulty_options = ['Fácil', 'Medio', 'Difícil']
-FPS_levels = {'Fácil': 4, 'Medio': 6, 'Difícil': 8}  # Reducido para mejor jugabilidad
+FPS_levels = {'Fácil': 5, 'Medio': 7, 'Difícil': 9}  # AUMENTADO para más velocidad
 
 # Variables del menú (CONTROLADAS Y LIMITADAS)
 menu_idx = 0  # SIEMPRE entre 0-2 (3 opciones máximo)
@@ -718,6 +912,8 @@ def draw_menu():
     
     # Información de IA infernal
     info_lines = [
+        "🎮 CONTROL XBOX 360: A=aceptar | B=atrás | Joystick/D-pad=navegar",
+        "⌨️ TECLADO: Enter=aceptar | ESC=atrás | Flechas=navegar",
         "👹 CRIATURAS INFERNALES CON IA:",
         "Portal de Entrada: 3 criaturas aleatorias",
         "Cámaras de Tormento: 3 seres del averno", 
@@ -727,13 +923,13 @@ def draw_menu():
         "Enemigos: 👽👻🧟🦹👺🤡👹 (7 tipos disponibles)",
         "👻 Fantasmas pueden volverse INVISIBLES (cooldown 4s)",
         "💎 RECOLECTA TODOS LOS DIAMANTES para abrir portales",
-        "🧱 Paredes infernales con bloquerojo.png"
+        "🚪 PUERTAS INFERNALES aparecen cuando completes todos los diamantes"
     ]
     
     start_y = title_y + 200
     for i, line in enumerate(info_lines):
-        color = COLOR_FIRE if i == 0 else COLOR_BONUS
-        font_size = font if i == 0 else small_font
+        color = COLOR_FIRE if i == 2 else COLOR_BONUS
+        font_size = font if i == 2 else small_font
         text = font_size.render(line, True, color)
         screen.blit(text, (50, start_y + i * 25))
     
@@ -836,15 +1032,19 @@ def reset_enemies():
 def reset_game():
     global player_pos, player_lives, current_level, maze, enemies, projectiles, pathfinder
     global player_score, screen, total_diamonds, collected_diamonds, temp_message, temp_message_time
+    global last_button_a_state, last_button_b_state, last_space_state
     
     player_pos = [1, 1]
     player_lives = 3
     current_level = 0
     player_score = 0
     
-    # NUEVO: Limpiar mensajes temporales
+    # NUEVO: Limpiar mensajes temporales y estados de control
     temp_message = ""
     temp_message_time = 0
+    last_button_a_state = False
+    last_button_b_state = False
+    last_space_state = False
     
     # Cargar laberinto del nivel inicial
     maze = levels[current_level]['maze']
@@ -862,7 +1062,7 @@ def reset_game():
     print(f"🔄 Juego reiniciado - Nivel {current_level + 1}")
 
 def draw_maze():
-    """MODIFICADO: Dibuja el laberinto con sprites de pared infernal si están disponibles"""
+    """MEJORADO: Dibuja el laberinto con puertas más visibles"""
     for y in range(len(maze)):
         for x in range(len(maze[y])):
             rect = pygame.Rect(x * TILE_SIZE, y * TILE_SIZE, TILE_SIZE, TILE_SIZE)
@@ -876,12 +1076,30 @@ def draw_maze():
                     pygame.draw.rect(screen, COLOR_WALL, rect)
                     # Agregar borde más oscuro para efecto 3D
                     pygame.draw.rect(screen, (10, 0, 0), rect, 2)
-            elif maze[y][x] == 2:  # Portal de salida
+            elif maze[y][x] == 2:  # Portal de salida - MEJORADO
                 pygame.draw.rect(screen, COLOR_PATH, rect)
-                # Efecto de portal con gradiente
-                pygame.draw.rect(screen, COLOR_EXIT, rect)
-                door_emoji = emoji_font.render('🚪', True, (255, 215, 0))  # Puerta dorada
-                screen.blit(door_emoji, (x * TILE_SIZE + 4, y * TILE_SIZE))
+                # MEJORADO: Puerta más visible con animación
+                pygame.draw.rect(screen, (255, 215, 0), rect, 3)  # Borde dorado
+                
+                # VERIFICAR si se pueden abrir las puertas
+                if collected_diamonds >= total_diamonds:
+                    # Puerta abierta - Verde brillante
+                    pygame.draw.rect(screen, (0, 255, 0), rect)
+                    door_emoji = emoji_font.render('🚪', True, (255, 255, 255))
+                    screen.blit(door_emoji, (x * TILE_SIZE + 4, y * TILE_SIZE))
+                    
+                    # Efecto de brillo
+                    import math
+                    alpha = int(128 + 127 * math.sin(time.time() * 5))
+                    glow_surface = pygame.Surface((TILE_SIZE, TILE_SIZE))
+                    glow_surface.fill((0, 255, 0))
+                    glow_surface.set_alpha(alpha)
+                    screen.blit(glow_surface, (x * TILE_SIZE, y * TILE_SIZE))
+                else:
+                    # Puerta cerrada - Rojo brillante
+                    pygame.draw.rect(screen, (255, 0, 0), rect)
+                    door_emoji = emoji_font.render('🔒', True, (255, 255, 255))
+                    screen.blit(door_emoji, (x * TILE_SIZE + 4, y * TILE_SIZE))
             elif maze[y][x] == 3:  # Tesoros infernales
                 pygame.draw.rect(screen, COLOR_PATH, rect)
                 # Efecto dorado brillante
@@ -962,41 +1180,52 @@ def move_enemies():
                 enemy["pos"] = [new_x, new_y]
 
 def move_projectiles():
+    """MEJORADO: Proyectiles más rápidos y precisos"""
     global enemies, projectiles, player_score
     newp = []
     for p in projectiles:
-        p['pos'][0] += p['dir'][0]
-        p['pos'][1] += p['dir'][1]
-        
-        x, y = p['pos']
-        
-        if not (0 <= x < MAZE_WIDTH and 0 <= y < MAZE_HEIGHT):
-            continue
+        # MEJORADO: Proyectiles se mueven más rápido (2 casillas por frame)
+        for _ in range(2):  # Mover 2 veces por frame
+            p['pos'][0] += p['dir'][0]
+            p['pos'][1] += p['dir'][1]
             
-        if maze[y][x] == 1:
-            continue
+            x, y = p['pos']
+            
+            # Verificar límites
+            if not (0 <= x < MAZE_WIDTH and 0 <= y < MAZE_HEIGHT):
+                break
                 
-        hit = False
-        for i, e in enumerate(enemies[:]):
-            if e['pos'] == [x, y]:
-                # VERIFICAR SI EL FANTASMA ESTÁ INVISIBLE
-                is_invisible = False
-                if e['type'] == '👻' and i < len(enemy_behaviors):
-                    behavior = enemy_behaviors[i]
-                    if hasattr(behavior, 'is_currently_invisible'):
-                        is_invisible = behavior.is_currently_invisible()
-                
-                # NO PUEDE SER GOLPEADO SI ESTÁ INVISIBLE
-                if not is_invisible:
-                    enemies.remove(e)
-                    if i < len(enemy_behaviors):
-                        enemy_behaviors.pop(i)
-                    player_score += 150  # Bonus por eliminar enemigo
-                    hit = True
-                    break
+            # Verificar colisión con paredes
+            if maze[y][x] == 1:
+                break
                     
-        if not hit:
-            newp.append(p)
+            # Verificar colisión con enemigos
+            hit = False
+            for i, e in enumerate(enemies[:]):
+                if e['pos'] == [x, y]:
+                    # VERIFICAR SI EL FANTASMA ESTÁ INVISIBLE
+                    is_invisible = False
+                    if e['type'] == '👻' and i < len(enemy_behaviors):
+                        behavior = enemy_behaviors[i]
+                        if hasattr(behavior, 'is_currently_invisible'):
+                            is_invisible = behavior.is_currently_invisible()
+                    
+                    # NO PUEDE SER GOLPEADO SI ESTÁ INVISIBLE
+                    if not is_invisible:
+                        enemies.remove(e)
+                        if i < len(enemy_behaviors):
+                            enemy_behaviors.pop(i)
+                        player_score += 150  # Bonus por eliminar enemigo
+                        hit = True
+                        break
+            
+            if hit:
+                break
+        else:
+            # Solo agregar si no salió del bucle con break
+            if (0 <= p['pos'][0] < MAZE_WIDTH and 0 <= p['pos'][1] < MAZE_HEIGHT and 
+                maze[p['pos'][1]][p['pos'][0]] != 1):
+                newp.append(p)
     
     projectiles = newp
 
@@ -1048,10 +1277,10 @@ def draw_ui():
     diamonds_remaining = total_diamonds - collected_diamonds
     if diamonds_remaining > 0:
         diamond_color = (255, 100, 100)  # Rojo si faltan diamantes
-        diamond_status = f"💎 DIAMANTES REQUERIDOS: {collected_diamonds}/{total_diamonds} (faltan {diamonds_remaining})"
+        diamond_status = f"💎 DIAMANTES REQUERIDOS: {collected_diamonds}/{total_diamonds} (faltan {diamonds_remaining}) - 🔒 PUERTA CERRADA"
     else:
         diamond_color = (100, 255, 100)  # Verde si están completos
-        diamond_status = f"💎 DIAMANTES COMPLETOS: {collected_diamonds}/{total_diamonds} ✅"
+        diamond_status = f"💎 DIAMANTES COMPLETOS: {collected_diamonds}/{total_diamonds} ✅ - 🚪 PUERTA ABIERTA"
     
     diamond_text = small_font.render(diamond_status, True, diamond_color)
     screen.blit(diamond_text, (10, ui_y + 50))
@@ -1092,15 +1321,29 @@ def draw_ui():
     aim_text = small_font.render(aim_status, True, aim_color)
     screen.blit(aim_text, (400, ui_y + 25))
     
-    # Información de controles infernales
-    sprite_info = [
-        f"Tortura: {levels[current_level]['difficulty']} | Velocidad: {FPS} FPS",
-        f"(R=recargar | ESPACIO=lanzar proyectil | A=guiado | ESC=salir)"
-    ]
+    # MEJORADO: Información de proyectiles
+    projectile_info = f"💩 Proyectiles: {len(projectiles)}/3 (Velocidad: 2x)"
+    projectile_color = COLOR_FIRE if len(projectiles) < 3 else (255, 100, 100)
+    projectile_text = small_font.render(projectile_info, True, projectile_color)
+    screen.blit(projectile_text, (400, ui_y + 50))
     
-    for i, line in enumerate(sprite_info):
-        info_text = small_font.render(line, True, COLOR_TEXT)
-        screen.blit(info_text, (400, ui_y + 50 + i * 20))
+    # Información de controles infernales
+    control_info = []
+    if controller_connected:
+        control_info = [
+            f"🎮 CONTROL XBOX 360 | {levels[current_level]['difficulty']} | {FPS} FPS",
+            f"🕹️ Joystick/D-pad=mover | A=disparar (MEJORADO) | B=salir"
+        ]
+    else:
+        control_info = [
+            f"⌨️ SOLO TECLADO | {levels[current_level]['difficulty']} | {FPS} FPS",
+            f"🔄 Flechas=mover | ESPACIO=disparar (MEJORADO) | A=guiado | ESC=salir"
+        ]
+    
+    for i, line in enumerate(control_info):
+        info_color = COLOR_FIRE if controller_connected else COLOR_TEXT
+        info_text = small_font.render(line, True, info_color)
+        screen.blit(info_text, (400, ui_y + 70 + i * 20))
 
 def show_message(message):
     # Crear superficie temporal para el mensaje
@@ -1139,6 +1382,7 @@ def next_level():
         
         show_message(f"🔥 {levels[current_level]['name']} 🔥")
         show_message(f"💎 Nuevo nivel: {total_diamonds} diamantes requeridos 💎")
+        show_message(f"🚪 Encuentra la puerta infernal para continuar 🚪")
     else:
         show_message(f"🏆 ¡Has conquistado todas las dimensiones infernales! 🏆")
         show_message(f"💎 Almas recolectadas: {player_score} 💎")
@@ -1153,9 +1397,22 @@ initialize_enemy_behaviors()
 # Loop principal
 running = True
 while running:
+    # NUEVO: Leer inputs del control al inicio del loop
+    controller_move = get_controller_movement()
+    controller_a_menu = get_controller_button_a_menu()
+    controller_b = get_controller_button_b()
+    
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             running = False
+        
+        # NUEVO: Detectar conexión/desconexión de controles
+        elif event.type == pygame.JOYDEVICEADDED:
+            print("🎮 Control conectado!")
+            init_controller()
+        elif event.type == pygame.JOYDEVICEREMOVED:
+            print("🚫 Control desconectado!")
+            controller_connected = False
         
         if event.type == pygame.KEYDOWN:
             # Manejo ESTRICTO del menú (SOLO 3 opciones válidas)
@@ -1189,32 +1446,98 @@ while running:
                     reset_menu()  # ASEGURAR menú limpio
                     game_state = STATE_MENU
     
-    # Renderizado según el estado del juego (SOLO 3 ESTADOS)
+    # NUEVO: Manejar navegación con control en menús
     if game_state == STATE_MENU:
+        # Navegación con joystick/D-pad
+        if abs(controller_move[1]) > 0.5:  # Movimiento vertical significativo
+            if controller_move[1] < 0:  # Arriba
+                menu_idx = (menu_idx - 1) % 3
+            else:  # Abajo
+                menu_idx = (menu_idx + 1) % 3
+            time.sleep(0.15)  # Pequeña pausa para evitar navegación muy rápida
+        
+        # Aceptar con botón A
+        if controller_a_menu:
+            if menu_idx == 0:  # Nueva Partida
+                reset_game()
+                update_maze_dimensions()
+                game_state = STATE_PLAY
+            elif menu_idx == 1:  # Seleccionar Dificultad
+                game_state = STATE_DIFF
+            elif menu_idx == 2:  # Salir
+                running = False
+        
         draw_menu()
+        
     elif game_state == STATE_DIFF:
+        # Navegación con joystick/D-pad
+        if abs(controller_move[1]) > 0.5:  # Movimiento vertical significativo
+            if controller_move[1] < 0:  # Arriba
+                diff_idx = (diff_idx - 1) % len(difficulty_options)
+            else:  # Abajo
+                diff_idx = (diff_idx + 1) % len(difficulty_options)
+            time.sleep(0.15)  # Pequeña pausa para evitar navegación muy rápida
+        
+        # Aceptar con botón A
+        if controller_a_menu:
+            FPS = FPS_levels[difficulty_options[diff_idx]]
+            reset_menu()  # ASEGURAR menú limpio
+            game_state = STATE_MENU
+        
+        # Retroceder con botón B
+        if controller_b:
+            reset_menu()  # ASEGURAR menú limpio
+            game_state = STATE_MENU
+        
         draw_difficulty_menu()
+        
     elif game_state == STATE_PLAY:
-        # Controles del jugador
+        # Controles del jugador - TECLADO + CONTROL XBOX 360
         keys = pygame.key.get_pressed()
         new_pos = player_pos.copy()
         
+        # NUEVO: Leer input del control Xbox 360
+        controller_shoot = get_controller_shoot()  # Ahora usa botón A
+        
+        # Variables para direcciones
+        move_x, move_y = 0, 0
+        shoot_direction = None
+        
+        # TECLADO: Movimiento con flechas
         if keys[pygame.K_UP]:
-            new_pos[1] -= 1
-            last_direction = [0, -1]
+            move_y = -1
             current_direction = 'up'
         elif keys[pygame.K_DOWN]:
-            new_pos[1] += 1
-            last_direction = [0, 1]
+            move_y = 1
             current_direction = 'down'
         elif keys[pygame.K_LEFT]:
-            new_pos[0] -= 1
-            last_direction = [-1, 0]
+            move_x = -1
             current_direction = 'left'
         elif keys[pygame.K_RIGHT]:
-            new_pos[0] += 1
-            last_direction = [1, 0]
+            move_x = 1
             current_direction = 'right'
+        
+        # CONTROL: Movimiento con joystick/D-pad (tiene prioridad sobre teclado)
+        if controller_connected and (abs(controller_move[0]) > 0 or abs(controller_move[1]) > 0):
+            # Normalizar movimiento del control
+            norm_move = normalize_direction(controller_move[0], controller_move[1])
+            move_x, move_y = norm_move[0], norm_move[1]
+            
+            # Actualizar dirección del sprite
+            if move_x > 0:
+                current_direction = 'right'
+            elif move_x < 0:
+                current_direction = 'left'
+            elif move_y < 0:
+                current_direction = 'up'
+            elif move_y > 0:
+                current_direction = 'down'
+        
+        # Aplicar movimiento
+        if move_x != 0 or move_y != 0:
+            new_pos[0] += move_x
+            new_pos[1] += move_y
+            last_direction = [move_x, move_y]
         
         # Verificar movimiento válido
         if (0 <= new_pos[0] < MAZE_WIDTH and 0 <= new_pos[1] < MAZE_HEIGHT and 
@@ -1224,19 +1547,38 @@ while running:
             handle_bonus_tile(new_pos[0], new_pos[1])
             player_pos = new_pos
         
-        # Sistema de disparo con aim bot
-        if keys[pygame.K_SPACE] and len(projectiles) < 5:  # Aumentado límite de proyectiles
-            # Obtener dirección de aim bot
+        # Asegurar dirección válida para disparar
+        ensure_valid_shooting_direction()
+        
+        # MEJORADO: Sistema de disparo más responsivo
+        can_shoot = len(projectiles) < 3  # REDUCIDO de 5 a 3 para mejor responsividad
+        
+        # TECLADO: Disparo con ESPACIO (con debounce mejorado)
+        current_space_pressed = keys[pygame.K_SPACE]
+        keyboard_shoot = current_space_pressed and not last_space_state
+        last_space_state = current_space_pressed
+        
+        if (controller_shoot or keyboard_shoot) and can_shoot:
+            # Determinar dirección de disparo (SOLO 4 direcciones como antes)
+            shoot_direction = last_direction.copy()  # Usar última dirección de movimiento
+            
+            # Obtener dirección de aim bot si está activo
             aim_direction = aim_bot.get_aim_direction(player_pos, enemies)
             
             if aim_direction:
                 # Usar aim bot
                 projectiles.append({'pos': player_pos.copy(), 'dir': aim_direction})
+                print(f"🎯 Proyectil GUIADO creado: {aim_direction}")
             else:
-                # Disparo normal
-                projectiles.append({'pos': player_pos.copy(), 'dir': last_direction.copy()})
+                # Disparo normal (4 direcciones: arriba, abajo, izquierda, derecha)
+                projectiles.append({'pos': player_pos.copy(), 'dir': shoot_direction})
+                print(f"💥 Proyectil RÁPIDO creado: {shoot_direction}")
+            
+            print(f"📊 Proyectiles activos: {len(projectiles)}/3")
+        elif (controller_shoot or keyboard_shoot) and not can_shoot:
+            print("⚠️ Máximo de proyectiles alcanzado (3/3)")
         
-        # Toggle aim bot
+        # Toggle aim bot (solo teclado)
         if keys[pygame.K_a]:
             aim_bot.aim_assistance = not aim_bot.aim_assistance
             time.sleep(0.3)  # Evitar toggle múltiple
@@ -1247,17 +1589,23 @@ while running:
             reload_sprites_if_needed()
             show_message("¡Sprites recargados!")
         
-        # Verificar llegada a la salida - SOLO SI SE RECOGIERON TODOS LOS DIAMANTES
+        # Debug del control (presiona D)
+        if keys[pygame.K_d]:
+            debug_controller_state()
+            time.sleep(0.5)  # Evitar spam
+        
+        # MEJORADO: Verificar llegada a la salida con puertas visibles
         if maze[player_pos[1]][player_pos[0]] == 2:
             if collected_diamonds >= total_diamonds:
+                print(f"🚪 ¡Portal abierto! Avanzando al siguiente nivel...")
                 next_level()
             else:
                 remaining = total_diamonds - collected_diamonds
-                show_temp_message(f"💎 ¡Faltan {remaining} diamantes para abrir el portal! 💎")
+                show_temp_message(f"🔒 ¡Faltan {remaining} diamantes! La puerta está cerrada")
         
         # Actualizar enemigos y proyectiles
         move_enemies()
-        move_projectiles()
+        move_projectiles()  # Ahora más rápidos
         
         # Verificar colisiones
         if check_enemy_collision():
@@ -1269,6 +1617,9 @@ while running:
             # NUEVO: Limpiar mensaje temporal
             temp_message = ""
             temp_message_time = 0
+            last_button_a_state = False
+            last_button_b_state = False
+            last_space_state = False
             
             if player_lives <= 0:
                 show_message(f"💀 Tu alma ha sido devorada 💀")
@@ -1281,18 +1632,22 @@ while running:
         
         # Dibujar todo
         screen.fill(COLOR_BACKGROUND)
-        draw_maze()
+        draw_maze()  # Ahora con puertas más visibles
         draw_player()
         draw_enemies()  # Ya no dibuja fantasmas invisibles
         draw_projectiles()
         draw_aim_bot_indicators()
-        draw_ui()
+        draw_ui()  # UI mejorada
         draw_temp_message()  # NUEVO: Dibujar mensaje temporal
 
-        if keys[pygame.K_ESCAPE]:
-            # NUEVO: Limpiar mensaje temporal al salir
+        # NUEVO: Salir del juego también con botón B del control
+        if keys[pygame.K_ESCAPE] or controller_b:
+            # NUEVO: Limpiar mensaje temporal y estados de control al salir
             temp_message = ""
             temp_message_time = 0
+            last_button_a_state = False
+            last_button_b_state = False
+            last_space_state = False
             reset_menu()  # ASEGURAR menú limpio
             game_state = STATE_MENU
     
