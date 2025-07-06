@@ -19,7 +19,7 @@ import sys
 import random
 import time
 import math
-from scripts import AStar, create_enemy_behavior, GhostBehavior
+from scripts import AStar, create_enemy_behavior
 
 # Inicializar Pygame
 pygame.init()
