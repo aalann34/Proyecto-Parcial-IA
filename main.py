@@ -1,3 +1,11 @@
+print("🎮 Sistema de auto-escalado activado - Laberinto grande y visible")
+print("🖼️ Ventana optimizada con laberinto de tamaño perfecto")
+print("💡 Controles de tamaño:")
+print("   - F11: Pantalla completa")
+print("   - +/-: Ajustar tamaño del laberinto")
+print("🎯 Laberinto optimizado para máxima visibilidad")
+print("")
+
 # ========================================
 # PERRO HÉROE - SISTEMA MEJORADO CON AIM BOT Y PAREDES INFERNALES
 # ========================================
@@ -244,18 +252,18 @@ def detect_screen_resolution():
     return scale_factor, desktop_width, desktop_height
 
 def calculate_optimal_dimensions(scale_factor, desktop_width, desktop_height):
-    """Calcula dimensiones óptimas para el juego - RESOLUCIÓN MODERADA"""
+    """Calcula dimensiones óptimas para el juego - LABERINTO MÁS GRANDE Y VISIBLE"""
     
-    # AJUSTADO: Resolución más moderada para mejor UI
-    base_tile_size = 35  # Reducido de 45 a 35 para mejor balance
+    # CORREGIDO: Laberinto más grande para mejor visibilidad
+    base_tile_size = 50  # AUMENTADO de 35 a 50 para mejor visibilidad
     tile_size = int(base_tile_size * scale_factor)
-    tile_size = max(25, min(tile_size, 60))  # Rango moderado: 25-60 píxeles
+    tile_size = max(40, min(tile_size, 80))  # Rango: 40-80 píxeles (más grande)
     
-    # NUEVO: Tamaños más conservadores para pantallas grandes
+    # NUEVO: Tamaños más grandes para mejor visibilidad
     if desktop_width >= 1920:
-        tile_size = max(tile_size, 35)  # Mínimo 35px en pantallas grandes
+        tile_size = max(tile_size, 55)  # Mínimo 55px en pantallas grandes
     if desktop_width >= 2560:
-        tile_size = max(tile_size, 45)  # Mínimo 45px en pantallas 2K+
+        tile_size = max(tile_size, 65)  # Mínimo 65px en pantallas 2K+
     
     # Dimensiones del laberinto
     maze_width = 24
@@ -265,22 +273,22 @@ def calculate_optimal_dimensions(scale_factor, desktop_width, desktop_height):
     min_game_width = maze_width * tile_size
     min_game_height = maze_height * tile_size + 120  # +120 para UI
     
-    # AJUSTADO: Ventana más moderada (80% de la pantalla)
-    max_window_width = int(desktop_width * 0.80)  # Reducido de 0.95 a 0.80
-    max_window_height = int(desktop_height * 0.85)  # Reducido de 0.95 a 0.85
+    # AJUSTADO: Ventana moderada pero laberinto grande
+    max_window_width = int(desktop_width * 0.85)  # 85% de la pantalla
+    max_window_height = int(desktop_height * 0.90)  # 90% de la pantalla
     
-    # AJUSTADO: Tamaño mínimo más conservador
-    min_window_width = max(1000, min_game_width)  # Reducido de 1200 a 1000
-    min_window_height = max(700, min_game_height)  # Reducido de 800 a 700
+    # AJUSTADO: Tamaño mínimo para acomodar laberinto grande
+    min_window_width = max(1200, min_game_width)  
+    min_window_height = max(800, min_game_height)  
     
-    # Determinar tamaño final de ventana (más conservador)
-    window_width = max(min_window_width, min(max_window_width, min_game_width + 300))
-    window_height = max(min_window_height, min(max_window_height, min_game_height + 150))
+    # Determinar tamaño final de ventana
+    window_width = max(min_window_width, min(max_window_width, min_game_width + 200))
+    window_height = max(min_window_height, min(max_window_height, min_game_height + 100))
     
-    print(f"🎮 Dimensiones calculadas (RESOLUCIÓN MODERADA):")
-    print(f"   - Tamaño de celda: {tile_size}px (optimizado para UI)")
+    print(f"🎮 Dimensiones calculadas (LABERINTO GRANDE Y VISIBLE):")
+    print(f"   - Tamaño de celda: {tile_size}px (AUMENTADO para mejor visibilidad)")
     print(f"   - Laberinto: {min_game_width}x{min_game_height - 120}px")
-    print(f"   - Ventana: {window_width}x{window_height} (80% pantalla)")
+    print(f"   - Ventana: {window_width}x{window_height}")
     print(f"   - Resolución detectada: {desktop_width}x{desktop_height}")
     
     return tile_size, window_width, window_height, maze_width, maze_height
@@ -317,31 +325,31 @@ except:
 
 # Fallback: Si no se pudo maximizar, usar una ventana más grande
 if not maximized_successfully:
-    # Crear una ventana más moderada manualmente
-    fallback_width = min(1200, int(desktop_width * 0.80))  # Reducido de 1600 a 1200
-    fallback_height = min(800, int(desktop_height * 0.80))  # Reducido de 1000 a 800
+    # Crear una ventana apropiada para el laberinto grande
+    fallback_width = min(1400, int(desktop_width * 0.85))  # Aumentado para acomodar laberinto
+    fallback_height = min(900, int(desktop_height * 0.85))  # Aumentado para acomodar laberinto
     screen = pygame.display.set_mode((fallback_width, fallback_height))
     SCREEN_WIDTH = fallback_width
     SCREEN_HEIGHT = fallback_height
-    print(f"🖼️ Ventana moderada creada: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
-    print("💡 Usa F12 para maximizar o +/- para ajustar el laberinto")
+    print(f"🖼️ Ventana grande creada: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
+    print("💡 Usa F11 para pantalla completa o +/- para ajustar el laberinto")
 
 def adjust_tile_size(increase=True):
-    """NUEVO: Función para ajustar el tamaño del laberinto dinámicamente"""
+    """Función para ajustar el tamaño del laberinto dinámicamente"""
     global TILE_SIZE, emoji_font, emoji_font_size
     
     old_size = TILE_SIZE
     
     if increase:
-        TILE_SIZE = min(TILE_SIZE + 5, 100)  # Máximo 100px
+        TILE_SIZE = min(TILE_SIZE + 5, 120)  # Máximo 120px (aumentado)
         action = "aumentado"
     else:
-        TILE_SIZE = max(TILE_SIZE - 5, 25)   # Mínimo 25px
+        TILE_SIZE = max(TILE_SIZE - 5, 30)   # Mínimo 30px (aumentado)
         action = "reducido"
     
     if TILE_SIZE != old_size:
         # Actualizar fuente de emojis para que coincida
-        emoji_font_size = int(TILE_SIZE * 0.85)
+        emoji_font_size = int(TILE_SIZE * 0.8)
         emoji_font = pygame.font.SysFont('Segoe UI Emoji', emoji_font_size)
         
         print(f"🔧 Tamaño de laberinto {action}: {old_size}px → {TILE_SIZE}px")
@@ -351,72 +359,26 @@ def adjust_tile_size(increase=True):
         print(f"⚠️ Tamaño {limit} alcanzado: {TILE_SIZE}px")
         show_temp_message(f"Tamaño {limit}: {TILE_SIZE}px")
 
-def toggle_maximize():
-    """NUEVO: Función para maximizar/restaurar ventana con F12"""
-    global screen, SCREEN_WIDTH, SCREEN_HEIGHT, scale_factor
-    global font, small_font, emoji_font, base_font_size, small_font_size, emoji_font_size
-    
-    try:
-        if os.name == 'nt':  # Windows
-            import pygame._sdl2
-            window = pygame._sdl2.Window.from_display_module()
-            
-            # Alternar entre maximizado y restaurado
-            if hasattr(window, 'is_maximized') and window.is_maximized:
-                window.restore()
-                screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
-                SCREEN_WIDTH = WINDOW_WIDTH
-                SCREEN_HEIGHT = WINDOW_HEIGHT
-                print(f"🖼️ Ventana restaurada: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
-            else:
-                window.maximize()
-                # Esperar un poco para que se actualice
-                pygame.time.wait(100)
-                SCREEN_WIDTH = screen.get_width()
-                SCREEN_HEIGHT = screen.get_height()
-                print(f"🖼️ Ventana maximizada: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
-                
-                # Recalcular factor de escala para la nueva resolución
-                scale_factor = min(SCREEN_WIDTH / 1920, SCREEN_HEIGHT / 1080)
-                scale_factor = max(0.8, min(scale_factor, 2.5))
-                
-                # Actualizar fuentes para el nuevo tamaño
-                base_font_size = max(18, int(24 * scale_factor))
-                small_font_size = max(14, int(18 * scale_factor))
-                emoji_font_size = max(18, int(TILE_SIZE * 0.8))
-                
-                font = pygame.font.SysFont('Arial', base_font_size)
-                small_font = pygame.font.SysFont('Arial', small_font_size)
-                emoji_font = pygame.font.SysFont('Segoe UI Emoji', emoji_font_size)
-        else:
-            # Para otros sistemas, usar pantalla completa
-            toggle_fullscreen()
-    except Exception as e:
-        print(f"⚠️ Error maximizando: {e}")
-        # Fallback: cambiar a una ventana más grande
-        screen = pygame.display.set_mode((min(1400, desktop_width), min(900, desktop_height)))
-        SCREEN_WIDTH = screen.get_width()
-        SCREEN_HEIGHT = screen.get_height()
-        print(f"🖼️ Ventana redimensionada: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
+# FUNCIÓN F12 ELIMINADA - SOLO USAR F11 PARA PANTALLA COMPLETA
 
-# Configuración de fuentes escaladas automáticamente - MODERADAS
+# Configuración de fuentes escaladas automáticamente - ADAPTADAS AL LABERINTO GRANDE
 pygame.font.init()
-# AJUSTADO: Fuentes más moderadas para resolución conservadora
-base_font_size = max(18, int(24 * scale_factor))  # Reducido de 28 a 24
-small_font_size = max(14, int(18 * scale_factor))  # Reducido de 22 a 18
-emoji_font_size = max(16, int(TILE_SIZE * 0.75))  # Reducido factor de 0.85 a 0.75
+# AJUSTADO: Fuentes adaptadas al laberinto más grande
+base_font_size = max(20, int(26 * scale_factor))  # Aumentado de 24 a 26
+small_font_size = max(16, int(20 * scale_factor))  # Aumentado de 18 a 20
+emoji_font_size = max(18, int(TILE_SIZE * 0.8))   # Adaptado al nuevo TILE_SIZE
 
 font = pygame.font.SysFont('Arial', base_font_size)
 small_font = pygame.font.SysFont('Arial', small_font_size)
 emoji_font = pygame.font.SysFont('Segoe UI Emoji', emoji_font_size)
 
-print(f"✅ Configuración de pantalla moderada:")
+print(f"✅ Configuración de pantalla con laberinto grande:")
 print(f"   - Resolución de escritorio: {desktop_width}x{desktop_height}")
 print(f"   - Tamaño de ventana inicial: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
 print(f"   - Factor de escala: {scale_factor:.2f}")
 print(f"   - Tamaño de fuente principal: {base_font_size}px")
 print(f"   - Tamaño de fuente pequeña: {small_font_size}px")
-print(f"   - Tamaño de celda del juego: {TILE_SIZE}px (RESOLUCIÓN MODERADA)")
+print(f"   - Tamaño de celda del juego: {TILE_SIZE}px (GRANDE Y VISIBLE)")
 print(f"   - Tamaño total del laberinto: {MAZE_WIDTH * TILE_SIZE}x{MAZE_HEIGHT * TILE_SIZE}px")
 
 def toggle_fullscreen():
@@ -633,7 +595,7 @@ door_sprite = None  # NUEVO: Sprite de puerta
 current_direction = 'right'
 
 # ========================================
-# SISTEMA DE AUDIO MEJORADO
+# SISTEMA DE AUDIO MEJORADO (INTEGRADO CHATGPT SOLUTION)
 # ========================================
 
 # Variables para sonidos
@@ -704,13 +666,12 @@ def stop_music():
     except:
         pass
 
-# Cargar todos los sonidos al inicio
 def load_all_audio():
     """Carga todos los recursos de audio del juego"""
     global music_loaded, music_paths
     
     print("🎵 Cargando recursos de audio...")
-    
+
     # Cargar sonidos de efectos
     sounds_to_load = [
         ('disparo.wav', 'shoot'),
@@ -722,23 +683,22 @@ def load_all_audio():
         ('fantasma.wav', 'ghost'),
         ('teletransporte.wav', 'teleport')
     ]
-    
+
     sounds_loaded = 0
     for filename, sound_name in sounds_to_load:
         if load_sound(filename, sound_name):
             sounds_loaded += 1
-    
+
     # Verificar música disponible - MEJORADO
     print("🎵 Buscando archivos de música...")
-    
-    # Verificar cada archivo de música individualmente
+
     music_checks = [
         ('menu.mp3', 'menu', 'Música del menú principal'),
         ('juego.mp3', 'game', 'Música durante el gameplay'),
         ('victoria.mp3', 'victory', 'Música de victoria'),
         ('derrota.mp3', 'defeat', 'Música de derrota')
     ]
-    
+
     music_count = 0
     for filename, key, description in music_checks:
         music_path = load_music(filename, key)
@@ -748,17 +708,17 @@ def load_all_audio():
             print(f"   ✅ {description}: {filename}")
         else:
             print(f"   ❌ {description}: {filename} NO ENCONTRADO")
-    
+
     if sounds_loaded > 0:
         print(f"🔊 SONIDOS: {sounds_loaded}/{len(sounds_to_load)} cargados")
     else:
         print("⚠️ SONIDOS: No se cargaron efectos de sonido")
-    
+
     if music_count > 0:
         print(f"🎵 MÚSICA: {music_count}/4 pistas encontradas")
         music_loaded = True
-        
-        # NUEVO: Reproducir música del menú automáticamente al inicio
+
+        # Reproducir música del menú automáticamente
         if music_paths['menu']:
             print("🎵 Iniciando música del menú...")
             play_music(music_paths['menu'], volume=0.3)
@@ -766,12 +726,33 @@ def load_all_audio():
         print("⚠️ MÚSICA: No se encontraron archivos de música")
         print("📁 Asegúrate de que los archivos estén en: assets/music/")
         print("📋 Nombres requeridos: menu.mp3, juego.mp3, victoria.mp3, derrota.mp3")
-    
-    # Devolver estadísticas
+
     return sounds_loaded, music_count
 
-# Intentar cargar audio al inicio
+# ✅ CARGAR AUDIO AL INICIO (¡IMPORTANTE hacerlo antes de usar music_count!)
 sounds_count, music_count = load_all_audio()
+
+# ✅ MOSTRAR ESTADO DEL AUDIO DESPUÉS DE CARGAR
+print("")
+print("📊 ESTADO DEL AUDIO:")
+if music_count == 4:
+    print("✅ MÚSICA: Completa - Todas las pistas cargadas")
+else:
+    print(f"⚠️ MÚSICA: {music_count}/4 pistas cargadas")
+
+if sounds_count > 0:
+    print(f"✅ SONIDOS: {sounds_count}/8 efectos cargados")
+    if sounds_count < 8:
+        print("    📋 Ver MUSICA_Y_SONIDOS_PENDIENTES.md para completar sonidos")
+else:
+    print("⚠️ SONIDOS: Pendientes - Ver MUSICA_Y_SONIDOS_PENDIENTES.md")
+
+if music_count == 4 and sounds_count == 8:
+    print("🎉 ¡AUDIO COMPLETO! Tu proyecto está 100% listo para el examen")
+elif music_count == 4:
+    print("🎵 Música completa - Solo faltan los efectos de sonido")
+else:
+    print("🔊 Agrega los archivos de audio faltantes para completar el proyecto")
 
 # ========================================
 # SISTEMA DE AIM BOT MEJORADO
@@ -843,8 +824,12 @@ class AimBot:
 # Instancia global del aim bot
 aim_bot = AimBot(detection_range=6)
 
+# ========================================
+# SISTEMA DE SPRITES MEJORADO Y CORREGIDO
+# ========================================
+
 def load_dog_sprite():
-    """ACTUALIZADO: Función para cargar el sprite del perro con escalado automático"""
+    """CORREGIDO: Función para cargar el sprite del perro con escalado automático"""
     global use_sprites, dog_sprites
     
     sprite_path = 'assets/images/perro.png'
@@ -881,7 +866,7 @@ def load_dog_sprite():
         return False
 
 def load_enemy_sprites():
-    """ACTUALIZADO: Función para cargar sprites de criaturas infernales con escalado automático"""
+    """CORREGIDO: Función para cargar sprites de criaturas infernales con escalado automático"""
     global enemy_sprites
     
     enemy_files = {
@@ -925,7 +910,7 @@ def load_enemy_sprites():
     return sprites_loaded > 0
 
 def load_poop_sprite():
-    """ACTUALIZADO: Función para cargar el sprite de caca con escalado automático"""
+    """CORREGIDO: Función para cargar el sprite de caca con escalado automático"""
     global poop_sprite
     
     sprite_path = 'assets/images/caca.png'
@@ -948,7 +933,7 @@ def load_poop_sprite():
         return False
 
 def load_cover_image():
-    """ACTUALIZADO: Función para cargar la portada del juego con escalado automático"""
+    """CORREGIDO: Función para cargar la portada del juego con escalado automático"""
     global cover_image
     
     sprite_path = 'assets/images/portada.png'
@@ -976,7 +961,7 @@ def load_cover_image():
         return False
 
 def load_wall_sprite():
-    """ACTUALIZADO: Función para cargar el sprite de pared infernal con escalado automático"""
+    """CORREGIDO: Función para cargar el sprite de pared infernal con escalado automático"""
     global wall_sprite
     
     sprite_path = 'assets/images/bloquerojo.png'
@@ -998,7 +983,7 @@ def load_wall_sprite():
         return False
 
 def load_heart_sprite():
-    """ACTUALIZADO: Función para cargar el sprite de corazón con escalado automático"""
+    """CORREGIDO: Función para cargar el sprite de corazón con escalado automático"""
     global heart_sprite
     
     sprite_path = 'assets/images/corazon.png'
@@ -1023,7 +1008,7 @@ def load_heart_sprite():
         return False
 
 def load_diamond_sprite():
-    """ACTUALIZADO: Función para cargar el sprite de diamante con escalado automático"""
+    """CORREGIDO: Función para cargar el sprite de diamante con escalado automático"""
     global diamond_sprite
     
     sprite_path = 'assets/images/diamante.png'
@@ -1045,7 +1030,7 @@ def load_diamond_sprite():
         return False
 
 def load_door_sprite():
-    """ACTUALIZADO: Función para cargar el sprite de puerta con escalado automático"""
+    """CORREGIDO: Función para cargar el sprite de puerta con escalado automático"""
     global door_sprite
     
     sprite_path = 'assets/images/puerta.png'
@@ -1066,49 +1051,47 @@ def load_door_sprite():
     except Exception as e:
         return False
 
-# Intentar cargar sprites al iniciar (con auto-escalado)
-load_dog_sprite()
-load_enemy_sprites()
-load_poop_sprite()
-load_cover_image()
-load_wall_sprite()
-load_heart_sprite()
-load_diamond_sprite()
-load_door_sprite()
+# ✅ CARGAR SPRITES AL INICIO AUTOMÁTICAMENTE
+def load_all_sprites():
+    """NUEVO: Carga automáticamente todos los sprites al inicio"""
+    print("")
+    print("🎨 CARGANDO SPRITES:")
+    
+    sprites_loaded = 0
+    total_sprites = 7
+    
+    # Cargar cada sprite
+    if load_dog_sprite():
+        sprites_loaded += 1
+    if load_enemy_sprites():
+        sprites_loaded += 1  
+    if load_poop_sprite():
+        sprites_loaded += 1
+    if load_cover_image():
+        sprites_loaded += 1
+    if load_wall_sprite():
+        sprites_loaded += 1
+    if load_heart_sprite():
+        sprites_loaded += 1
+    if load_diamond_sprite():
+        sprites_loaded += 1
+    if load_door_sprite():
+        sprites_loaded += 1
+    
+    print(f"")
+    print(f"🎨 SPRITES CARGADOS: {sprites_loaded}/{total_sprites + 1}")
+    if sprites_loaded > 4:
+        print("✅ ¡Sprites principales cargados correctamente!")
+    else:
+        print("⚠️ Algunos sprites no se encontraron - El juego usará emojis como respaldo")
+    
+    return sprites_loaded
 
-print("🎮 Sistema de auto-escalado moderado activado - Resolución balanceada")
-print("🖼️ Ventana optimizada para mejor visibilidad de UI")
-print("💡 Controles de tamaño:")
-print("   - F12: Maximizar/restaurar ventana")
-print("   - F11: Pantalla completa")
-print("   - +/-: Ajustar tamaño del laberinto")
-print("🎯 Laberinto optimizado para resolución moderada")
-print("")
-print("✅ SPRITES: Completos y cargados correctamente")
+# ✅ CARGAR TODOS LOS SPRITES AUTOMÁTICAMENTE
+sprites_loaded_count = load_all_sprites()
 
-# Mostrar estado del audio basado en lo que se cargó
-if music_count == 4:
-    print("✅ MÚSICA: Completa - Todas las pistas cargadas")
-else:
-    print(f"⚠️ MÚSICA: {music_count}/4 pistas cargadas")
-
-if sounds_count > 0:
-    print(f"✅ SONIDOS: {sounds_count}/8 efectos cargados")
-    if sounds_count < 8:
-        print("    📋 Ver MUSICA_Y_SONIDOS_PENDIENTES.md para completar sonidos")
-else:
-    print("⚠️ SONIDOS: Pendientes - Ver MUSICA_Y_SONIDOS_PENDIENTES.md")
-
-if music_count == 4 and sounds_count == 8:
-    print("🎉 ¡AUDIO COMPLETO! Tu proyecto está 100% listo para el examen")
-elif music_count == 4:
-    print("🎵 Música completa - Solo faltan los efectos de sonido")
-else:
-    print("🔊 Agrega los archivos de audio faltantes para completar el proyecto")
-
-# Función para recargar sprites durante el juego (opcional)
 def reload_sprites_if_needed():
-    """Recarga sprites si no están cargados pero el archivo existe"""
+    """CORREGIDO: Recarga sprites si no están cargados pero el archivo existe"""
     global use_sprites
     if not use_sprites:
         load_dog_sprite()
@@ -1756,9 +1739,9 @@ def draw_ui():
     
     # Información de controles más compacta
     if controller_connected:
-        control_text = f"🎮 Xbox360 | {levels[current_level]['difficulty']} | {FPS}FPS | A=disparar B=salir | F12=maximizar +/-=tamaño laberinto"
+        control_text = f"🎮 Xbox360 | {levels[current_level]['difficulty']} | {FPS}FPS | A=disparar B=salir | +/-=tamaño F11=pantalla"
     else:
-        control_text = f"⌨️ Teclado | {levels[current_level]['difficulty']} | {FPS}FPS | ESPACIO=disparar A=guiado +/-=tamaño F12=maximizar"
+        control_text = f"⌨️ Teclado | {levels[current_level]['difficulty']} | {FPS}FPS | ESPACIO=disparar A=guiado +/-=tamaño F11=pantalla"
     
     info_color = COLOR_FIRE if controller_connected else COLOR_TEXT
     info_text_surface = small_font.render(control_text, True, info_color)
@@ -1820,7 +1803,7 @@ def draw_menu():
         "🎮 CONTROLES:",
         "Xbox 360: A=aceptar | B=atrás | Joystick=navegar",
         "Teclado: Enter=aceptar | ESC=atrás | Flechas=navegar",
-        "F12=Maximizar | F11=Pantalla completa | +/- = Ajustar laberinto"
+        "F11=Pantalla completa | +/- = Ajustar laberinto"
     ]
     
     for i, line in enumerate(control_lines):
@@ -1947,21 +1930,58 @@ def draw_difficulty_menu():
     
     pygame.display.flip()
 
+def reset_game():
+    global player_pos, player_lives, current_level, maze, enemies, projectiles, pathfinder
+    global player_score, screen, total_diamonds, collected_diamonds, temp_message, temp_message_time
+    global last_button_a_state, last_button_b_state, last_space_state
+    
+    player_pos = [1, 1]
+    player_lives = 3
+    current_level = 0
+    player_score = 0
+    
+    # NUEVO: Limpiar mensajes temporales y estados de control
+    temp_message = ""
+    temp_message_time = 0
+    last_button_a_state = False
+    last_button_b_state = False
+    last_space_state = False
+    
+    # CORREGIDO: Recargar laberinto ORIGINAL del nivel inicial (con diamantes)
+    import copy
+    maze = copy.deepcopy(levels[current_level]['maze'])  # Copia profunda para no modificar el original
+    projectiles = []
+    
+    # Actualizar dimensiones de pantalla
+    update_maze_dimensions()
+    
+    # Inicializar pathfinder ANTES de generar enemigos
+    pathfinder = AStar(maze)
+    
+    # Generar enemigos DESPUÉS de inicializar pathfinder (esto también resetea diamantes)
+    reset_enemies()
+    
+    print(f"🔄 Juego reiniciado - Nivel {current_level + 1}")
+    print(f"💎 Diamantes en nivel: {total_diamonds} (LABERINTO ORIGINAL RECARGADO)")
+
 def reset_enemies():
     """Resetea enemigos de forma aleatoria según el nivel actual"""
-    global enemies, enemy_behaviors, pathfinder, total_diamonds, collected_diamonds
+    global enemies, enemy_behaviors, pathfinder, total_diamonds, collected_diamonds, maze
+    
+    # CORREGIDO: Recargar laberinto original antes de contar diamantes
+    import copy
+    maze = copy.deepcopy(levels[current_level]['maze'])  # Asegurar laberinto fresco
     
     # RESETEAR SISTEMA DE DIAMANTES
-    total_diamonds = count_diamonds_in_level(levels[current_level]['maze'])
+    total_diamonds = count_diamonds_in_level(maze)
     collected_diamonds = 0
     print(f"💎 Nivel {current_level + 1}: {total_diamonds} diamantes totales - TODOS REQUERIDOS")
     
-    # Asegurar pathfinder
-    current_maze = levels[current_level]['maze']
-    pathfinder = AStar(current_maze)
+    # Asegurar pathfinder con laberinto fresco
+    pathfinder = AStar(maze)
     
     # NUEVO: Debug de posiciones antes de generar enemigos
-    debug_enemy_spawn_positions(current_maze)
+    debug_enemy_spawn_positions(maze)
     
     # Generar enemigos aleatorios
     enemies_config = generate_random_enemies(current_level)
@@ -1990,38 +2010,6 @@ def reset_enemies():
     
     print(f"✅ Nivel {current_level + 1}: {len(enemies)} enemigos cargados")
 
-def reset_game():
-    global player_pos, player_lives, current_level, maze, enemies, projectiles, pathfinder
-    global player_score, screen, total_diamonds, collected_diamonds, temp_message, temp_message_time
-    global last_button_a_state, last_button_b_state, last_space_state
-    
-    player_pos = [1, 1]
-    player_lives = 3
-    current_level = 0
-    player_score = 0
-    
-    # NUEVO: Limpiar mensajes temporales y estados de control
-    temp_message = ""
-    temp_message_time = 0
-    last_button_a_state = False
-    last_button_b_state = False
-    last_space_state = False
-    
-    # Cargar laberinto del nivel inicial
-    maze = levels[current_level]['maze']
-    projectiles = []
-    
-    # Actualizar dimensiones de pantalla
-    update_maze_dimensions()
-    
-    # Inicializar pathfinder ANTES de generar enemigos
-    pathfinder = AStar(maze)
-    
-    # Generar enemigos DESPUÉS de inicializar pathfinder (esto también resetea diamantes)
-    reset_enemies()
-    
-    print(f"🔄 Juego reiniciado - Nivel {current_level + 1}")
-
 def show_message(message):
     # Crear superficie temporal para el mensaje
     temp_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
@@ -2043,8 +2031,9 @@ def next_level():
     
     current_level += 1
     if current_level < len(levels):
-        # Actualizar laberinto
-        maze = levels[current_level]['maze']
+        # CORREGIDO: Recargar laberinto ORIGINAL del nuevo nivel
+        import copy
+        maze = copy.deepcopy(levels[current_level]['maze'])  # Copia profunda
         update_maze_dimensions()
         
         # IMPORTANTE: Reinicializar pathfinder ANTES de generar enemigos
@@ -2077,9 +2066,30 @@ def next_level():
             play_music(music_paths['menu'], volume=0.3)
 
 # Inicialización
+print("")
+print("🎮 INICIALIZANDO COMPONENTES FINALES:")
+
+# ✅ CARGAR SPRITES AUTOMÁTICAMENTE AL INICIO
+print("🎨 Cargando sprites automáticamente...")
+
+# ✅ CARGAR TODOS LOS SPRITES AL INICIO
+sprites_loaded_count = load_all_sprites()
+
+print("🔧 PROBLEMAS CORREGIDOS:")
+print("   ✅ Bug de diamantes: Ahora reaparecen en nueva partida")
+print("   ✅ Tamaño del laberinto: Aumentado para mejor visibilidad")
+print("   ✅ Sprites: Carga automática al inicio del juego")
+print("   ✅ Audio: Integrada solución de ChatGPT")
+
+# ✅ INICIALIZAR PATHFINDER
+pathfinder = AStar(levels[current_level]['maze'])
+
 clock = pygame.time.Clock()
 if 'enemies' in globals() and enemies:
     initialize_enemy_behaviors()
+
+# ✅ GENERAR ENEMIGOS INICIALES
+reset_enemies()
 
 # Loop principal
 running = True
@@ -2102,16 +2112,13 @@ while running:
             controller_connected = False
         
         if event.type == pygame.KEYDOWN:
-            # NUEVO: Control de pantalla completa (funciona en todos los estados)
+            # Control de pantalla completa (funciona en todos los estados)
             if event.key == pygame.K_F11:
                 toggle_fullscreen()
             elif event.key == pygame.K_F4 and fullscreen_mode:
                 # F4 para salir de pantalla completa
                 toggle_fullscreen()
-            # NUEVO: F12 para maximizar/restaurar ventana
-            elif event.key == pygame.K_F12:
-                toggle_maximize()
-            # NUEVO: Controles para ajustar tamaño del laberinto
+            # Controles para ajustar tamaño del laberinto
             elif event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:
                 adjust_tile_size(increase=True)  # + para agrandar
             elif event.key == pygame.K_MINUS:
