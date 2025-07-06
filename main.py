@@ -1350,14 +1350,14 @@ def move_projectiles():
             hit = False
             for i, e in enumerate(enemies[:]):
                 if e['pos'] == [x, y]:
-                    # VERIFICAR SI EL FANTASMA ESTÁ INVISIBLE
+                    # Verificar si el enemigo está invisible
                     is_invisible = False
                     if e['type'] == '👻' and i < len(enemy_behaviors):
                         behavior = enemy_behaviors[i]
                         if hasattr(behavior, 'is_currently_invisible'):
                             is_invisible = behavior.is_currently_invisible()
                     
-                    # NO PUEDE SER GOLPEADO SI ESTÁ INVISIBLE
+                    # No puede ser golpeado si está invisible
                     if not is_invisible:
                         enemies.remove(e)
                         if i < len(enemy_behaviors):
@@ -1386,14 +1386,14 @@ def check_enemy_collision():
     
     for i, e in enumerate(enemies):
         if e['pos'] == player_pos:
-            # VERIFICAR SI EL FANTASMA ESTÁ INVISIBLE
+            # Verificar si el enemigo está invisible
             is_invisible = False
             if e['type'] == '👻' and i < len(enemy_behaviors):
                 behavior = enemy_behaviors[i]
                 if hasattr(behavior, 'is_currently_invisible'):
                     is_invisible = behavior.is_currently_invisible()
             
-            # NO PUEDE COLISIONAR SI ESTÁ INVISIBLE
+            # No puede colisionar si está invisible
             if not is_invisible:
                 return True
     
@@ -1426,9 +1426,8 @@ def initialize_enemy_behaviors():
         )
         enemy_behaviors.append(behavior)
         
-        # DEBUG: Verificar si se crearon fantasmas
-        if enemy['type'] == '👻':
-            print(f"👻 FANTASMA CREADO: {enemy['pos']} - Puede volverse invisible")
+        # DEBUG: Verificar enemigos creados
+        print(f"👾 ENEMIGO CREADO: {enemy['pos']} - {enemy['type']}")
 
 def debug_enemy_spawn_positions(maze):
     """NUEVO: Función de debug para verificar posiciones de spawn"""
@@ -1843,7 +1842,6 @@ def draw_menu():
     game_info = [
         "🎯 OBJETIVO: Recolecta TODOS los diamantes 💎 para abrir las puertas 🚪",
         "👹 ENEMIGOS: 7 tipos de criaturas infernales con IA única",
-        "👻 Los fantasmas pueden volverse INVISIBLES temporalmente",
         "💩 DISPARO: Siempre puedes disparar (ESPACIO/A) - Presiona A para aim bot",
         "🎮 Sprites personalizados para mejor experiencia visual"
     ]
