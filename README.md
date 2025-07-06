@@ -138,6 +138,7 @@ assets/
 - ✅ **Detección automática** de sprites al iniciar
 - ✅ **Escalado inteligente** al tamaño de pantalla
 - ✅ **Fallback robusto** - usa emojis si no encuentra sprites
+- ✅ **Efectos especiales** - sprite de humo para invisibilidad
 - ✅ **Recarga en tiempo real** con tecla R
 - ✅ **Informes de estado** - te dice qué archivos faltan
 
@@ -250,6 +251,7 @@ Proyecto-Parcial-IA/
 ### 🎨 **Sistema de Rendering**
 - **Sprites escalables** automáticamente según resolución
 - **Efectos visuales** - brillos, transparencias, animaciones
+- **Efectos especiales** - sprite de humo para estados invisibles
 - **UI adaptativa** que se ajusta a cualquier tamaño de pantalla
 - **Mensajes temporales** con efectos de fade
 
@@ -303,7 +305,7 @@ Proyecto-Parcial-IA/
 ### 📈 **Estadísticas del Proyecto**
 - **Líneas de código:** ~2000+ líneas de Python puro
 - **Archivos principales:** 7 módulos organizados
-- **Sprites soportados:** 13 sprites personalizados
+- **Sprites soportados:** 14 sprites personalizados
 - **Efectos de audio:** 8 sonidos + 4 músicas
 - **Tiempo de desarrollo:** 3 semanas de programación intensiva
 

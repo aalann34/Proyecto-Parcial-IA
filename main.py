@@ -599,6 +599,7 @@ wall_sprite = None  # NUEVO: Sprite de pared infernal
 heart_sprite = None  # NUEVO: Sprite de corazón
 diamond_sprite = None  # NUEVO: Sprite de diamante
 door_sprite = None  # NUEVO: Sprite de puerta
+humo_sprite = None  # NUEVO: Sprite de humo para fantasmas invisibles
 current_direction = 'right'
 
 # ========================================
@@ -1063,6 +1064,28 @@ def load_door_sprite():
     except Exception as e:
         return False
 
+def load_humo_sprite():
+    """NUEVO: Función para cargar el sprite de humo con escalado automático"""
+    global humo_sprite
+    
+    sprite_path = 'assets/images/humo.png'
+    
+    try:
+        import os
+        if os.path.exists(sprite_path):
+            print(f"💨 ¡Sprite de humo encontrado!")
+            
+            humo_image = pygame.image.load(sprite_path)
+            humo_sprite = pygame.transform.scale(humo_image, (TILE_SIZE, TILE_SIZE))
+            
+            print(f"💨 ¡Humo cargado! Tamaño: {TILE_SIZE}x{TILE_SIZE}")
+            return True
+        else:
+            return False
+            
+    except Exception as e:
+        return False
+
 # ✅ CARGAR SPRITES AL INICIO AUTOMÁTICAMENTE
 def load_all_sprites():
     """NUEVO: Carga automáticamente todos los sprites al inicio"""
@@ -1070,7 +1093,7 @@ def load_all_sprites():
     print("🎨 CARGANDO SPRITES:")
     
     sprites_loaded = 0
-    total_sprites = 7
+    total_sprites = 8  # Actualizado: ahora son 8 sprites
     
     # Cargar cada sprite
     if load_dog_sprite():
@@ -1089,10 +1112,12 @@ def load_all_sprites():
         sprites_loaded += 1
     if load_door_sprite():
         sprites_loaded += 1
+    if load_humo_sprite():  # NUEVO: Cargar sprite de humo
+        sprites_loaded += 1
     
     print(f"")
     print(f"🎨 SPRITES CARGADOS: {sprites_loaded}/{total_sprites + 1}")
-    if sprites_loaded > 4:
+    if sprites_loaded > 5:
         print("✅ ¡Sprites principales cargados correctamente!")
     else:
         print("⚠️ Algunos sprites no se encontraron - El juego usará emojis como respaldo")
@@ -1132,6 +1157,10 @@ def reload_sprites_if_needed():
     
     if door_sprite is None:
         load_door_sprite()
+    
+    # NUEVO: Recargar sprite de humo
+    if humo_sprite is None:
+        load_humo_sprite()
 
 # Símbolos para elementos del juego (simplificados)
 GAME_SYMBOLS = {
@@ -1603,21 +1632,29 @@ def draw_enemies():
             if hasattr(behavior, 'is_currently_invisible'):
                 is_invisible = behavior.is_currently_invisible()
         
-        if is_invisible:
-            continue
-        
         screen_x = x * TILE_SIZE + offset_x
         screen_y = y * TILE_SIZE + offset_y
         
-        enemy_dir = enemy.get("dir", [1, 0])
-        sprite_direction = 'left' if enemy_dir[0] < 0 else 'right'
-        
-        if enemy_type in enemy_sprites:
-            scaled_enemy = pygame.transform.scale(enemy_sprites[enemy_type][sprite_direction], (TILE_SIZE, TILE_SIZE))
-            screen.blit(scaled_enemy, (screen_x, screen_y))
+        if is_invisible:
+            # NUEVO: Mostrar sprite de humo si está disponible
+            if humo_sprite:
+                scaled_humo = pygame.transform.scale(humo_sprite, (TILE_SIZE, TILE_SIZE))
+                screen.blit(scaled_humo, (screen_x, screen_y))
+            else:
+                # Fallback: emoji de humo
+                humo_emoji = emoji_font.render('💨', True, (200, 200, 200))
+                screen.blit(humo_emoji, (screen_x + 4, screen_y))
         else:
-            enemy_emoji = emoji_font.render(enemy_type, True, (0, 0, 0))
-            screen.blit(enemy_emoji, (screen_x + 4, screen_y))
+            # Mostrar enemigo normal
+            enemy_dir = enemy.get("dir", [1, 0])
+            sprite_direction = 'left' if enemy_dir[0] < 0 else 'right'
+            
+            if enemy_type in enemy_sprites:
+                scaled_enemy = pygame.transform.scale(enemy_sprites[enemy_type][sprite_direction], (TILE_SIZE, TILE_SIZE))
+                screen.blit(scaled_enemy, (screen_x, screen_y))
+            else:
+                enemy_emoji = emoji_font.render(enemy_type, True, (0, 0, 0))
+                screen.blit(enemy_emoji, (screen_x + 4, screen_y))
 
 def draw_projectiles():
     """Dibuja proyectiles centrados en ventana extendida"""
