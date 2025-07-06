@@ -648,14 +648,19 @@ def load_music(filename, music_name):
         return None
 
 def play_sound(sound_name, volume=0.7):
-    """Reproduce un sonido específico"""
+    """CORREGIDO: Reproduce un sonido específico con debug"""
     if audio_enabled and sound_name in sounds:
         try:
             sound = sounds[sound_name]
             sound.set_volume(volume)
             sound.play()
+            # DEBUG: Solo mostrar sonidos importantes
+            if sound_name in ['golpe', 'diamante', 'muerte']:
+                print(f"🔊 SONIDO: {sound_name}.wav reproducido (vol: {volume:.1f})")
         except Exception as e:
             print(f"❌ Error reproduciendo sonido {sound_name}: {e}")
+    elif sound_name not in sounds and audio_enabled:
+        print(f"⚠️ Sonido '{sound_name}' no encontrado en assets/sounds/")
 
 def play_music(music_path, loop=-1, volume=0.5):
     """Reproduce música de fondo"""
@@ -680,16 +685,16 @@ def load_all_audio():
     
     print("🎵 Cargando recursos de audio...")
 
-    # Cargar sonidos de efectos
+    # CORREGIDO: Usar nombres exactos de archivos que tienes
     sounds_to_load = [
-        ('disparo.wav', 'shoot'),
-        ('golpe.wav', 'hit'),
-        ('diamante.wav', 'diamond'),
-        ('puerta.wav', 'door'),
-        ('muerte.wav', 'death'),
-        ('click.wav', 'click'),
-        ('fantasma.wav', 'ghost'),
-        ('teletransporte.wav', 'teleport')
+        ('disparo.wav', 'disparo'),      # Cambié 'shoot' por 'disparo'
+        ('golpe.wav', 'golpe'),          # Cambié 'hit' por 'golpe'
+        ('diamante.wav', 'diamante'),    # Cambié 'diamond' por 'diamante'
+        ('puerta.wav', 'puerta'),        # Cambié 'door' por 'puerta'
+        ('muerte.wav', 'muerte'),        # Cambié 'death' por 'muerte'
+        ('click.wav', 'click'),          # Mantuvo igual
+        ('fantasma.wav', 'fantasma'),    # Cambié 'ghost' por 'fantasma'
+        ('teletransporte.wav', 'teletransporte')  # Cambié 'teleport' por 'teletransporte'
     ]
 
     sounds_loaded = 0
@@ -1335,7 +1340,7 @@ def draw_temp_message():
         temp_message = ""
 
 def move_enemies():
-    """Mueve enemigos usando IA"""
+    """Mueve enemigos usando IA - SIN SONIDOS INCORRECTOS"""
     global enemy_behaviors, pathfinder
     
     for behavior in enemy_behaviors:
@@ -1354,6 +1359,14 @@ def move_enemies():
             
             if pathfinder.is_valid_position(new_x, new_y):
                 enemy["pos"] = [new_x, new_y]
+    
+    # NOTA: Esta función NO debe reproducir sonidos
+    # Los sonidos solo se reproducen cuando:
+    # - El jugador dispara (disparo.wav)
+    # - El jugador golpea enemigo (golpe.wav)  
+    # - El jugador recoge diamante (diamante.wav)
+    # - El jugador es golpeado (muerte.wav)
+    # - El jugador abre puerta (puerta.wav)
 
 def move_projectiles():
     """MEJORADO: Proyectiles más rápidos y precisos"""
@@ -1393,8 +1406,8 @@ def move_projectiles():
                             enemy_behaviors.pop(i)
                         player_score += 150  # Bonus por eliminar enemigo
                         
-                        # NUEVO: Reproducir sonido de golpe
-                        play_sound('hit', volume=0.9)
+                        # CORREGIDO: Solo reproducir sonido cuando EL JUGADOR golpea a un enemigo
+                        play_sound('golpe', volume=0.9)
                         
                         hit = True
                         break
@@ -1410,11 +1423,12 @@ def move_projectiles():
     projectiles = newp
 
 def check_enemy_collision():
-    """Verifica colisiones con enemigos"""
+    """CORREGIDO: Verifica colisiones SOLO entre jugador y enemigos"""
     global player_score, enemies, enemy_behaviors
     
+    # Solo verificar si EL JUGADOR está en la misma posición que un enemigo
     for i, e in enumerate(enemies):
-        if e['pos'] == player_pos:
+        if e['pos'] == player_pos:  # SOLO verificar posición del jugador
             # Verificar si el enemigo está invisible
             is_invisible = False
             if e['type'] == '👻' and i < len(enemy_behaviors):
@@ -1424,6 +1438,7 @@ def check_enemy_collision():
             
             # No puede colisionar si está invisible
             if not is_invisible:
+                print(f"💥 COLISIÓN: Jugador golpeado por {e['type']} en {e['pos']}")
                 return True
     
     return False
@@ -1486,18 +1501,21 @@ def debug_enemy_spawn_positions(maze):
 # ========================================
 
 def handle_bonus_tile(x, y):
-    """Maneja las bonificaciones - DIAMANTES OBLIGATORIOS"""
+    """CORREGIDO: Maneja las bonificaciones - SOLO DIAMANTES"""
     global player_score, maze, collected_diamonds
     
-    if maze[y][x] == 3:  # Diamante
+    if maze[y][x] == 3:  # Solo si hay un diamante en esa posición
         player_score += 100
         collected_diamonds += 1
         maze[y][x] = 0  # Eliminar el diamante del mapa
         
-        # NUEVO: Reproducir sonido de diamante
-        play_sound('diamond', volume=0.8)
+        # CORREGIDO: Solo reproducir sonido de diamante
+        play_sound('diamante', volume=0.8)
         
-        print(f"💎 Diamante recogido! {collected_diamonds}/{total_diamonds}")
+        print(f"💎 Diamante recogido en [{x},{y}]! {collected_diamonds}/{total_diamonds}")
+        
+    # NOTA: Esta función NO debe reproducir sonido de golpe
+    # Solo debe sonar 'diamante.wav' cuando se recoge un diamante
 
 # Actualizar dimensiones del laberinto según el nivel actual
 def update_maze_dimensions():
@@ -2339,9 +2357,15 @@ while running:
         if (0 <= new_pos[0] < MAZE_WIDTH and 0 <= new_pos[1] < MAZE_HEIGHT and 
             maze[new_pos[1]][new_pos[0]] != 1):
             
-            # Manejar bonificaciones
-            handle_bonus_tile(new_pos[0], new_pos[1])
+            # CORREGIDO: Solo manejar bonificaciones si realmente nos movemos
+            old_pos = player_pos.copy()
             player_pos = new_pos
+            
+            # Solo verificar bonificaciones si cambió de posición
+            if old_pos != player_pos:
+                handle_bonus_tile(new_pos[0], new_pos[1])
+            
+        # Si el movimiento no es válido, mantener posición anterior (sin sonidos)
         
         # Asegurar dirección válida para disparar
         ensure_valid_shooting_direction()
@@ -2390,7 +2414,7 @@ while running:
             projectiles.append({'pos': player_pos.copy(), 'dir': final_direction})
             
             # 4. Reproducir sonido de disparo
-            play_sound('shoot', volume=0.6)
+            play_sound('disparo', volume=0.6)
             
             # 5. Debug mejorado
             print(f"💥 Proyectil {disparo_tipo} creado: {final_direction}")
@@ -2424,7 +2448,7 @@ while running:
                 print(f"🚪 ¡Portal abierto! Avanzando al siguiente nivel...")
                 
                 # NUEVO: Reproducir sonido de puerta
-                play_sound('door', volume=0.8)
+                play_sound('puerta', volume=0.8)
                 
                 next_level()
             else:
@@ -2442,8 +2466,8 @@ while running:
             reset_enemies()
             projectiles = []
             
-            # NUEVO: Reproducir sonido de muerte
-            play_sound('death', volume=0.8)
+            # CORREGIDO: Reproducir sonido solo cuando el JUGADOR es golpeado
+            play_sound('muerte', volume=0.8)
             
             # NUEVO: Limpiar mensaje temporal
             temp_message = ""
