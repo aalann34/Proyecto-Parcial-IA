@@ -7,11 +7,15 @@ print("🎯 Laberinto optimizado para máxima visibilidad")
 print("")
 
 # ========================================
-# PERRO HÉROE - SISTEMA MEJORADO CON AIM BOT Y PAREDES INFERNALES
+# DIMENSIONES INFERNALES - SISTEMA AVANZADO CON IA Y SPRITES
 # ========================================
-# Protagonista: Sprite del perro + sprites de enemigos + sprite de caca + portada + BLOQUE ROJO INFERNAL
-# Estructura: assets/images/, assets/sounds/, assets/music/
-# Cumple requisitos del examen parcial de IA
+# Estudiante: Alan Alberto Martinez Ubiera
+# Matrícula: 23-EISN-2-062
+# Email: aalann34@gmail.com
+# Universidad: Universidad O&M
+# Materia: Inteligencia Artificial
+# Profesor: Yoel Andeyci Pilier Martínez
+# Fecha: 5 de Julio, 2025
 # ========================================
 
 import pygame
@@ -24,27 +28,26 @@ from scripts import AStar, create_enemy_behavior
 # Inicializar Pygame
 pygame.init()
 
-# NUEVO: Inicializar sistema de audio
+# Inicializar sistema de audio
 pygame.mixer.init(frequency=22050, size=-16, channels=2, buffer=512)
 
-# NUEVO: Inicializar sistema de joysticks/controles
+# Inicializar sistema de joysticks/controles
 pygame.joystick.init()
 
-# NUEVO: Variable de pantalla completa
+# Variable de pantalla completa
 fullscreen_mode = False
 
-# NUEVO: Sistema de control Xbox 360
+# Sistema de control Xbox 360
 controller = None
 controller_connected = False
-last_button_a_state = False  # Para evitar disparos múltiples con botón A
-last_button_b_state = False  # NUEVO: Para evitar navegación múltiple con botón B
-last_space_state = False  # Para evitar disparos múltiples con teclado
+last_button_a_state = False
+last_button_b_state = False
+last_space_state = False
 
 def init_controller():
-    """Inicializa el control Xbox 360 con mejor detección"""
+    """Inicializa el control Xbox 360"""
     global controller, controller_connected
     
-    # Detectar controles conectados
     joystick_count = pygame.joystick.get_count()
     
     if joystick_count > 0:
@@ -55,7 +58,6 @@ def init_controller():
         print(f"🕹️ Ejes: {controller.get_numaxes()}")
         print(f"🔘 Botones: {controller.get_numbuttons()}")
         
-        # NUEVO: Verificar que el botón A existe
         if controller.get_numbuttons() > 0:
             print("✅ Botón A (botón 0) disponible")
         else:
@@ -71,8 +73,8 @@ def get_controller_movement():
     
     try:
         # Leer joystick izquierdo (ejes 0 y 1)
-        stick_x = controller.get_axis(0)  # Eje X del joystick izquierdo
-        stick_y = controller.get_axis(1)  # Eje Y del joystick izquierdo
+        stick_x = controller.get_axis(0)
+        stick_y = controller.get_axis(1)
         
         # Leer D-pad (sombrero 0)
         if controller.get_numhats() > 0:
@@ -89,7 +91,7 @@ def get_controller_movement():
         
         # Combinar joystick y D-pad (prioridad al D-pad)
         if hat_x != 0 or hat_y != 0:
-            return [hat_x, -hat_y]  # Invertir Y del D-pad
+            return [hat_x, -hat_y]
         else:
             return [stick_x, stick_y]
             
@@ -98,17 +100,15 @@ def get_controller_movement():
         return [0, 0]
 
 def get_controller_shoot():
-    """MEJORADO: Detecta si se presiona el botón A - MÁS RESPONSIVO"""
+    """Detecta si se presiona el botón A para disparar"""
     global last_button_a_state
     
     if not controller_connected:
         return False
     
     try:
-        # Botón A es el botón 0 en Xbox 360
         button_a_pressed = controller.get_button(0)
         
-        # MEJORADO: Sistema de detección más responsivo
         if button_a_pressed and not last_button_a_state:
             last_button_a_state = True
             print("🎮 ¡Botón A presionado! Disparando...")
@@ -121,19 +121,16 @@ def get_controller_shoot():
         print(f"❌ Error leyendo botón A: {e}")
         return False
 
-# NUEVO: Función para detectar botón B en menús
 def get_controller_button_b():
-    """Detecta si se presiona el botón B - PARA NAVEGACIÓN EN MENÚS"""
+    """Detecta si se presiona el botón B para navegación"""
     global last_button_b_state
     
     if not controller_connected:
         return False
     
     try:
-        # Botón B es el botón 1 en Xbox 360
         button_b_pressed = controller.get_button(1)
         
-        # Solo activar en el momento que se presiona (no mantener)
         if button_b_pressed and not last_button_b_state:
             last_button_b_state = True
             return True
@@ -144,19 +141,16 @@ def get_controller_button_b():
     except Exception as e:
         return False
 
-# NUEVO: Función para detectar botón A en menús (separada del disparo)
 def get_controller_button_a_menu():
-    """Detecta si se presiona el botón A - PARA NAVEGACIÓN EN MENÚS"""
+    """Detecta si se presiona el botón A para navegación en menús"""
     global last_button_a_state
     
     if not controller_connected:
         return False
     
     try:
-        # Botón A es el botón 0 en Xbox 360
         button_a_pressed = controller.get_button(0)
         
-        # Solo activar en el momento que se presiona (no mantener)
         if button_a_pressed and not last_button_a_state:
             last_button_a_state = True
             return True
@@ -168,29 +162,25 @@ def get_controller_button_a_menu():
         return False
 
 def normalize_direction(dx, dy):
-    """Normaliza una dirección a 4 direcciones cardinales: ↑↓←→ (SIN diagonales)"""
+    """Normaliza una dirección a 4 direcciones cardinales"""
     if dx == 0 and dy == 0:
         return [0, 0]
     
-    # Convertir a direcciones discretas (SOLO 4 direcciones como antes)
     if abs(dx) > abs(dy):
-        # Principalmente horizontal
         if dx > 0:
-            return [1, 0]  # Derecha →
+            return [1, 0]  # Derecha
         else:
-            return [-1, 0]  # Izquierda ←
+            return [-1, 0]  # Izquierda
     else:
-        # Principalmente vertical
         if dy > 0:
-            return [0, 1]  # Abajo ↓
+            return [0, 1]  # Abajo
         else:
-            return [0, -1]  # Arriba ↑
+            return [0, -1]  # Arriba
 
 def ensure_valid_shooting_direction():
-    """CORREGIDO: Asegura que siempre haya una dirección válida para disparar"""
+    """Asegura que siempre haya una dirección válida para disparar"""
     global last_direction, current_direction
     
-    # Si last_direction es [0,0] o inválida, usar la dirección del sprite actual
     if last_direction == [0, 0] or last_direction is None:
         if current_direction == 'up':
             last_direction = [0, -1]
@@ -201,34 +191,12 @@ def ensure_valid_shooting_direction():
         elif current_direction == 'right':
             last_direction = [1, 0]
         else:
-            # Por defecto: disparar hacia la derecha
             last_direction = [1, 0]
             current_direction = 'right'
     
-    # NUEVO: Verificar que la dirección sea válida (no [0,0])
     if last_direction[0] == 0 and last_direction[1] == 0:
-        last_direction = [1, 0]  # Forzar dirección derecha por defecto
+        last_direction = [1, 0]
         print("🔧 Dirección de disparo corregida: derecha")
-
-def debug_controller_state():
-    """Función de debug para verificar el estado del control"""
-    if controller_connected and controller:
-        try:
-            print(f"🎮 DEBUG CONTROL:")
-            print(f"   - Nombre: {controller.get_name()}")
-            print(f"   - Botones disponibles: {controller.get_numbuttons()}")
-            
-            # Verificar estado del botón A específicamente
-            if controller.get_numbuttons() > 0:
-                button_a_state = controller.get_button(0)
-                print(f"   - Botón A (0): {'PRESIONADO' if button_a_state else 'liberado'}")
-            else:
-                print("   - ¡NO HAY BOTONES DETECTADOS!")
-                
-        except Exception as e:
-            print(f"❌ Error en debug del control: {e}")
-    else:
-        print("🚫 No hay control conectado")
 
 # ========================================
 # SISTEMA DE AUTO-ESCALADO INTELIGENTE
@@ -236,67 +204,56 @@ def debug_controller_state():
 
 def detect_screen_resolution():
     """Detecta la resolución de pantalla y calcula dimensiones óptimas"""
-    # Obtener información de la pantalla
     display_info = pygame.display.Info()
     desktop_width = display_info.current_w
     desktop_height = display_info.current_h
     
     print(f"🖥️ Resolución detectada: {desktop_width}x{desktop_height}")
     
-    # Calcular factor de escala basado en resolución común (1920x1080)
     base_width = 1920
     base_height = 1080
     
     scale_factor_w = desktop_width / base_width
     scale_factor_h = desktop_height / base_height
-    scale_factor = min(scale_factor_w, scale_factor_h)  # Usar el menor para mantener proporción
+    scale_factor = min(scale_factor_w, scale_factor_h)
     
-    # Asegurar que el factor de escala esté en un rango razonable
-    scale_factor = max(0.5, min(scale_factor, 2.0))  # Entre 50% y 200%
+    scale_factor = max(0.5, min(scale_factor, 2.0))
     
     print(f"📐 Factor de escala calculado: {scale_factor:.2f}")
     
     return scale_factor, desktop_width, desktop_height
 
 def calculate_optimal_dimensions(scale_factor, desktop_width, desktop_height):
-    """Calcula dimensiones óptimas para el juego - LABERINTO MÁS GRANDE Y VISIBLE"""
+    """Calcula dimensiones óptimas para el juego"""
     
-    # CORREGIDO: Laberinto más grande para mejor visibilidad
-    base_tile_size = 50  # AUMENTADO de 35 a 50 para mejor visibilidad
+    base_tile_size = 50
     tile_size = int(base_tile_size * scale_factor)
-    tile_size = max(40, min(tile_size, 80))  # Rango: 40-80 píxeles (más grande)
+    tile_size = max(40, min(tile_size, 80))
     
-    # NUEVO: Tamaños más grandes para mejor visibilidad
     if desktop_width >= 1920:
-        tile_size = max(tile_size, 55)  # Mínimo 55px en pantallas grandes
+        tile_size = max(tile_size, 55)
     if desktop_width >= 2560:
-        tile_size = max(tile_size, 65)  # Mínimo 65px en pantallas 2K+
+        tile_size = max(tile_size, 65)
     
-    # Dimensiones del laberinto
     maze_width = 24
     maze_height = 14
     
-    # Calcular tamaño mínimo necesario para el laberinto
     min_game_width = maze_width * tile_size
-    min_game_height = maze_height * tile_size + 120  # +120 para UI
+    min_game_height = maze_height * tile_size + 120
     
-    # AJUSTADO: Ventana moderada pero laberinto grande
-    max_window_width = int(desktop_width * 0.85)  # 85% de la pantalla
-    max_window_height = int(desktop_height * 0.90)  # 90% de la pantalla
+    max_window_width = int(desktop_width * 0.85)
+    max_window_height = int(desktop_height * 0.90)
     
-    # AJUSTADO: Tamaño mínimo para acomodar laberinto grande
     min_window_width = max(1200, min_game_width)  
     min_window_height = max(800, min_game_height)  
     
-    # Determinar tamaño final de ventana
     window_width = max(min_window_width, min(max_window_width, min_game_width + 200))
     window_height = max(min_window_height, min(max_window_height, min_game_height + 100))
     
-    print(f"🎮 Dimensiones calculadas (LABERINTO GRANDE Y VISIBLE):")
-    print(f"   - Tamaño de celda: {tile_size}px (AUMENTADO para mejor visibilidad)")
+    print(f"🎮 Dimensiones calculadas:")
+    print(f"   - Tamaño de celda: {tile_size}px")
     print(f"   - Laberinto: {min_game_width}x{min_game_height - 120}px")
     print(f"   - Ventana: {window_width}x{window_height}")
-    print(f"   - Resolución detectada: {desktop_width}x{desktop_height}")
     
     return tile_size, window_width, window_height, maze_width, maze_height
 
@@ -306,13 +263,13 @@ TILE_SIZE, WINDOW_WIDTH, WINDOW_HEIGHT, MAZE_WIDTH, MAZE_HEIGHT = calculate_opti
     scale_factor, desktop_width, desktop_height
 )
 
-# Configuración de la pantalla con auto-escalado
+# Configuración de la pantalla
 SCREEN_WIDTH = WINDOW_WIDTH
 SCREEN_HEIGHT = WINDOW_HEIGHT
 screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
 pygame.display.set_caption("🔥 Dimensiones Infernales - Sistema de IA Avanzado")
 
-# NUEVO: Maximizar ventana automáticamente al iniciar
+# Maximizar ventana automáticamente
 import os
 maximized_successfully = False
 
@@ -323,39 +280,35 @@ try:
         window.maximize()
         maximized_successfully = True
         print("🖼️ Ventana maximizada automáticamente")
-        # Actualizar dimensiones después de maximizar
         SCREEN_WIDTH = screen.get_width()
         SCREEN_HEIGHT = screen.get_height()
         print(f"📐 Nueva resolución: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
 except:
     print("⚠️ No se pudo maximizar automáticamente, usando ventana grande")
 
-# Fallback: Si no se pudo maximizar, usar una ventana más grande
+# Fallback si no se pudo maximizar
 if not maximized_successfully:
-    # Crear una ventana apropiada para el laberinto grande
-    fallback_width = min(1400, int(desktop_width * 0.85))  # Aumentado para acomodar laberinto
-    fallback_height = min(900, int(desktop_height * 0.85))  # Aumentado para acomodar laberinto
+    fallback_width = min(1400, int(desktop_width * 0.85))
+    fallback_height = min(900, int(desktop_height * 0.85))
     screen = pygame.display.set_mode((fallback_width, fallback_height))
     SCREEN_WIDTH = fallback_width
     SCREEN_HEIGHT = fallback_height
     print(f"🖼️ Ventana grande creada: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
-    print("💡 Usa F11 para pantalla completa o +/- para ajustar el laberinto")
 
 def adjust_tile_size(increase=True):
-    """Función para ajustar el tamaño del laberinto dinámicamente"""
+    """Ajusta el tamaño del laberinto dinámicamente"""
     global TILE_SIZE, emoji_font, emoji_font_size
     
     old_size = TILE_SIZE
     
     if increase:
-        TILE_SIZE = min(TILE_SIZE + 5, 120)  # Máximo 120px (aumentado)
+        TILE_SIZE = min(TILE_SIZE + 5, 120)
         action = "aumentado"
     else:
-        TILE_SIZE = max(TILE_SIZE - 5, 30)   # Mínimo 30px (aumentado)
+        TILE_SIZE = max(TILE_SIZE - 5, 30)
         action = "reducido"
     
     if TILE_SIZE != old_size:
-        # Actualizar fuente de emojis para que coincida
         emoji_font_size = int(TILE_SIZE * 0.8)
         emoji_font = pygame.font.SysFont('Segoe UI Emoji', emoji_font_size)
         
@@ -366,52 +319,43 @@ def adjust_tile_size(increase=True):
         print(f"⚠️ Tamaño {limit} alcanzado: {TILE_SIZE}px")
         show_temp_message(f"Tamaño {limit}: {TILE_SIZE}px")
 
-# FUNCIÓN F12 ELIMINADA - SOLO USAR F11 PARA PANTALLA COMPLETA
-
-# Configuración de fuentes escaladas automáticamente - ADAPTADAS AL LABERINTO GRANDE
+# Configuración de fuentes escaladas automáticamente
 pygame.font.init()
-# AJUSTADO: Fuentes adaptadas al laberinto más grande
-base_font_size = max(20, int(26 * scale_factor))  # Aumentado de 24 a 26
-small_font_size = max(16, int(20 * scale_factor))  # Aumentado de 18 a 20
-emoji_font_size = max(18, int(TILE_SIZE * 0.8))   # Adaptado al nuevo TILE_SIZE
+base_font_size = max(20, int(26 * scale_factor))
+small_font_size = max(16, int(20 * scale_factor))
+emoji_font_size = max(18, int(TILE_SIZE * 0.8))
 
 font = pygame.font.SysFont('Arial', base_font_size)
 small_font = pygame.font.SysFont('Arial', small_font_size)
 emoji_font = pygame.font.SysFont('Segoe UI Emoji', emoji_font_size)
 
-print(f"✅ Configuración de pantalla con laberinto grande:")
+print(f"✅ Configuración de pantalla:")
 print(f"   - Resolución de escritorio: {desktop_width}x{desktop_height}")
 print(f"   - Tamaño de ventana inicial: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
 print(f"   - Factor de escala: {scale_factor:.2f}")
 print(f"   - Tamaño de fuente principal: {base_font_size}px")
-print(f"   - Tamaño de fuente pequeña: {small_font_size}px")
-print(f"   - Tamaño de celda del juego: {TILE_SIZE}px (GRANDE Y VISIBLE)")
-print(f"   - Tamaño total del laberinto: {MAZE_WIDTH * TILE_SIZE}x{MAZE_HEIGHT * TILE_SIZE}px")
+print(f"   - Tamaño de celda del juego: {TILE_SIZE}px")
 
 def toggle_fullscreen():
-    """ACTUALIZADO: Función para alternar entre pantalla completa y modo ventana con auto-escalado"""
+    """Función para alternar entre pantalla completa y modo ventana"""
     global fullscreen_mode, screen, SCREEN_WIDTH, SCREEN_HEIGHT, scale_factor
     global font, small_font, emoji_font, base_font_size, small_font_size, emoji_font_size
     
     if fullscreen_mode:
-        # Cambiar a modo ventana (usar dimensiones calculadas automáticamente)
         screen = pygame.display.set_mode((WINDOW_WIDTH, WINDOW_HEIGHT))
         fullscreen_mode = False
         SCREEN_WIDTH = WINDOW_WIDTH
         SCREEN_HEIGHT = WINDOW_HEIGHT
         print(f"🖼️ Modo ventana: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
     else:
-        # Cambiar a pantalla completa
         screen = pygame.display.set_mode((0, 0), pygame.FULLSCREEN)
         fullscreen_mode = True
         SCREEN_WIDTH = screen.get_width()
         SCREEN_HEIGHT = screen.get_height()
         
-        # Recalcular factor de escala para pantalla completa
         scale_factor = min(SCREEN_WIDTH / 1920, SCREEN_HEIGHT / 1080)
         scale_factor = max(0.5, min(scale_factor, 3.0))
         
-        # Actualizar fuentes para pantalla completa
         base_font_size = max(20, int(30 * scale_factor))
         small_font_size = max(16, int(22 * scale_factor))
         emoji_font_size = max(20, int(TILE_SIZE * 0.9))
@@ -420,17 +364,17 @@ def toggle_fullscreen():
         small_font = pygame.font.SysFont('Arial', small_font_size)
         emoji_font = pygame.font.SysFont('Segoe UI Emoji', emoji_font_size)
         
-        print(f"🖥️ Pantalla completa: {SCREEN_WIDTH}x{SCREEN_HEIGHT} (escala: {scale_factor:.2f})")
+        print(f"🖥️ Pantalla completa: {SCREEN_WIDTH}x{SCREEN_HEIGHT}")
 
 # Intentar inicializar control al inicio
 init_controller()
 
 # ========================================
-# NIVELES CORREGIDOS - TODOS CON 5 DIAMANTES BIEN DISTRIBUIDOS
+# NIVELES DEL JUEGO
 # ========================================
 
 levels = [
-    # NIVEL 1 - ENTRADA AL INFIERNO (5 DIAMANTES BIEN DISPERSOS)
+    # NIVEL 1 - Portal de Entrada
     {
         'id': 1,
         'name': 'Portal de Entrada',
@@ -454,7 +398,7 @@ levels = [
         ]
     },
 
-    # NIVEL 2 - CÁMARAS DE TORMENTO (5 DIAMANTES BIEN DISPERSOS - CORREGIDO)
+    # NIVEL 2 - Cámaras de Tormento
     {
         'id': 2,
         'name': 'Cámaras de Tormento',
@@ -478,7 +422,7 @@ levels = [
         ]
     },
 
-    # NIVEL 3 - LABERINTO DE FUEGO (5 DIAMANTES BIEN DISPERSOS)
+    # NIVEL 3 - Laberinto de Fuego
     {
         'id': 3,
         'name': 'Laberinto de Fuego',
@@ -502,7 +446,7 @@ levels = [
         ]
     },
 
-    # NIVEL 4 - FORTALEZA DEMONÍACA (5 DIAMANTES BIEN DISPERSOS - CORREGIDO SIN DIAMANTE EN SPAWN)
+    # NIVEL 4 - Fortaleza Demoníaca
     {
         'id': 4,
         'name': 'Fortaleza Demoníaca',
@@ -526,7 +470,7 @@ levels = [
         ]
     },
 
-    # NIVEL 5 - TRONO DE LUCIFER (5 DIAMANTES BIEN DISPERSOS - CORREGIDO SIN DIAMANTE EN SPAWN)
+    # NIVEL 5 - Trono de Lucifer
     {
         'id': 5,
         'name': 'Trono de Lucifer',
@@ -551,70 +495,64 @@ levels = [
     }
 ]
 
-# Colores del juego - TEMA INFERNAL
-COLOR_WALL = (20, 0, 0)          # Rojo muy oscuro para paredes
-COLOR_PATH = (80, 40, 40)        # Rojo oscuro para caminos
-COLOR_BACKGROUND = (0, 0, 0)     # Negro profundo
-COLOR_PLAYER = (255, 255, 0)     # Amarillo brillante para el protagonista
-COLOR_EXIT = (255, 100, 0)       # Naranja brillante para salida
-COLOR_ENEMY = (255, 0, 0)        # Rojo intenso para enemigos
-COLOR_TEXT = (255, 255, 255)     # Blanco para texto
-COLOR_AIMBOT = (255, 255, 0)     # Amarillo para aim bot
-COLOR_BONUS = (255, 215, 0)      # Dorado para bonus
-COLOR_FIRE = (255, 69, 0)        # Rojo fuego para efectos
-COLOR_LAVA = (139, 0, 0)         # Rojo lava para elementos especiales
+# Colores del juego - Tema infernal
+COLOR_WALL = (20, 0, 0)
+COLOR_PATH = (80, 40, 40)
+COLOR_BACKGROUND = (0, 0, 0)
+COLOR_PLAYER = (255, 255, 0)
+COLOR_EXIT = (255, 100, 0)
+COLOR_ENEMY = (255, 0, 0)
+COLOR_TEXT = (255, 255, 255)
+COLOR_AIMBOT = (255, 255, 0)
+COLOR_BONUS = (255, 215, 0)
+COLOR_FIRE = (255, 69, 0)
+COLOR_LAVA = (139, 0, 0)
 
-# Game states (SOLO 3 ESTADOS)
+# Estados del juego
 STATE_MENU = 'MENU'
 STATE_DIFF = 'DIFFICULTY'
 STATE_PLAY = 'PLAY'
 
-# Menú principal simplificado (SOLO 3 OPCIONES)
+# Opciones de menú
 menu_options = ['Nueva Partida', 'Seleccionar Dificultad', 'Salir']
 difficulty_options = ['Fácil', 'Medio', 'Difícil']
-FPS_levels = {'Fácil': 5, 'Medio': 7, 'Difícil': 9}  # AUMENTADO para más velocidad
+FPS_levels = {'Fácil': 5, 'Medio': 7, 'Difícil': 9}
 
-# Variables del menú (CONTROLADAS Y LIMITADAS)
-menu_idx = 0  # SIEMPRE entre 0-2 (3 opciones máximo)
-diff_idx = 1  # Por defecto 'Medio'
+# Variables del menú
+menu_idx = 0
+diff_idx = 1
 game_state = STATE_MENU
 FPS = FPS_levels[difficulty_options[diff_idx]]
 
-# Función para resetear menú
 def reset_menu():
     global menu_idx
-    menu_idx = 0  # Resetear al inicio
-
-# Configuración del protagonista perro (CON SOPORTE PARA SPRITES)
-print("🐶 Perro héroe de las dimensiones infernales inicializado")
+    menu_idx = 0
 
 # Variables para sprites
 use_sprites = False
 dog_sprites = {}
-enemy_sprites = {}  # Sprites de enemigos
-poop_sprite = None  # Sprite de caca
-cover_image = None  # Portada del juego
-wall_sprite = None  # NUEVO: Sprite de pared infernal
-# NUEVOS SPRITES
-heart_sprite = None  # NUEVO: Sprite de corazón
-diamond_sprite = None  # NUEVO: Sprite de diamante
-door_sprite = None  # NUEVO: Sprite de puerta
-humo_sprite = None  # NUEVO: Sprite de humo para fantasmas invisibles
-fire_sprite = None  # NUEVO: Sprite de fuego
+enemy_sprites = {}
+poop_sprite = None
+cover_image = None
+wall_sprite = None
+heart_sprite = None
+diamond_sprite = None
+door_sprite = None
+humo_sprite = None
+fire_sprite = None
 current_direction = 'right'
 
 # ========================================
-# SISTEMA DE AUDIO MEJORADO (INTEGRADO CHATGPT SOLUTION)
+# SISTEMA DE AUDIO
 # ========================================
 
-# Variables para sonidos
 sounds = {}
 music_loaded = False
 audio_enabled = True
-music_paths = {}  # NUEVO: Variable global para rutas de música
+music_paths = {}
 
 def load_sound(filename, sound_name):
-    """Carga un sonido específico con manejo de errores"""
+    """Carga un sonido específico"""
     global sounds
     sound_path = f'assets/sounds/{filename}'
     
@@ -633,7 +571,7 @@ def load_sound(filename, sound_name):
         return False
 
 def load_music(filename, music_name):
-    """Carga música de fondo con manejo de errores"""
+    """Carga música de fondo"""
     music_path = f'assets/music/{filename}'
     
     try:
@@ -649,19 +587,16 @@ def load_music(filename, music_name):
         return None
 
 def play_sound(sound_name, volume=0.7):
-    """CORREGIDO: Reproduce un sonido específico con debug"""
+    """Reproduce un sonido específico"""
     if audio_enabled and sound_name in sounds:
         try:
             sound = sounds[sound_name]
             sound.set_volume(volume)
             sound.play()
-            # DEBUG: Solo mostrar sonidos importantes
             if sound_name in ['diamante', 'muerte']:
-                print(f"🔊 SONIDO: {sound_name}.wav reproducido (vol: {volume:.1f})")
+                print(f"🔊 SONIDO: {sound_name}.wav reproducido")
         except Exception as e:
             print(f"❌ Error reproduciendo sonido {sound_name}: {e}")
-    elif sound_name not in sounds and audio_enabled:
-        print(f"⚠️ Sonido '{sound_name}' no encontrado en assets/sounds/")
 
 def play_music(music_path, loop=-1, volume=0.5):
     """Reproduce música de fondo"""
@@ -686,15 +621,14 @@ def load_all_audio():
     
     print("🎵 Cargando recursos de audio...")
 
-    # SONIDOS FINALES - Solo los necesarios
     sounds_to_load = [
-        ('disparo.wav', 'disparo'),      # 💥 Disparar proyectiles
-        ('diamante.wav', 'diamante'),    # 💎 Recoger diamantes
-        ('puerta.wav', 'puerta'),        # 🚪 Abrir puertas
-        ('muerte.wav', 'muerte'),        # ☠️ Enemigos tocan jugador
-        ('click.wav', 'click'),          # 🖱️ Navegación menús
-        ('fantasma.wav', 'fantasma'),    # 👻 Fantasma invisibilidad
-        ('teletransporte.wav', 'teletransporte')  # 👺 Demonio teletransporte
+        ('disparo.wav', 'disparo'),
+        ('diamante.wav', 'diamante'),
+        ('puerta.wav', 'puerta'),
+        ('muerte.wav', 'muerte'),
+        ('click.wav', 'click'),
+        ('fantasma.wav', 'fantasma'),
+        ('teletransporte.wav', 'teletransporte')
     ]
 
     sounds_loaded = 0
@@ -702,7 +636,6 @@ def load_all_audio():
         if load_sound(filename, sound_name):
             sounds_loaded += 1
 
-    # Verificar música disponible - MEJORADO
     print("🎵 Buscando archivos de música...")
 
     music_checks = [
@@ -731,21 +664,17 @@ def load_all_audio():
         print(f"🎵 MÚSICA: {music_count}/4 pistas encontradas")
         music_loaded = True
 
-        # Reproducir música del menú automáticamente
         if music_paths['menu']:
             print("🎵 Iniciando música del menú...")
             play_music(music_paths['menu'], volume=0.3)
     else:
         print("⚠️ MÚSICA: No se encontraron archivos de música")
-        print("📁 Asegúrate de que los archivos estén en: assets/music/")
-        print("📋 Nombres requeridos: menu.mp3, juego.mp3, victoria.mp3, derrota.mp3")
 
     return sounds_loaded, music_count
 
-# ✅ CARGAR AUDIO AL INICIO (¡IMPORTANTE hacerlo antes de usar music_count!)
+# Cargar audio al inicio
 sounds_count, music_count = load_all_audio()
 
-# ✅ MOSTRAR ESTADO DEL AUDIO DESPUÉS DE CARGAR
 print("")
 print("📊 ESTADO DEL AUDIO:")
 if music_count == 4:
@@ -755,39 +684,15 @@ else:
 
 if sounds_count > 0:
     print(f"✅ SONIDOS: {sounds_count}/7 efectos cargados")
-    if sounds_count < 7:
-        print("    📋 Ver MUSICA_Y_SONIDOS_PENDIENTES.md para completar sonidos")
 else:
-    print("⚠️ SONIDOS: Pendientes - Ver MUSICA_Y_SONIDOS_PENDIENTES.md")
-
-if music_count == 4 and sounds_count == 7:
-    print("🎉 ¡AUDIO COMPLETO! Tu proyecto está 100% listo para el examen")
-elif music_count == 4:
-    print("🎵 Música completa - Solo faltan los efectos de sonido")
-else:
-    print("🔊 Agrega los archivos de audio faltantes para completar el proyecto")
-
-print("")
-print("🔧 CORRECCIONES APLICADAS:")
-print("✅ Nivel 2: Agregado 1 diamante faltante - Total: 5/5")
-print("✅ Nivel 4: Agregado 1 diamante faltante - Total: 5/5")
-print("✅ Nivel 5: Agregado 1 diamante faltante - Total: 5/5")
-print("✅ Redistribución: Diamantes dispersos uniformemente")
-print("✅ Distancia mínima: 3+ casillas entre diamantes")
-print("✅ TODOS LOS NIVELES: 5 diamantes correctamente distribuidos")
-print("✅ Enemigos aparecen más lejos: Zona seguridad ampliada 5x5")
-print("✅ Demonio teletransporte aleatorio: Ya no aparece al lado del jugador")
-print("✅ Sprite fuego.png: Agregado al sistema de carga automática")
-print("✅ Proyectiles de caca mejorados: Ahora se ven como balas reales con rotación y estela")
-print("✅ Diamantes en spawn corregidos: Niveles 4 y 5 ya no tienen diamantes donde aparece el perro")
-print("✅ Sprites de fuego en menús: Reemplazados todos los emojis por sprites de fuego.png")
+    print("⚠️ SONIDOS: Pendientes")
 
 # ========================================
-# SISTEMA DE AIM BOT MEJORADO
+# SISTEMA DE AIM BOT
 # ========================================
 
 class AimBot:
-    """Sistema de aim bot inteligente para ayudar al jugador"""
+    """Sistema de aim bot inteligente"""
     
     def __init__(self, detection_range=6):
         self.detection_range = detection_range
@@ -795,7 +700,7 @@ class AimBot:
         self.target_enemy = None
         
     def find_nearest_enemy(self, player_pos, enemies):
-        """Encuentra el enemigo más cercano dentro del rango"""
+        """Encuentra el enemigo más cercano"""
         nearest_enemy = None
         min_distance = float('inf')
         
@@ -815,18 +720,16 @@ class AimBot:
         dx = target_pos[0] - player_pos[0]
         dy = target_pos[1] - player_pos[1]
         
-        # Normalizar direcciones para proyectiles
         if abs(dx) > abs(dy):
             return [1 if dx > 0 else -1, 0]
         else:
             return [0, 1 if dy > 0 else -1]
     
     def get_aim_direction(self, player_pos, enemies):
-        """CORREGIDO: Obtiene la dirección de disparo asistido solo si hay enemigos cerca"""
+        """Obtiene la dirección de disparo asistido"""
         if not self.aim_assistance:
             return None
         
-        # Si no hay enemigos, no hay dirección de aim
         if not enemies:
             return None
             
@@ -836,33 +739,18 @@ class AimBot:
             self.target_enemy = nearest_enemy
             return self.calculate_aim_direction(player_pos, nearest_enemy['pos'])
         
-        # No hay enemigos en rango
         self.target_enemy = None
         return None
-    
-    def draw_aim_indicator(self, screen, player_pos, target_pos):
-        """Dibuja un indicador visual del aim bot"""
-        if target_pos:
-            # Línea de mira
-            start_pixel = (player_pos[0] * TILE_SIZE + TILE_SIZE//2, 
-                          player_pos[1] * TILE_SIZE + TILE_SIZE//2)
-            end_pixel = (target_pos[0] * TILE_SIZE + TILE_SIZE//2, 
-                        target_pos[1] * TILE_SIZE + TILE_SIZE//2)
-            
-            pygame.draw.line(screen, COLOR_AIMBOT, start_pixel, end_pixel, 2)
-            
-            # Círculo alrededor del objetivo
-            pygame.draw.circle(screen, COLOR_AIMBOT, end_pixel, TILE_SIZE//2, 2)
 
 # Instancia global del aim bot
 aim_bot = AimBot(detection_range=6)
 
 # ========================================
-# SISTEMA DE SPRITES MEJORADO Y CORREGIDO
+# SISTEMA DE SPRITES
 # ========================================
 
 def load_dog_sprite():
-    """CORREGIDO: Función para cargar el sprite del perro con escalado automático"""
+    """Carga el sprite del héroe protagonista"""
     global use_sprites, dog_sprites
     
     sprite_path = 'assets/images/perro.png'
@@ -870,15 +758,11 @@ def load_dog_sprite():
     try:
         import os
         if os.path.exists(sprite_path):
-            print(f"✅ ¡Sprite del perro encontrado! Cargando desde: {sprite_path}")
+            print(f"✅ Sprite del héroe encontrado: {sprite_path}")
             
-            # Cargar el sprite
             dog_spritesheet = pygame.image.load(sprite_path)
-            
-            # Escalar automáticamente al tamaño de celda calculado
             scaled_sprite = pygame.transform.scale(dog_spritesheet, (TILE_SIZE, TILE_SIZE))
             
-            # Crear sprites para todas las direcciones
             dog_sprites = {
                 'up': [scaled_sprite],
                 'right': [scaled_sprite], 
@@ -887,11 +771,10 @@ def load_dog_sprite():
             }
             
             use_sprites = True
-            print(f"🎮 ¡Sprite del perro cargado! Tamaño: {TILE_SIZE}x{TILE_SIZE}")
+            print(f"🎮 Sprite del héroe cargado: {TILE_SIZE}x{TILE_SIZE}")
             return True
         else:
             print(f"📁 No se encontró sprite en: {sprite_path}")
-            print("💡 Tip: Crea la carpeta 'assets/images/' y pon tu 'perro.png' ahí")
             return False
             
     except Exception as e:
@@ -899,7 +782,7 @@ def load_dog_sprite():
         return False
 
 def load_enemy_sprites():
-    """CORREGIDO: Función para cargar sprites de criaturas infernales con escalado automático"""
+    """Carga sprites de enemigos"""
     global enemy_sprites
     
     enemy_files = {
@@ -923,8 +806,6 @@ def load_enemy_sprites():
                 print(f"👾 Cargando criatura: {sprite_path}")
                 
                 enemy_spritesheet = pygame.image.load(sprite_path)
-                
-                # Escalar automáticamente al tamaño de celda
                 scaled_sprite = pygame.transform.scale(enemy_spritesheet, (TILE_SIZE, TILE_SIZE))
                 
                 enemy_sprites[emoji] = {
@@ -938,12 +819,12 @@ def load_enemy_sprites():
             print(f"⚠️ Error cargando {sprite_path}: {e}")
     
     if sprites_loaded > 0:
-        print(f"🔥 ¡{sprites_loaded} criaturas cargadas! Tamaño: {TILE_SIZE}x{TILE_SIZE}")
+        print(f"🔥 {sprites_loaded} criaturas cargadas: {TILE_SIZE}x{TILE_SIZE}")
     
     return sprites_loaded > 0
 
 def load_poop_sprite():
-    """CORREGIDO: Función para cargar el sprite de caca con escalado automático"""
+    """Carga el sprite de proyectil"""
     global poop_sprite
     
     sprite_path = 'assets/images/caca.png'
@@ -951,22 +832,22 @@ def load_poop_sprite():
     try:
         import os
         if os.path.exists(sprite_path):
-            print(f"💩 ¡Sprite de caca encontrado!")
+            print(f"💩 Sprite de proyectil encontrado")
             
             poop_image = pygame.image.load(sprite_path)
             poop_sprite = pygame.transform.scale(poop_image, (TILE_SIZE, TILE_SIZE))
             
-            print(f"💩 ¡Sprite de caca cargado! Tamaño: {TILE_SIZE}x{TILE_SIZE}")
+            print(f"💩 Sprite de proyectil cargado: {TILE_SIZE}x{TILE_SIZE}")
             return True
         else:
             return False
             
     except Exception as e:
-        print(f"❌ Error cargando sprite de caca: {e}")
+        print(f"❌ Error cargando sprite de proyectil: {e}")
         return False
 
 def load_cover_image():
-    """CORREGIDO: Función para cargar la portada del juego con escalado automático"""
+    """Carga la portada del juego"""
     global cover_image
     
     sprite_path = 'assets/images/portada.png'
@@ -974,17 +855,16 @@ def load_cover_image():
     try:
         import os
         if os.path.exists(sprite_path):
-            print(f"🖼️ ¡Portada encontrada!")
+            print(f"🖼️ Portada encontrada")
             
             cover_raw = pygame.image.load(sprite_path)
             
-            # Escalar portada proporcionalmente a la ventana
-            cover_width = int(SCREEN_WIDTH * 0.4)  # 40% del ancho de pantalla
-            cover_height = int(cover_width * 0.75)  # Mantener proporción 4:3
+            cover_width = int(SCREEN_WIDTH * 0.4)
+            cover_height = int(cover_width * 0.75)
             
             cover_image = pygame.transform.scale(cover_raw, (cover_width, cover_height))
             
-            print(f"🖼️ ¡Portada escalada! Tamaño: {cover_width}x{cover_height}")
+            print(f"🖼️ Portada escalada: {cover_width}x{cover_height}")
             return True
         else:
             return False
@@ -994,7 +874,7 @@ def load_cover_image():
         return False
 
 def load_wall_sprite():
-    """CORREGIDO: Función para cargar el sprite de pared infernal con escalado automático"""
+    """Carga el sprite de pared"""
     global wall_sprite
     
     sprite_path = 'assets/images/bloquerojo.png'
@@ -1002,12 +882,12 @@ def load_wall_sprite():
     try:
         import os
         if os.path.exists(sprite_path):
-            print(f"🧱 ¡Sprite de pared encontrado!")
+            print(f"🧱 Sprite de pared encontrado")
             
             wall_image = pygame.image.load(sprite_path)
             wall_sprite = pygame.transform.scale(wall_image, (TILE_SIZE, TILE_SIZE))
             
-            print(f"🧱 ¡Pared cargada! Tamaño: {TILE_SIZE}x{TILE_SIZE}")
+            print(f"🧱 Pared cargada: {TILE_SIZE}x{TILE_SIZE}")
             return True
         else:
             return False
@@ -1016,7 +896,7 @@ def load_wall_sprite():
         return False
 
 def load_heart_sprite():
-    """CORREGIDO: Función para cargar el sprite de corazón con escalado automático"""
+    """Carga el sprite de corazón"""
     global heart_sprite
     
     sprite_path = 'assets/images/corazon.png'
@@ -1024,15 +904,13 @@ def load_heart_sprite():
     try:
         import os
         if os.path.exists(sprite_path):
-            print(f"💖 ¡Sprite de corazón encontrado!")
+            print(f"💖 Sprite de corazón encontrado")
             
             heart_image = pygame.image.load(sprite_path)
-            
-            # Tamaño de corazón escalado automáticamente
             heart_size = max(25, int(TILE_SIZE * 0.8))
             heart_sprite = pygame.transform.scale(heart_image, (heart_size, heart_size))
             
-            print(f"💖 ¡Corazón cargado! Tamaño: {heart_size}x{heart_size}")
+            print(f"💖 Corazón cargado: {heart_size}x{heart_size}")
             return True
         else:
             return False
@@ -1041,7 +919,7 @@ def load_heart_sprite():
         return False
 
 def load_diamond_sprite():
-    """CORREGIDO: Función para cargar el sprite de diamante con escalado automático"""
+    """Carga el sprite de diamante"""
     global diamond_sprite
     
     sprite_path = 'assets/images/diamante.png'
@@ -1049,12 +927,12 @@ def load_diamond_sprite():
     try:
         import os
         if os.path.exists(sprite_path):
-            print(f"💎 ¡Sprite de diamante encontrado!")
+            print(f"💎 Sprite de diamante encontrado")
             
             diamond_image = pygame.image.load(sprite_path)
             diamond_sprite = pygame.transform.scale(diamond_image, (TILE_SIZE, TILE_SIZE))
             
-            print(f"💎 ¡Diamante cargado! Tamaño: {TILE_SIZE}x{TILE_SIZE}")
+            print(f"💎 Diamante cargado: {TILE_SIZE}x{TILE_SIZE}")
             return True
         else:
             return False
@@ -1063,7 +941,7 @@ def load_diamond_sprite():
         return False
 
 def load_door_sprite():
-    """CORREGIDO: Función para cargar el sprite de puerta con escalado automático"""
+    """Carga el sprite de puerta"""
     global door_sprite
     
     sprite_path = 'assets/images/puerta.png'
@@ -1071,12 +949,12 @@ def load_door_sprite():
     try:
         import os
         if os.path.exists(sprite_path):
-            print(f"🚪 ¡Sprite de puerta encontrado!")
+            print(f"🚪 Sprite de puerta encontrado")
             
             door_image = pygame.image.load(sprite_path)
             door_sprite = pygame.transform.scale(door_image, (TILE_SIZE, TILE_SIZE))
             
-            print(f"🚪 ¡Puerta cargada! Tamaño: {TILE_SIZE}x{TILE_SIZE}")
+            print(f"🚪 Puerta cargada: {TILE_SIZE}x{TILE_SIZE}")
             return True
         else:
             return False
@@ -1085,7 +963,7 @@ def load_door_sprite():
         return False
 
 def load_fire_sprite():
-    """NUEVO: Función para cargar el sprite de fuego con escalado automático"""
+    """Carga el sprite de fuego"""
     global fire_sprite
     
     sprite_path = 'assets/images/fuego.png'
@@ -1093,12 +971,12 @@ def load_fire_sprite():
     try:
         import os
         if os.path.exists(sprite_path):
-            print(f"🔥 ¡Sprite de fuego encontrado!")
+            print(f"🔥 Sprite de fuego encontrado")
             
             fire_image = pygame.image.load(sprite_path)
             fire_sprite = pygame.transform.scale(fire_image, (TILE_SIZE, TILE_SIZE))
             
-            print(f"🔥 ¡Fuego cargado! Tamaño: {TILE_SIZE}x{TILE_SIZE}")
+            print(f"🔥 Fuego cargado: {TILE_SIZE}x{TILE_SIZE}")
             return True
         else:
             return False
@@ -1107,7 +985,7 @@ def load_fire_sprite():
         return False
 
 def load_humo_sprite():
-    """NUEVO: Función para cargar el sprite de humo con escalado automático"""
+    """Carga el sprite de humo"""
     global humo_sprite
     
     sprite_path = 'assets/images/humo.png'
@@ -1115,12 +993,12 @@ def load_humo_sprite():
     try:
         import os
         if os.path.exists(sprite_path):
-            print(f"💨 ¡Sprite de humo encontrado!")
+            print(f"💨 Sprite de humo encontrado")
             
             humo_image = pygame.image.load(sprite_path)
             humo_sprite = pygame.transform.scale(humo_image, (TILE_SIZE, TILE_SIZE))
             
-            print(f"💨 ¡Humo cargado! Tamaño: {TILE_SIZE}x{TILE_SIZE}")
+            print(f"💨 Humo cargado: {TILE_SIZE}x{TILE_SIZE}")
             return True
         else:
             return False
@@ -1128,16 +1006,14 @@ def load_humo_sprite():
     except Exception as e:
         return False
 
-# ✅ CARGAR SPRITES AL INICIO AUTOMÁTICAMENTE
 def load_all_sprites():
-    """NUEVO: Carga automáticamente todos los sprites al inicio"""
+    """Carga automáticamente todos los sprites"""
     print("")
     print("🎨 CARGANDO SPRITES:")
     
     sprites_loaded = 0
-    total_sprites = 9  # Actualizado: ahora son 9 sprites (agregado fuego)
+    total_sprites = 10
     
-    # Cargar cada sprite
     if load_dog_sprite():
         sprites_loaded += 1
     if load_enemy_sprites():
@@ -1154,45 +1030,40 @@ def load_all_sprites():
         sprites_loaded += 1
     if load_door_sprite():
         sprites_loaded += 1
-    if load_humo_sprite():  # NUEVO: Cargar sprite de humo
+    if load_humo_sprite():
         sprites_loaded += 1
-    if load_fire_sprite():  # NUEVO: Cargar sprite de fuego
+    if load_fire_sprite():
         sprites_loaded += 1
     
     print(f"")
     print(f"🎨 SPRITES CARGADOS: {sprites_loaded}/{total_sprites}")
     if sprites_loaded > 5:
-        print("✅ ¡Sprites principales cargados correctamente!")
+        print("✅ Sprites principales cargados correctamente")
     else:
         print("⚠️ Algunos sprites no se encontraron - El juego usará emojis como respaldo")
     
     return sprites_loaded
 
-# ✅ CARGAR TODOS LOS SPRITES AUTOMÁTICAMENTE
+# Cargar todos los sprites automáticamente
 sprites_loaded_count = load_all_sprites()
 
 def reload_sprites_if_needed():
-    """CORREGIDO: Recarga sprites si no están cargados pero el archivo existe"""
+    """Recarga sprites si es necesario"""
     global use_sprites
     if not use_sprites:
         load_dog_sprite()
     
-    # También recargar sprites de enemigos
     load_enemy_sprites()
     
-    # Recargar sprite de caca
     if poop_sprite is None:
         load_poop_sprite()
     
-    # Recargar portada
     if cover_image is None:
         load_cover_image()
     
-    # NUEVO: Recargar sprite de pared
     if wall_sprite is None:
         load_wall_sprite()
     
-    # NUEVOS: Recargar sprites adicionales
     if heart_sprite is None:
         load_heart_sprite()
     
@@ -1202,48 +1073,36 @@ def reload_sprites_if_needed():
     if door_sprite is None:
         load_door_sprite()
     
-    # NUEVO: Recargar sprite de humo
     if humo_sprite is None:
         load_humo_sprite()
     
-    # NUEVO: Recargar sprite de fuego
     if fire_sprite is None:
         load_fire_sprite()
 
-# Símbolos para elementos del juego (simplificados)
-GAME_SYMBOLS = {
-    0: '  ',  # Camino libre
-    1: '██',  # Pared
-    2: '🎯',  # Objetivo
-    3: '⭐',  # Bonus
-}
-
-# Variables del juego simplificadas
-player_score = 0
-
 # Variables del juego
+player_score = 0
 player_pos = [1, 1]
 player_lives = 3
 current_level = 0
 maze = levels[current_level]['maze']
 projectiles = []
-last_direction = [1, 0]  # CORREGIDO: Inicializar con dirección válida (derecha)
+last_direction = [1, 0]
 
-# NUEVO: Sistema de diamantes obligatorios
-total_diamonds = 0  # Diamantes totales en el nivel actual
-collected_diamonds = 0  # Diamantes recogidos
+# Sistema de diamantes obligatorios
+total_diamonds = 0
+collected_diamonds = 0
 
-# NUEVO: Sistema de mensajes temporales
-temp_message = ""  # Mensaje temporal a mostrar
-temp_message_time = 0  # Tiempo cuando se mostró el mensaje
-temp_message_duration = 2.0  # Duración del mensaje en segundos
+# Sistema de mensajes temporales
+temp_message = ""
+temp_message_time = 0
+temp_message_duration = 2.0
 
 # ========================================
-# CLASE PERSONALIZADA PARA DEMONIO CON TELETRANSPORTE ALEATORIO
+# CLASE PERSONALIZADA PARA DEMONIO
 # ========================================
 
 class DemonRandomTeleport:
-    """Comportamiento personalizado del demonio con teletransporte ALEATORIO"""
+    """Comportamiento del demonio con teletransporte aleatorio"""
     
     def __init__(self, enemy_data, pathfinder, player_pos_getter, all_enemies=None):
         self.enemy = enemy_data
@@ -1251,13 +1110,12 @@ class DemonRandomTeleport:
         self.get_player_pos = player_pos_getter
         self.all_enemies = all_enemies or []
         
-        # Sistema de teletransporte aleatorio mejorado
         self.last_teleport_time = 0
-        self.teleport_cooldown = 4.0  # Cada 4 segundos
+        self.teleport_cooldown = 4.0
         self.last_move_time = 0
-        self.move_delay = 0.7  # Movimiento normal lento
+        self.move_delay = 0.7
         
-        print(f"👺 Demonio con teletransporte ALEATORIO inicializado - cooldown: {self.teleport_cooldown}s")
+        print(f"👺 Demonio con teletransporte aleatorio inicializado")
         
     def update(self):
         """Actualiza el comportamiento del demonio"""
@@ -1265,14 +1123,10 @@ class DemonRandomTeleport:
         player_pos = self.get_player_pos()
         enemy_pos = self.enemy["pos"]
         
-        # Calcular distancia al jugador
         distance = math.sqrt((enemy_pos[0] - player_pos[0])**2 + (enemy_pos[1] - player_pos[1])**2)
         
-        # PRIORIDAD 1: Teletransporte aleatorio (si está disponible)
         if self._can_teleport(current_time, distance):
             return self._teleport_randomly()
-        
-        # PRIORIDAD 2: Movimiento normal (si puede moverse)
         elif self._can_move_now(current_time):
             return self._normal_move(player_pos, enemy_pos)
         
@@ -1280,46 +1134,40 @@ class DemonRandomTeleport:
     
     def _can_teleport(self, current_time, distance):
         """Verifica si puede teletransportarse"""
-        # Puede teletransportarse si ha pasado el cooldown
         return current_time - self.last_teleport_time >= self.teleport_cooldown
     
     def _teleport_randomly(self):
-        """Se teletransporta a una posición COMPLETAMENTE ALEATORIA del mapa"""
+        """Se teletransporta a una posición aleatoria"""
         try:
             current_time = time.time()
             self.last_teleport_time = current_time
             
-            # Encontrar TODAS las posiciones válidas del mapa (no solo cerca del jugador)
             valid_positions = []
             current_maze = levels[current_level]['maze']
             height = len(current_maze)
             width = len(current_maze[0])
             
-            # Buscar todas las posiciones de camino libre en todo el mapa
             for y in range(1, height - 1):
                 for x in range(1, width - 1):
-                    if current_maze[y][x] == 0:  # Camino libre
+                    if current_maze[y][x] == 0:
                         valid_positions.append([x, y])
             
             if valid_positions:
-                # Elegir una posición COMPLETAMENTE ALEATORIA
                 new_pos = random.choice(valid_positions)
                 old_pos = self.enemy["pos"].copy()
                 self.enemy["pos"] = new_pos
-                self.enemy["dir"] = [0, 0]  # Sin dirección específica tras teletransporte
+                self.enemy["dir"] = [0, 0]
                 
-                print(f"👺 Demonio se teletransportó ALEATORIAMENTE de {old_pos} a {new_pos}")
+                print(f"👺 Demonio se teletransportó de {old_pos} a {new_pos}")
                 
-                # NUEVO: Reproducir sonido de teletransporte
                 play_sound('teletransporte', volume=0.6)
                 
                 return True
             
-            print("👺 No se encontraron posiciones válidas para teletransporte aleatorio")
             return False
             
         except Exception as e:
-            print(f"❌ Error en teletransporte aleatorio del demonio: {e}")
+            print(f"❌ Error en teletransporte: {e}")
             return False
     
     def _can_move_now(self, current_time):
@@ -1327,11 +1175,10 @@ class DemonRandomTeleport:
         return current_time - self.last_move_time >= self.move_delay
     
     def _normal_move(self, player_pos, enemy_pos):
-        """Movimiento normal cuando no puede teletransportarse"""
+        """Movimiento normal"""
         try:
             self.last_move_time = time.time()
             
-            # Usar A* para ir hacia el jugador
             dx, dy = self.pathfinder.get_next_move(
                 enemy_pos[0], enemy_pos[1],
                 player_pos[0], player_pos[1]
@@ -1349,49 +1196,42 @@ class DemonRandomTeleport:
             return False
 
 # ========================================
-# CONFIGURACIÓN ALEATORIA DE ENEMIGOS
+# CONFIGURACIÓN DE ENEMIGOS
 # ========================================
 
-# Tipos de enemigos infernales disponibles
 ALL_ENEMY_TYPES = ['👽', '👻', '🧟', '🦹', '👺', '🤡', '👹']
 
-# Configuración de enemigos por nivel - MEJORADA para más diversión
 ENEMIES_PER_LEVEL = {
-    0: 3,  # Nivel 1: 3 enemigos (fácil)
+    0: 3,  # Nivel 1: 3 enemigos
     1: 4,  # Nivel 2: 4 enemigos 
     2: 4,  # Nivel 3: 4 enemigos
-    3: 5,  # Nivel 4: 5 enemigos (más desafiante)
-    4: 5   # Nivel 5: 5 enemigos (final épico)
+    3: 5,  # Nivel 4: 5 enemigos
+    4: 5   # Nivel 5: 5 enemigos
 }
 
 def find_valid_enemy_positions(maze, count=10):
-    """CORREGIDO: Encuentra posiciones válidas con zona de seguridad MÁS GRANDE alrededor del jugador"""
+    """Encuentra posiciones válidas para enemigos"""
     height = len(maze)
     width = len(maze[0])
     valid_positions = []
     
-    # AMPLIADA: Zona de seguridad 5x5 alrededor del jugador inicial [1,1]
     player_safe_zone = []
-    for y in range(0, 5):  # AMPLIADO de 3x3 a 5x5
+    for y in range(0, 5):
         for x in range(0, 5):
             player_safe_zone.append([x, y])
     
-    # Buscar todas las posiciones válidas (no paredes)
-    for y in range(3, height - 3):  # AUMENTADO: Evitar aún más bordes
-        for x in range(3, width - 3):  # AUMENTADO: Evitar aún más bordes
-            if maze[y][x] == 0:  # Camino libre
-                # NUEVO: Verificar que no esté en la zona de seguridad AMPLIADA del jugador
+    for y in range(3, height - 3):
+        for x in range(3, width - 3):
+            if maze[y][x] == 0:
                 if [x, y] not in player_safe_zone:
-                    # NUEVO: Verificar distancia mínima al jugador (Manhattan distance)
                     distance_to_player = abs(x - 1) + abs(y - 1)
-                    if distance_to_player >= 6:  # AUMENTADO de 3 a 6 casillas mínimo
-                        # NUEVO: Verificar que no esté cerca de la salida
+                    if distance_to_player >= 6:
                         is_near_exit = False
                         for exit_y in range(height):
                             for exit_x in range(width):
-                                if maze[exit_y][exit_x] == 2:  # Salida encontrada
+                                if maze[exit_y][exit_x] == 2:
                                     distance_to_exit = abs(x - exit_x) + abs(y - exit_y)
-                                    if distance_to_exit < 4:  # Zona de seguridad de la salida AMPLIADA
+                                    if distance_to_exit < 4:
                                         is_near_exit = True
                                         break
                             if is_near_exit:
@@ -1400,25 +1240,21 @@ def find_valid_enemy_positions(maze, count=10):
                         if not is_near_exit:
                             valid_positions.append([x, y])
     
-    print(f"🎯 Posiciones seguras encontradas: {len(valid_positions)} (zona seguridad ampliada)")
+    print(f"🎯 Posiciones seguras encontradas: {len(valid_positions)}")
     
-    # Mezclar y retornar las primeras 'count' posiciones
     import random
     random.shuffle(valid_positions)
     return valid_positions[:count]
 
 def generate_random_enemies(level):
-    """Genera enemigos aleatorios para un nivel específico"""
+    """Genera enemigos aleatorios para un nivel"""
     enemy_count = ENEMIES_PER_LEVEL.get(level, 2)
     
-    # Seleccionar tipos aleatorios
     selected_types = random.sample(ALL_ENEMY_TYPES, min(enemy_count, len(ALL_ENEMY_TYPES)))
     
-    # Encontrar posiciones válidas
     current_maze = levels[level]['maze']
     valid_positions = find_valid_enemy_positions(current_maze, enemy_count + 5)
     
-    # Si no hay posiciones, usar respaldo
     if len(valid_positions) == 0:
         valid_positions = [[2, 2], [3, 3], [4, 4], [5, 5], [6, 6]]
     
@@ -1432,110 +1268,90 @@ def generate_random_enemies(level):
     
     return enemies_config
 
-# Enemigos (se generarán dinámicamente)
+# Enemigos y comportamientos
 enemies = []
-
-# Sistema de comportamientos de IA
 enemy_behaviors = []
 
 def show_temp_message(message):
-    """CORREGIDO: Muestra un mensaje temporal que no bloquea el juego"""
+    """Muestra un mensaje temporal"""
     global temp_message, temp_message_time
     temp_message = message
     temp_message_time = time.time()
     print(f"📢 Mensaje: {message}")
 
 def draw_temp_message():
-    """ACTUALIZADO: Dibujar mensaje temporal centrado en cualquier resolución"""
+    """Dibuja mensaje temporal"""
     global temp_message, temp_message_time
     
     if temp_message and time.time() - temp_message_time < temp_message_duration:
-        # Calcular transparencia basada en el tiempo restante
         elapsed = time.time() - temp_message_time
         alpha = max(0, 1 - (elapsed / temp_message_duration))
         
-        # NUEVO: Adaptable a pantalla completa
         if fullscreen_mode:
-            # En pantalla completa, centrar en toda la pantalla
             message_width = SCREEN_WIDTH - 80
             message_height = 100
             message_x = 40
             message_y = (SCREEN_HEIGHT // 2) - (message_height // 2)
             
-            # Fuente escalada
             font_scale = max(1.0, min(2.5, SCREEN_WIDTH / 800))
             message_font_size = int(30 * font_scale)
             message_font = pygame.font.SysFont('Arial', message_font_size)
         else:
-            # Modo ventana normal
             message_width = SCREEN_WIDTH - 40
             message_height = 80
             message_x = 20
             message_y = (MAZE_HEIGHT * TILE_SIZE // 2) - (message_height // 2)
             message_font = font
         
-        # Fondo semi-transparente con borde
         message_surface = pygame.Surface((message_width, message_height))
         message_surface.fill((0, 0, 0))
         message_surface.set_alpha(int(180 * alpha))
         
-        # Dibujar fondo con borde dorado
         screen.blit(message_surface, (message_x, message_y))
         border_thickness = max(2, int(3 * (SCREEN_WIDTH / 800)))
         pygame.draw.rect(screen, (255, 215, 0), (message_x - border_thickness, message_y - border_thickness, 
                         message_width + border_thickness * 2, message_height + border_thickness * 2), border_thickness)
         
-        # Dibujar texto del mensaje centrado
         text_color = (255, int(255 * alpha), int(255 * alpha))
         text = message_font.render(temp_message, True, text_color)
         text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, message_y + message_height // 2))
         screen.blit(text, text_rect)
     elif temp_message and time.time() - temp_message_time >= temp_message_duration:
-        # Limpiar mensaje cuando expire
         temp_message = ""
 
 def move_enemies():
-    """Mueve enemigos usando IA - Con detección de sonidos especiales"""
+    """Mueve enemigos usando IA"""
     global enemy_behaviors, pathfinder
     
     for i, behavior in enumerate(enemy_behaviors):
         try:
-            # Guardar estados anteriores para detectar cambios
             enemy = behavior.enemy
             enemy_type = enemy["type"]
             old_pos = enemy["pos"].copy()
             
-            # Estados anteriores para detectar cambios especiales
             old_invisible_state = False
             if enemy_type == '👻' and hasattr(behavior, 'is_invisible'):
                 old_invisible_state = behavior.is_invisible
             
-            # Actualizar comportamiento
             behavior.update()
             
-            # NUEVO: Detectar teletransporte del demonio
             if enemy_type == '👺':
                 new_pos = enemy["pos"]
-                # Si se movió más de 1 casilla, fue teletransporte
                 distance_moved = abs(new_pos[0] - old_pos[0]) + abs(new_pos[1] - old_pos[1])
                 if distance_moved > 1:
                     play_sound('teletransporte', volume=0.6)
                     print(f"👺 Demonio se teletransportó de {old_pos} a {new_pos}")
             
-            # NUEVO: Detectar invisibilidad del fantasma
             if enemy_type == '👻' and hasattr(behavior, 'is_invisible'):
                 new_invisible_state = behavior.is_invisible
-                # Si cambió de visible a invisible
                 if not old_invisible_state and new_invisible_state:
                     play_sound('fantasma', volume=0.5)
                     print(f"👻 Fantasma se volvió INVISIBLE")
-                # Si cambió de invisible a visible
                 elif old_invisible_state and not new_invisible_state:
                     print(f"👻 Fantasma se volvió VISIBLE")
                     
         except Exception as e:
             print(f"Error en comportamiento de enemigo: {e}")
-            # Fallback a movimiento simple hacia el jugador
             enemy = behavior.enemy
             player_x, player_y = player_pos
             enemy_x, enemy_y = enemy["pos"]
@@ -1546,49 +1362,38 @@ def move_enemies():
             
             if pathfinder.is_valid_position(new_x, new_y):
                 enemy["pos"] = [new_x, new_y]
-    
-    # NOTA: Esta función NO reproduce sonidos automáticos de combate
-    # Los sonidos se reproducen solo en eventos específicos del jugador
 
 def move_projectiles():
-    """MEJORADO: Proyectiles más rápidos y precisos"""
+    """Mueve proyectiles más rápidos"""
     global enemies, projectiles, player_score
     newp = []
     for p in projectiles:
-        # MEJORADO: Proyectiles se mueven más rápido (2 casillas por frame)
-        for _ in range(2):  # Mover 2 veces por frame
+        for _ in range(2):  # Proyectiles rápidos
             p['pos'][0] += p['dir'][0]
             p['pos'][1] += p['dir'][1]
             
             x, y = p['pos']
             
-            # Verificar límites
             if not (0 <= x < MAZE_WIDTH and 0 <= y < MAZE_HEIGHT):
                 break
                 
-            # Verificar colisión con paredes
             if maze[y][x] == 1:
                 break
                     
-            # Verificar colisión con enemigos
             hit = False
             for i, e in enumerate(enemies[:]):
                 if e['pos'] == [x, y]:
-                    # Verificar si el enemigo está invisible
                     is_invisible = False
                     if e['type'] == '👻' and i < len(enemy_behaviors):
                         behavior = enemy_behaviors[i]
                         if hasattr(behavior, 'is_currently_invisible'):
                             is_invisible = behavior.is_currently_invisible()
                     
-                    # No puede ser golpeado si está invisible
                     if not is_invisible:
                         enemies.remove(e)
                         if i < len(enemy_behaviors):
                             enemy_behaviors.pop(i)
-                        player_score += 150  # Bonus por eliminar enemigo
-                        
-                        # PROYECTIL ELIMINÓ ENEMIGO - Sin sonido adicional
+                        player_score += 150
                         
                         hit = True
                         break
@@ -1596,7 +1401,6 @@ def move_projectiles():
             if hit:
                 break
         else:
-            # Solo agregar si no salió del bucle con break
             if (0 <= p['pos'][0] < MAZE_WIDTH and 0 <= p['pos'][1] < MAZE_HEIGHT and 
                 maze[p['pos'][1]][p['pos'][0]] != 1):
                 newp.append(p)
@@ -1604,20 +1408,17 @@ def move_projectiles():
     projectiles = newp
 
 def check_enemy_collision():
-    """CORREGIDO: Verifica colisiones SOLO entre jugador y enemigos"""
+    """Verifica colisiones entre jugador y enemigos"""
     global player_score, enemies, enemy_behaviors
     
-    # Solo verificar si EL JUGADOR está en la misma posición que un enemigo
     for i, e in enumerate(enemies):
-        if e['pos'] == player_pos:  # SOLO verificar posición del jugador
-            # Verificar si el enemigo está invisible
+        if e['pos'] == player_pos:
             is_invisible = False
             if e['type'] == '👻' and i < len(enemy_behaviors):
                 behavior = enemy_behaviors[i]
                 if hasattr(behavior, 'is_currently_invisible'):
                     is_invisible = behavior.is_currently_invisible()
             
-            # No puede colisionar si está invisible
             if not is_invisible:
                 print(f"💥 COLISIÓN: Jugador tocado por {e['type']} en {e['pos']}")
                 return True
@@ -1629,14 +1430,13 @@ def count_diamonds_in_level(maze):
     count = 0
     for row in maze:
         for cell in row:
-            if cell == 3:  # 3 = diamante
+            if cell == 3:
                 count += 1
     return count
 
 def get_player_position():
     return player_pos
 
-# Función para inicializar comportamientos de enemigos
 def initialize_enemy_behaviors():
     """Inicializa los comportamientos de IA para todos los enemigos"""
     global enemy_behaviors
@@ -1645,7 +1445,6 @@ def initialize_enemy_behaviors():
     for enemy in enemies:
         enemy_type = enemy.get("type", "👻")
         
-        # NUEVO: Usar teletransporte aleatorio para demonios
         if enemy_type == "👺":
             behavior = DemonRandomTeleport(
                 enemy_data=enemy,
@@ -1654,7 +1453,6 @@ def initialize_enemy_behaviors():
                 all_enemies=enemies
             )
         else:
-            # Usar comportamiento normal del archivo externo para otros enemigos
             behavior = create_enemy_behavior(
                 enemy_data=enemy,
                 pathfinder=pathfinder,
@@ -1664,57 +1462,29 @@ def initialize_enemy_behaviors():
         
         enemy_behaviors.append(behavior)
         
-        # DEBUG: Verificar enemigos creados
         print(f"👾 ENEMIGO CREADO: {enemy['pos']} - {enemy['type']}")
         if enemy_type == "👺":
-            print(f"   🔧 Usando teletransporte ALEATORIO personalizado")
-
-def debug_enemy_spawn_positions(maze):
-    """NUEVO: Función de debug para verificar posiciones de spawn"""
-    print("🔍 DEBUG: Verificando posiciones de spawn de enemigos...")
-    
-    valid_positions = find_valid_enemy_positions(maze, 20)
-    
-    print(f"📍 Posiciones válidas encontradas: {len(valid_positions)}")
-    print(f"🎯 Primeras 10 posiciones: {valid_positions[:10]}")
-    
-    # Verificar distancia mínima al jugador
-    player_start = [1, 1]
-    min_distance = float('inf')
-    closest_pos = None
-    
-    for pos in valid_positions:
-        distance = abs(pos[0] - player_start[0]) + abs(pos[1] - player_start[1])
-        if distance < min_distance:
-            min_distance = distance
-            closest_pos = pos
-    
-    print(f"📏 Posición más cercana al jugador: {closest_pos} (distancia: {min_distance})")
-    print(f"✅ Zona de seguridad: {'OK' if min_distance >= 6 else 'PROBLEMA'} (mínimo requerido: 6)")
+            print(f"   🔧 Usando teletransporte aleatorio personalizado")
 
 # ========================================
-# FUNCIONES BÁSICAS DEL JUEGO
+# FUNCIONES DEL JUEGO
 # ========================================
 
 def handle_bonus_tile(x, y):
-    """CORREGIDO: Maneja las bonificaciones - SOLO DIAMANTES"""
+    """Maneja las bonificaciones - diamantes"""
     global player_score, maze, collected_diamonds
     
-    if maze[y][x] == 3:  # Solo si hay un diamante en esa posición
+    if maze[y][x] == 3:
         player_score += 100
         collected_diamonds += 1
-        maze[y][x] = 0  # Eliminar el diamante del mapa
+        maze[y][x] = 0
         
-        # SONIDO: Solo diamante cuando se recoge
         play_sound('diamante', volume=0.8)
         
-        print(f"💎 Diamante recogido en [{x},{y}]! {collected_diamonds}/{total_diamonds}")
-        
-    # NOTA: Esta función solo maneja diamantes
+        print(f"💎 Diamante recogido! {collected_diamonds}/{total_diamonds}")
 
-# Actualizar dimensiones del laberinto según el nivel actual
 def update_maze_dimensions():
-    """Actualiza dimensiones - Solo para compatibilidad"""
+    """Actualiza dimensiones del laberinto"""
     global MAZE_WIDTH, MAZE_HEIGHT
     current_maze = levels[current_level]['maze']
     MAZE_HEIGHT = len(current_maze)
@@ -1722,14 +1492,12 @@ def update_maze_dimensions():
     print(f"🎮 Nivel actualizado: {MAZE_WIDTH}x{MAZE_HEIGHT}")
 
 def draw_maze():
-    """Dibuja el laberinto centrado en ventana extendida"""
-    # Calcular offset para centrar en ventana extendida
+    """Dibuja el laberinto"""
     maze_pixel_width = MAZE_WIDTH * TILE_SIZE
     maze_pixel_height = MAZE_HEIGHT * TILE_SIZE
     offset_x = (SCREEN_WIDTH - maze_pixel_width) // 2
     offset_y = (SCREEN_HEIGHT - maze_pixel_height - 100) // 2
     
-    # Asegurar que el laberinto esté visible
     offset_x = max(0, offset_x)
     offset_y = max(0, offset_y)
     
@@ -1739,7 +1507,7 @@ def draw_maze():
             screen_y = y * TILE_SIZE + offset_y
             rect = pygame.Rect(screen_x, screen_y, TILE_SIZE, TILE_SIZE)
             
-            if maze[y][x] == 1:  # Paredes infernales
+            if maze[y][x] == 1:  # Paredes
                 if wall_sprite:
                     scaled_wall = pygame.transform.scale(wall_sprite, (TILE_SIZE, TILE_SIZE))
                     screen.blit(scaled_wall, (screen_x, screen_y))
@@ -1749,12 +1517,11 @@ def draw_maze():
             elif maze[y][x] == 2:  # Portal de salida
                 pygame.draw.rect(screen, COLOR_PATH, rect)
                 
-                if collected_diamonds >= 5:  # SIEMPRE 5 diamantes requeridos
+                if collected_diamonds >= 5:
                     # Puerta abierta
                     if door_sprite:
                         scaled_door = pygame.transform.scale(door_sprite, (TILE_SIZE, TILE_SIZE))
                         screen.blit(scaled_door, (screen_x, screen_y))
-                        # Efecto de brillo verde
                         import math
                         alpha = int(64 + 63 * math.sin(time.time() * 5))
                         glow_surface = pygame.Surface((TILE_SIZE, TILE_SIZE))
@@ -1780,13 +1547,12 @@ def draw_maze():
                         door_emoji = emoji_font.render('🔒', True, (255, 255, 255))
                         screen.blit(door_emoji, (screen_x + 4, screen_y))
                         
-            elif maze[y][x] == 3:  # Tesoros infernales
+            elif maze[y][x] == 3:  # Diamantes
                 pygame.draw.rect(screen, COLOR_PATH, rect)
                 
                 if diamond_sprite:
                     scaled_diamond = pygame.transform.scale(diamond_sprite, (TILE_SIZE, TILE_SIZE))
                     screen.blit(scaled_diamond, (screen_x, screen_y))
-                    # Efecto de brillo dorado
                     import math
                     alpha = int(64 + 63 * math.sin(time.time() * 3))
                     glow_surface = pygame.Surface((TILE_SIZE, TILE_SIZE))
@@ -1797,16 +1563,15 @@ def draw_maze():
                     pygame.draw.rect(screen, COLOR_BONUS, rect, 3)
                     bonus_emoji = emoji_font.render('💎', True, (255, 215, 0))
                     screen.blit(bonus_emoji, (screen_x + 4, screen_y))
-            else:  # Suelo infernal
+            else:  # Suelo
                 pygame.draw.rect(screen, COLOR_PATH, rect)
                 if (x + y) % 4 == 0:
                     pygame.draw.rect(screen, (90, 45, 45), rect, 1)
 
 def draw_player():
-    """Dibuja al jugador centrado en ventana extendida"""
+    """Dibuja al jugador"""
     x, y = player_pos
     
-    # Calcular offset igual que en draw_maze
     maze_pixel_width = MAZE_WIDTH * TILE_SIZE
     maze_pixel_height = MAZE_HEIGHT * TILE_SIZE
     offset_x = (SCREEN_WIDTH - maze_pixel_width) // 2
@@ -1825,8 +1590,7 @@ def draw_player():
         screen.blit(player_emoji, (screen_x + 4, screen_y))
 
 def draw_enemies():
-    """Dibuja enemigos centrados en ventana extendida"""
-    # Calcular offset igual que en draw_maze
+    """Dibuja enemigos"""
     maze_pixel_width = MAZE_WIDTH * TILE_SIZE
     maze_pixel_height = MAZE_HEIGHT * TILE_SIZE
     offset_x = (SCREEN_WIDTH - maze_pixel_width) // 2
@@ -1838,7 +1602,6 @@ def draw_enemies():
         x, y = enemy["pos"]
         enemy_type = enemy["type"]
         
-        # Verificar invisibilidad
         is_invisible = False
         if enemy_type == '👻' and i < len(enemy_behaviors):
             behavior = enemy_behaviors[i]
@@ -1849,16 +1612,13 @@ def draw_enemies():
         screen_y = y * TILE_SIZE + offset_y
         
         if is_invisible:
-            # NUEVO: Mostrar sprite de humo si está disponible
             if humo_sprite:
                 scaled_humo = pygame.transform.scale(humo_sprite, (TILE_SIZE, TILE_SIZE))
                 screen.blit(scaled_humo, (screen_x, screen_y))
             else:
-                # Fallback: emoji de humo
                 humo_emoji = emoji_font.render('💨', True, (200, 200, 200))
                 screen.blit(humo_emoji, (screen_x + 4, screen_y))
         else:
-            # Mostrar enemigo normal
             enemy_dir = enemy.get("dir", [1, 0])
             sprite_direction = 'left' if enemy_dir[0] < 0 else 'right'
             
@@ -1870,8 +1630,7 @@ def draw_enemies():
                 screen.blit(enemy_emoji, (screen_x + 4, screen_y))
 
 def draw_projectiles():
-    """Dibuja proyectiles centrados en ventana extendida - CACA COMO PROYECTIL REAL"""
-    # Calcular offset igual que en draw_maze
+    """Dibuja proyectiles como proyectiles reales"""
     maze_pixel_width = MAZE_WIDTH * TILE_SIZE
     maze_pixel_height = MAZE_HEIGHT * TILE_SIZE
     offset_x = (SCREEN_WIDTH - maze_pixel_width) // 2
@@ -1884,27 +1643,22 @@ def draw_projectiles():
         screen_x = x * TILE_SIZE + offset_x
         screen_y = y * TILE_SIZE + offset_y
         
-        # PROYECTIL DE CACA REALISTA
         if poop_sprite:
-            # Tamaño más pequeño para que se vea como proyectil
-            projectile_size = int(TILE_SIZE * 0.5)  # 50% del tamaño de celda
+            projectile_size = int(TILE_SIZE * 0.5)
             scaled_poop = pygame.transform.scale(poop_sprite, (projectile_size, projectile_size))
             
-            # NUEVO: Rotación basada en la dirección del movimiento
             direction = p.get('dir', [1, 0])
             if direction[0] != 0 or direction[1] != 0:
-                # Calcular ángulo de rotación
                 angle = math.atan2(direction[1], direction[0]) * 180 / math.pi
                 rotated_poop = pygame.transform.rotate(scaled_poop, -angle)
             else:
                 rotated_poop = scaled_poop
             
-            # Centrar el proyectil en la celda
             poop_rect = rotated_poop.get_rect()
             centered_x = screen_x + (TILE_SIZE - poop_rect.width) // 2
             centered_y = screen_y + (TILE_SIZE - poop_rect.height) // 2
             
-            # EFECTO DE ESTELA MARRÓN detrás del proyectil
+            # Estela de proyectil
             if direction[0] != 0 or direction[1] != 0:
                 trail_length = 4
                 for i in range(1, trail_length + 1):
@@ -1913,392 +1667,211 @@ def draw_projectiles():
                     trail_alpha = max(30, 150 - (i * 30))
                     trail_size = max(2, projectile_size - (i * 4))
                     
-                    # Crear superficie con transparencia para la estela marrón
                     trail_surface = pygame.Surface((trail_size, trail_size))
-                    trail_surface.fill((101, 67, 33))  # Color marrón para estela de caca
+                    trail_surface.fill((101, 67, 33))
                     trail_surface.set_alpha(trail_alpha)
                     screen.blit(trail_surface, (trail_x, trail_y))
             
-            # Dibujar el proyectil de caca principal
             screen.blit(rotated_poop, (centered_x, centered_y))
             
-            # NUEVO: Efecto de "vuelo" con pequeñas partículas marrones
+            # Partículas
             import random
-            if random.random() < 0.3:  # 30% probabilidad de partícula
+            if random.random() < 0.3:
                 particle_x = centered_x + random.randint(-5, 5)
                 particle_y = centered_y + random.randint(-5, 5)
                 particle_size = random.randint(1, 3)
                 pygame.draw.circle(screen, (139, 69, 19), (particle_x, particle_y), particle_size)
             
-        # Respaldo con emoji de caca como proyectil
         else:
-            # Centro de la celda
             center_x = screen_x + TILE_SIZE // 2
             center_y = screen_y + TILE_SIZE // 2
             
-            # Tamaño más pequeño para emoji
             projectile_font_size = max(12, int(TILE_SIZE * 0.4))
             projectile_font = pygame.font.SysFont('Segoe UI Emoji', projectile_font_size)
             
-            # Emoji de caca más pequeño y centrado
             poop_emoji = projectile_font.render('💩', True, (139, 69, 19))
             emoji_rect = poop_emoji.get_rect(center=(center_x, center_y))
             screen.blit(poop_emoji, emoji_rect)
-            
-            # Estela de puntos marrones para emoji
-            direction = p.get('dir', [1, 0])
-            if direction[0] != 0 or direction[1] != 0:
-                for i in range(1, 4):
-                    trail_x = center_x - (direction[0] * i * 8)
-                    trail_y = center_y - (direction[1] * i * 8)
-                    trail_alpha = max(50, 200 - (i * 50))
-                    
-                    # Puntos marrones para la estela
-                    trail_surface = pygame.Surface((6, 6))
-                    trail_surface.fill((101, 67, 33))
-                    trail_surface.set_alpha(trail_alpha)
-                    screen.blit(trail_surface, (trail_x - 3, trail_y - 3))
 
 def draw_ui():
-    """UI en ventana extendida"""
-    # UI en la parte inferior de la ventana extendida
+    """UI con sprites de fuego"""
     ui_start_y = SCREEN_HEIGHT - 90
     
-    # ========================================
-    # SECCIÓN SUPERIOR: INFORMACIÓN BÁSICA
-    # ========================================
-    
-    # Información del nivel (esquina superior izquierda)
+    # Información del nivel
     level_info = f"Dimensión: {current_level + 1} - {levels[current_level]['name']}"
     level_text = small_font.render(level_info, True, COLOR_BONUS)
     screen.blit(level_text, (10, ui_start_y))
     
-    # ========================================
-    # SECCIÓN CORAZONES: MÁS GRANDES Y PROMINENTES
-    # ========================================
-    
-    # Corazones más grandes en la esquina superior derecha
+    # Vidas con sprites de fuego
     hearts_x = SCREEN_WIDTH - 150
     hearts_y = ui_start_y
     
-    # Texto "Vida:" 
     lives_label = small_font.render("Vida:", True, COLOR_FIRE)
     screen.blit(lives_label, (hearts_x - 50, hearts_y + 8))
     
-    if heart_sprite:
-        # Usar sprites de corazón MÁS GRANDES (35x35)
+    if fire_sprite:
+        large_fire_sprite = pygame.transform.scale(fire_sprite, (35, 35))
+        for i in range(player_lives):
+            screen.blit(large_fire_sprite, (hearts_x + i * 40, hearts_y))
+    elif heart_sprite:
         large_heart_sprite = pygame.transform.scale(heart_sprite, (35, 35))
         for i in range(player_lives):
             screen.blit(large_heart_sprite, (hearts_x + i * 40, hearts_y))
     else:
-        # Respaldo con emojis más grandes
-        large_emoji_font = pygame.font.SysFont('Segoe UI Emoji', 35)
         for i in range(player_lives):
-            heart_emoji = large_emoji_font.render('💖', True, COLOR_FIRE)
-            screen.blit(heart_emoji, (hearts_x + i * 40, hearts_y))
+            pygame.draw.rect(screen, COLOR_FIRE, (hearts_x + i * 40, hearts_y, 30, 30))
     
-    # ========================================
-    # SECCIÓN MEDIA: ESTADÍSTICAS PRINCIPALES
-    # ========================================
+    section_y = ui_start_y + 30
     
-    section_y = ui_start_y + 30  # Más espacio después de los corazones
-    
-    # Puntuación de almas (izquierda)
+    # Puntuación
     score_text = small_font.render(f"Almas: {player_score}", True, COLOR_TEXT)
     screen.blit(score_text, (10, section_y))
     
-    # Estado de diamantes (centro) - SIEMPRE 5 DIAMANTES
-    diamonds_remaining = 5 - collected_diamonds  # Siempre 5 diamantes por nivel
+    # Estado de diamantes
+    diamonds_remaining = 5 - collected_diamonds
     if diamonds_remaining > 0:
-        diamond_color = (255, 100, 100)  # Rojo si faltan diamantes
-        diamond_status = f"💎 {collected_diamonds}/5 (faltan {diamonds_remaining}) 🔒"
+        diamond_color = (255, 100, 100)
+        diamond_status = f"Gemas: {collected_diamonds}/5 (faltan {diamonds_remaining}) CERRADA"
     else:
-        diamond_color = (100, 255, 100)  # Verde si están completos
-        diamond_status = f"💎 {collected_diamonds}/5 ✅ 🚪 ABIERTA"
+        diamond_color = (100, 255, 100)
+        diamond_status = f"Gemas: {collected_diamonds}/5 COMPLETADO - PUERTA ABIERTA"
     
     diamond_text = small_font.render(diamond_status, True, diamond_color)
-    screen.blit(diamond_text, (200, section_y))
+    if fire_sprite:
+        fire_size = max(15, int(small_font_size * 0.8))
+        scaled_fire = pygame.transform.scale(fire_sprite, (fire_size, fire_size))
+        screen.blit(scaled_fire, (190, section_y))
+        screen.blit(diamond_text, (210, section_y))
+    else:
+        screen.blit(diamond_text, (200, section_y))
     
     # Información de enemigos
     enemy_count = len(enemies)
-    enemy_types_current = []
     invisible_count = 0
     
     for i, e in enumerate(enemies):
         enemy_type = e['type']
-        # Verificar si está invisible
         if enemy_type == '👻' and i < len(enemy_behaviors):
             behavior = enemy_behaviors[i]
             if hasattr(behavior, 'is_currently_invisible') and behavior.is_currently_invisible():
                 invisible_count += 1
-                enemy_types_current.append('💨')  # Usar humo para representar invisibilidad
-            else:
-                enemy_types_current.append(enemy_type)
-        else:
-            enemy_types_current.append(enemy_type)
     
-    enemy_info = f"Demonios: {enemy_count} {''.join(enemy_types_current) if enemy_types_current else ''}"
+    enemy_info = f"Demonios: {enemy_count} activos"
     if invisible_count > 0:
-        enemy_info += f" ({invisible_count} 💨)"
+        enemy_info += f" ({invisible_count} invisibles)"
     
     enemy_text = small_font.render(enemy_info, True, COLOR_FIRE)
-    screen.blit(enemy_text, (600, section_y))
-    
-    # ========================================
-    # SECCIÓN INFERIOR: INFORMACIÓN DE COMBATE
-    # ========================================
+    if fire_sprite:
+        fire_size = max(15, int(small_font_size * 0.8))
+        scaled_fire = pygame.transform.scale(fire_sprite, (fire_size, fire_size))
+        screen.blit(scaled_fire, (590, section_y))
+        screen.blit(enemy_text, (610, section_y))
+    else:
+        screen.blit(enemy_text, (600, section_y))
     
     combat_y = section_y + 25
     
-    # Información de proyectiles (centro)
-    projectile_info = f"💩 Proyectiles: {len(projectiles)}/3"
+    # Información de proyectiles
+    projectile_info = f"Proyectiles: {len(projectiles)}/3"
     projectile_color = COLOR_FIRE if len(projectiles) < 3 else (255, 100, 100)
     projectile_text = small_font.render(projectile_info, True, projectile_color)
-    screen.blit(projectile_text, (10, combat_y))
     
-    # Información de aim bot (derecha)
+    if fire_sprite:
+        fire_size = max(15, int(small_font_size * 0.8))
+        scaled_fire = pygame.transform.scale(fire_sprite, (fire_size, fire_size))
+        screen.blit(scaled_fire, (0, combat_y))
+        screen.blit(projectile_text, (20, combat_y))
+    else:
+        screen.blit(projectile_text, (10, combat_y))
+    
+    # Información de aim bot
     if aim_bot.aim_assistance:
         if aim_bot.target_enemy:
-            aim_status = "🎯 ACTIVO"
-            aim_color = (0, 255, 0)  # Verde cuando está apuntando
+            aim_status = "AIM: ACTIVO"
+            aim_color = (0, 255, 0)
         else:
-            aim_status = "🎯 ESPERANDO"
-            aim_color = COLOR_FIRE  # Naranja cuando está esperando enemigos
+            aim_status = "AIM: ESPERANDO"
+            aim_color = COLOR_FIRE
     else:
-        aim_status = "🎯 MANUAL"
-        aim_color = (100, 100, 100)  # Gris cuando está desactivado
+        aim_status = "AIM: MANUAL"
+        aim_color = (100, 100, 100)
     
     aim_text = small_font.render(aim_status, True, aim_color)
-    screen.blit(aim_text, (200, combat_y))
     
-    # ========================================
-    # SECCIÓN CONTROLES: INFORMACIÓN COMPACTA
-    # ========================================
-    
-    # Información de controles más compacta
-    if controller_connected:
-        control_text = f"🎮 Xbox360 | {levels[current_level]['difficulty']} | {FPS}FPS | A=disparar(siempre) B=salir | +/-=tamaño F11=pantalla"
+    if fire_sprite:
+        fire_size = max(15, int(small_font_size * 0.8))
+        scaled_fire = pygame.transform.scale(fire_sprite, (fire_size, fire_size))
+        screen.blit(scaled_fire, (190, combat_y))
+        screen.blit(aim_text, (210, combat_y))
     else:
-        control_text = f"⌨️ Teclado | {levels[current_level]['difficulty']} | {FPS}FPS | ESPACIO=disparar(siempre) A=aim +/-=tamaño F11=pantalla"
+        screen.blit(aim_text, (200, combat_y))
+    
+    # Información de controles
+    if controller_connected:
+        control_text = f"Xbox360 | {levels[current_level]['difficulty']} | {FPS}FPS | A=disparar B=salir | +/-=tamaño F11=pantalla"
+    else:
+        control_text = f"Teclado | {levels[current_level]['difficulty']} | {FPS}FPS | ESPACIO=disparar A=aim +/-=tamaño F11=pantalla"
     
     info_color = COLOR_FIRE if controller_connected else COLOR_TEXT
     info_text_surface = small_font.render(control_text, True, info_color)
-    screen.blit(info_text_surface, (400, combat_y))
+    
+    if fire_sprite:
+        fire_size = max(15, int(small_font_size * 0.8))
+        scaled_fire = pygame.transform.scale(fire_sprite, (fire_size, fire_size))
+        screen.blit(scaled_fire, (390, combat_y))
+        screen.blit(info_text_surface, (410, combat_y))
+    else:
+        screen.blit(info_text_surface, (400, combat_y))
 
 def draw_menu():
-    """Menú principal con ventana extendida"""
-    # Fondo infernal degradado
+    """Menú principal con sprites de fuego"""
     screen.fill((20, 0, 0))
     
-    # Mostrar portada si está disponible
     if cover_image:
-        # Centrar la portada en la parte superior
         cover_x = (SCREEN_WIDTH - cover_image.get_width()) // 2
         cover_y = 30
         screen.blit(cover_image, (cover_x, cover_y))
         title_y = cover_y + cover_image.get_height() + 30
     else:
-        # Título con tema infernal
-        title = font.render("🔥 DIMENSIONES INFERNALES 🔥", True, COLOR_FIRE)
-        screen.blit(title, (SCREEN_WIDTH // 2 - title.get_width() // 2, 40))
+        title_text = "DIMENSIONES INFERNALES"
+        title = font.render(title_text, True, COLOR_FIRE)
+        title_x = SCREEN_WIDTH // 2 - title.get_width() // 2
+        
+        if fire_sprite:
+            fire_size = max(30, int(base_font_size * 1.2))
+            scaled_fire = pygame.transform.scale(fire_sprite, (fire_size, fire_size))
+            
+            screen.blit(scaled_fire, (title_x - fire_size - 10, 40))
+            screen.blit(scaled_fire, (title_x + title.get_width() + 10, 40))
+        
+        screen.blit(title, (title_x, 40))
         subtitle = small_font.render("- Sistema de IA Demoníaca -", True, COLOR_BONUS)
         screen.blit(subtitle, (SCREEN_WIDTH // 2 - subtitle.get_width() // 2, 80))
         title_y = 130
     
-    # ========================================
-    # SECCIÓN OPCIONES DEL MENÚ CON SPRITES DE FUEGO
-    # ========================================
-    
-    # Opciones del menú sin emojis (se agregarán sprites)
+    # Opciones del menú con sprites de fuego
     menu_texts = ['Nueva Partida', 'Dificultad', 'Salir']
     
     for i, option in enumerate(menu_texts):
         option_y = title_y + i * 50
         
-        # Calcular posición del sprite de fuego
-        fire_size = max(20, int(base_font_size * 0.8))  # Tamaño proporcional a la fuente
-        option_text_width = font.size(option)[0]
-        fire_x = (SCREEN_WIDTH // 2) - (option_text_width // 2) - fire_size - 10  # 10px de separación
-        fire_y = option_y
-        
-        # Dibujar sprite de fuego si está disponible
-        if fire_sprite:
-            scaled_fire = pygame.transform.scale(fire_sprite, (fire_size, fire_size))
-            screen.blit(scaled_fire, (fire_x, fire_y))
-        else:
-            # Respaldo con emoji de fuego
-            fire_emoji = small_font.render('🔥', True, COLOR_FIRE)
-            screen.blit(fire_emoji, (fire_x, fire_y))
-        
-        # Color de la opción
-        if i == menu_idx:
-            color = COLOR_FIRE  # Naranja fuego para opción seleccionada
-            # Efecto de brillo para opción seleccionada
-            shadow_text = font.render(option, True, (100, 0, 0))
-            screen.blit(shadow_text, (SCREEN_WIDTH // 2 - shadow_text.get_width() // 2 + 2, option_y + 2))
-            
-            # Indicador de selección (otro sprite de fuego más grande)
-            indicator_size = fire_size + 5
-            indicator_x = fire_x - indicator_size - 5
-            if fire_sprite:
-                scaled_indicator = pygame.transform.scale(fire_sprite, (indicator_size, indicator_size))
-                screen.blit(scaled_indicator, (indicator_x, fire_y - 2))
-            else:
-                indicator = "► "
-                indicator_text = font.render(indicator, True, COLOR_FIRE)
-                screen.blit(indicator_text, (indicator_x, option_y))
-        else:
-            color = (150, 75, 75)  # Rojo oscuro para opciones no seleccionadas
-        
-        # Dibujar texto de la opción
-        text = font.render(option, True, color)
-        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, option_y))
-    
-    # ========================================
-    # SECCIÓN INFORMACIÓN DE CONTROLES (CON SPRITES DE FUEGO)
-    # ========================================
-    
-    controls_y = title_y + 200  # Más espacio después de las opciones
-    
-    # Información de controles con sprites de fuego
-    control_lines = [
-        "CONTROLES:",
-        "Xbox 360: A=aceptar | B=atrás | Joystick=navegar",
-        "Teclado: Enter=aceptar | ESC=atrás | Flechas=navegar",
-        "F11=Pantalla completa | +/- = Ajustar laberinto"
-    ]
-    
-    for i, line in enumerate(control_lines):
-        line_y = controls_y + i * 30
-        
-        # Solo agregar sprite de fuego al título "CONTROLES:"
-        if i == 0:
-            color = COLOR_FIRE
-            font_to_use = font
-            
-            # Sprite de fuego antes del título
-            if fire_sprite:
-                fire_size = max(18, int(base_font_size * 0.7))
-                scaled_fire = pygame.transform.scale(fire_sprite, (fire_size, fire_size))
-                fire_x = (SCREEN_WIDTH // 2) - (font.size(line)[0] // 2) - fire_size - 10
-                screen.blit(scaled_fire, (fire_x, line_y))
-        else:
-            color = COLOR_TEXT
-            font_to_use = small_font
-            
-        text = font_to_use.render(line, True, color)
-        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, line_y))
-    
-    # ========================================
-    # SECCIÓN INFORMACIÓN DEL JUEGO (CON SPRITES DE FUEGO)
-    # ========================================
-    
-    info_y = controls_y + 120
-    
-    # Información del juego con sprites de fuego
-    game_info = [
-        "OBJETIVO: Recolecta los 5 diamantes 💎 para abrir las puertas 🚪",
-        "ENEMIGOS: 7 tipos de criaturas infernales con IA única",
-        "DISPARO: Siempre puedes disparar (ESPACIO/A) - Presiona A para aim bot",
-        "Sprites personalizados para mejor experiencia visual"
-    ]
-    
-    for i, info in enumerate(game_info):
-        line_y = info_y + i * 25
-        
-        # Color de la línea
-        if i == 0:
-            color = COLOR_BONUS
-        else:
-            color = (200, 150, 100)
-        
-        # Sprite de fuego para cada línea de información
-        if fire_sprite:
-            fire_size = max(15, int(small_font_size * 0.8))
-            scaled_fire = pygame.transform.scale(fire_sprite, (fire_size, fire_size))
-            text_width = small_font.size(info)[0]
-            fire_x = (SCREEN_WIDTH - text_width) // 2 - fire_size - 8
-            screen.blit(scaled_fire, (fire_x, line_y))
-        
-        # Texto de la información
-        text = small_font.render(info, True, color)
-        text_x = (SCREEN_WIDTH - text.get_width()) // 2
-        screen.blit(text, (text_x, line_y))
-    
-    # ========================================
-    # EFECTOS VISUALES SUTILES
-    # ========================================
-    
-    # Efectos de partículas infernales más sutiles
-    import random
-    for _ in range(3):  # Menos partículas para no distraer
-        x = random.randint(50, SCREEN_WIDTH - 50)
-        y = random.randint(50, SCREEN_HEIGHT - 50)
-        alpha = random.randint(50, 150)
-        
-        # Crear superficie con transparencia
-        particle_surface = pygame.Surface((4, 4))
-        particle_surface.fill((255, 100, 0))
-        particle_surface.set_alpha(alpha)
-        screen.blit(particle_surface, (x, y))
-    
-    pygame.display.flip()
-
-def draw_difficulty_menu():
-    """Menú de dificultad con sprites de fuego"""
-    # Fondo infernal
-    screen.fill((20, 0, 0))
-    
-    # ========================================
-    # TÍTULO CON SPRITE DE FUEGO
-    # ========================================
-    
-    title_text = "Elige tu nivel de tortura:"
-    title = font.render(title_text, True, COLOR_FIRE)
-    title_x = SCREEN_WIDTH // 2 - title.get_width() // 2
-    
-    # Sprite de fuego antes del título
-    if fire_sprite:
-        fire_size = max(25, int(base_font_size * 0.9))
-        scaled_fire = pygame.transform.scale(fire_sprite, (fire_size, fire_size))
-        fire_x = title_x - fire_size - 10
-        screen.blit(scaled_fire, (fire_x, 80))
-    
-    screen.blit(title, (title_x, 80))
-    
-    # ========================================
-    # OPCIONES DE DIFICULTAD CON SPRITES
-    # ========================================
-    
-    # Opciones sin emojis (se agregarán sprites)
-    difficulty_texts = ['Alma Perdida (Fácil)', 'Demonio (Medio)', 'Señor del Infierno (Difícil)']
-    
-    for i, opt in enumerate(difficulty_texts):
-        option_y = 180 + i * 60
-        
-        # Calcular posición del sprite de fuego
         fire_size = max(20, int(base_font_size * 0.8))
-        option_text_width = font.size(opt)[0]
+        option_text_width = font.size(option)[0]
         fire_x = (SCREEN_WIDTH // 2) - (option_text_width // 2) - fire_size - 10
         fire_y = option_y
         
-        # Dibujar sprite de fuego
         if fire_sprite:
             scaled_fire = pygame.transform.scale(fire_sprite, (fire_size, fire_size))
             screen.blit(scaled_fire, (fire_x, fire_y))
         else:
-            # Respaldo con emoji de fuego
             fire_emoji = small_font.render('🔥', True, COLOR_FIRE)
             screen.blit(fire_emoji, (fire_x, fire_y))
         
-        # Color y efectos de la opción
-        if i == diff_idx:
+        if i == menu_idx:
             color = COLOR_FIRE
-            # Efecto de brillo para opción seleccionada
-            shadow_text = font.render(opt, True, (100, 0, 0))
+            shadow_text = font.render(option, True, (100, 0, 0))
             screen.blit(shadow_text, (SCREEN_WIDTH // 2 - shadow_text.get_width() // 2 + 2, option_y + 2))
             
-            # Indicador de selección (sprite de fuego más grande)
             indicator_size = fire_size + 5
             indicator_x = fire_x - indicator_size - 5
             if fire_sprite:
@@ -2311,17 +1884,136 @@ def draw_difficulty_menu():
         else:
             color = (150, 75, 75)
         
-        # Dibujar texto de la opción
+        text = font.render(option, True, color)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, option_y))
+    
+    # Información de controles
+    controls_y = title_y + 200
+    
+    control_lines = [
+        "CONTROLES:",
+        "Xbox 360: A=aceptar | B=atrás | Joystick=navegar",
+        "Teclado: Enter=aceptar | ESC=atrás | Flechas=navegar",
+        "F11=Pantalla completa | +/- = Ajustar laberinto"
+    ]
+    
+    for i, line in enumerate(control_lines):
+        line_y = controls_y + i * 30
+        
+        if i == 0:
+            color = COLOR_FIRE
+            font_to_use = font
+            
+            if fire_sprite:
+                fire_size = max(18, int(base_font_size * 0.7))
+                scaled_fire = pygame.transform.scale(fire_sprite, (fire_size, fire_size))
+                fire_x = (SCREEN_WIDTH // 2) - (font.size(line)[0] // 2) - fire_size - 10
+                screen.blit(scaled_fire, (fire_x, line_y))
+        else:
+            color = COLOR_TEXT
+            font_to_use = small_font
+            
+        text = font_to_use.render(line, True, color)
+        screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, line_y))
+    
+    # Información del juego
+    info_y = controls_y + 120
+    
+    game_info = [
+        "OBJETIVO: Recolecta los 5 diamantes para abrir las puertas",
+        "ENEMIGOS: 7 tipos de criaturas infernales con IA única",
+        "DISPARO: Siempre puedes disparar (ESPACIO/A) - Presiona A para aim bot",
+        "Sprites personalizados para mejor experiencia visual"
+    ]
+    
+    for i, info in enumerate(game_info):
+        line_y = info_y + i * 25
+        
+        if i == 0:
+            color = COLOR_BONUS
+        else:
+            color = (200, 150, 100)
+        
+        if fire_sprite:
+            fire_size = max(15, int(small_font_size * 0.8))
+            scaled_fire = pygame.transform.scale(fire_sprite, (fire_size, fire_size))
+            text_width = small_font.size(info)[0]
+            fire_x = (SCREEN_WIDTH - text_width) // 2 - fire_size - 8
+            screen.blit(scaled_fire, (fire_x, line_y))
+        
+        text = small_font.render(info, True, color)
+        text_x = (SCREEN_WIDTH - text.get_width()) // 2
+        screen.blit(text, (text_x, line_y))
+    
+    # Efectos visuales sutiles
+    import random
+    for _ in range(3):
+        x = random.randint(50, SCREEN_WIDTH - 50)
+        y = random.randint(50, SCREEN_HEIGHT - 50)
+        alpha = random.randint(50, 150)
+        
+        particle_surface = pygame.Surface((4, 4))
+        particle_surface.fill((255, 100, 0))
+        particle_surface.set_alpha(alpha)
+        screen.blit(particle_surface, (x, y))
+    
+    pygame.display.flip()
+
+def draw_difficulty_menu():
+    """Menú de dificultad con sprites de fuego"""
+    screen.fill((20, 0, 0))
+    
+    title_text = "Elige tu nivel de tortura:"
+    title = font.render(title_text, True, COLOR_FIRE)
+    title_x = SCREEN_WIDTH // 2 - title.get_width() // 2
+    
+    if fire_sprite:
+        fire_size = max(25, int(base_font_size * 0.9))
+        scaled_fire = pygame.transform.scale(fire_sprite, (fire_size, fire_size))
+        fire_x = title_x - fire_size - 10
+        screen.blit(scaled_fire, (fire_x, 80))
+    
+    screen.blit(title, (title_x, 80))
+    
+    difficulty_texts = ['Alma Perdida (Fácil)', 'Demonio (Medio)', 'Señor del Infierno (Difícil)']
+    
+    for i, opt in enumerate(difficulty_texts):
+        option_y = 180 + i * 60
+        
+        fire_size = max(20, int(base_font_size * 0.8))
+        option_text_width = font.size(opt)[0]
+        fire_x = (SCREEN_WIDTH // 2) - (option_text_width // 2) - fire_size - 10
+        fire_y = option_y
+        
+        if fire_sprite:
+            scaled_fire = pygame.transform.scale(fire_sprite, (fire_size, fire_size))
+            screen.blit(scaled_fire, (fire_x, fire_y))
+        else:
+            fire_emoji = small_font.render('🔥', True, COLOR_FIRE)
+            screen.blit(fire_emoji, (fire_x, fire_y))
+        
+        if i == diff_idx:
+            color = COLOR_FIRE
+            shadow_text = font.render(opt, True, (100, 0, 0))
+            screen.blit(shadow_text, (SCREEN_WIDTH // 2 - shadow_text.get_width() // 2 + 2, option_y + 2))
+            
+            indicator_size = fire_size + 5
+            indicator_x = fire_x - indicator_size - 5
+            if fire_sprite:
+                scaled_indicator = pygame.transform.scale(fire_sprite, (indicator_size, indicator_size))
+                screen.blit(scaled_indicator, (indicator_x, fire_y - 2))
+            else:
+                indicator = "► "
+                indicator_text = font.render(indicator, True, COLOR_FIRE)
+                screen.blit(indicator_text, (indicator_x, option_y))
+        else:
+            color = (150, 75, 75)
+        
         txt = font.render(opt, True, color)
         screen.blit(txt, (SCREEN_WIDTH // 2 - txt.get_width() // 2, option_y))
     
-    # ========================================
-    # INFORMACIÓN DE VELOCIDAD CON SPRITES
-    # ========================================
-    
     speed_y = 400
     
-    # Información de velocidad con sprites de fuego
     speed_info = [
         f"VELOCIDADES:",
         f"Alma Perdida: {FPS_levels['Fácil']} FPS - Demonios lentos",
@@ -2336,7 +2028,6 @@ def draw_difficulty_menu():
             color = COLOR_FIRE
             font_to_use = font
             
-            # Sprite de fuego para el título
             if fire_sprite:
                 fire_size = max(18, int(base_font_size * 0.7))
                 scaled_fire = pygame.transform.scale(fire_sprite, (fire_size, fire_size))
@@ -2344,10 +2035,9 @@ def draw_difficulty_menu():
                 screen.blit(scaled_fire, (fire_x, line_y))
                 
         elif i == diff_idx + 1:
-            color = COLOR_FIRE  # Resaltar la opción seleccionada
+            color = COLOR_FIRE
             font_to_use = small_font
             
-            # Sprite de fuego pequeño para la opción seleccionada
             if fire_sprite:
                 fire_size = max(15, int(small_font_size * 0.8))
                 scaled_fire = pygame.transform.scale(fire_sprite, (fire_size, fire_size))
@@ -2361,13 +2051,8 @@ def draw_difficulty_menu():
         text = font_to_use.render(info, True, color)
         screen.blit(text, (SCREEN_WIDTH // 2 - text.get_width() // 2, line_y))
     
-    # ========================================
-    # INSTRUCCIONES
-    # ========================================
-    
     instructions_y = speed_y + 150
     
-    # Instrucciones de navegación
     back_text = small_font.render("Enter=aceptar | ESC/B=volver | Flechas=navegar", True, COLOR_BONUS)
     screen.blit(back_text, (SCREEN_WIDTH // 2 - back_text.get_width() // 2, instructions_y))
     
@@ -2383,67 +2068,51 @@ def reset_game(show_welcome_messages=True):
     current_level = 0
     player_score = 0
     
-    # NUEVO: Limpiar mensajes temporales y estados de control
     temp_message = ""
     temp_message_time = 0
     last_button_a_state = False
     last_button_b_state = False
     last_space_state = False
     
-    # CORREGIDO: Recargar laberinto ORIGINAL del nivel inicial (con diamantes)
     import copy
-    maze = copy.deepcopy(levels[current_level]['maze'])  # Copia profunda para no modificar el original
+    maze = copy.deepcopy(levels[current_level]['maze'])
     projectiles = []
     
-    # Actualizar dimensiones de pantalla
     update_maze_dimensions()
     
-    # Inicializar pathfinder ANTES de generar enemigos
     pathfinder = AStar(maze)
     
-    # Generar enemigos DESPUÉS de inicializar pathfinder (esto también resetea diamantes)
     reset_enemies()
     
     print(f"🔄 Juego reiniciado - Nivel {current_level + 1}")
-    print(f"💎 Diamantes en nivel: {total_diamonds} (LABERINTO ORIGINAL RECARGADO)")
+    print(f"💎 Diamantes en nivel: {total_diamonds}")
     
-    # CORREGIDO: Solo mostrar mensajes de bienvenida si es una nueva partida
     if show_welcome_messages:
-        show_message(f"🔥 ¡Bienvenido a las Dimensiones Infernales! 🔥")
-        show_message(f"🎯 Nivel {current_level + 1}: {levels[current_level]['name']}")
-        show_message(f"💎 Objetivo: Recolecta los 5 diamantes para abrir la puerta")
-        show_message(f"👹 ¡Cuidado con los {len(enemies)} demonios que te persiguen!")
+        show_message(f"Bienvenido a las Dimensiones Infernales!")
+        show_message(f"Nivel {current_level + 1}: {levels[current_level]['name']}")
+        show_message(f"Objetivo: Recolecta los 5 diamantes para abrir la puerta")
+        show_message(f"Cuidado con los {len(enemies)} demonios que te persiguen!")
 
 def reset_enemies():
     """Resetea enemigos de forma aleatoria según el nivel actual"""
     global enemies, enemy_behaviors, pathfinder, total_diamonds, collected_diamonds, maze
     
-    # CORREGIDO: Recargar laberinto original antes de contar diamantes
     import copy
-    maze = copy.deepcopy(levels[current_level]['maze'])  # Asegurar laberinto fresco
+    maze = copy.deepcopy(levels[current_level]['maze'])
     
-    # RESETEAR SISTEMA DE DIAMANTES - SIEMPRE 5 DIAMANTES
     total_diamonds = count_diamonds_in_level(maze)
     collected_diamonds = 0
     
-    # VERIFICACIÓN: Asegurar que siempre sean 5 diamantes
     if total_diamonds != 5:
         print(f"⚠️ ERROR: Nivel {current_level + 1} tiene {total_diamonds} diamantes, debería tener 5")
-        print(f"🔧 Corrigiendo automáticamente...")
-        total_diamonds = 5  # Forzar 5 diamantes
+        total_diamonds = 5
     
-    print(f"💎 Nivel {current_level + 1}: {total_diamonds} diamantes - TODOS REQUERIDOS para abrir la puerta")
+    print(f"💎 Nivel {current_level + 1}: {total_diamonds} diamantes requeridos")
     
-    # Asegurar pathfinder con laberinto fresco
     pathfinder = AStar(maze)
     
-    # NUEVO: Debug de posiciones antes de generar enemigos
-    debug_enemy_spawn_positions(maze)
-    
-    # Generar enemigos aleatorios
     enemies_config = generate_random_enemies(current_level)
     
-    # Crear enemigos
     enemies = []
     for enemy_config in enemies_config:
         enemy = {
@@ -2453,7 +2122,6 @@ def reset_enemies():
         }
         enemies.append(enemy)
     
-    # Respaldo si no hay enemigos
     if len(enemies) == 0:
         enemy = {
             'pos': [2, 2],
@@ -2462,88 +2130,42 @@ def reset_enemies():
         }
         enemies.append(enemy)
     
-    # Inicializar IA
     initialize_enemy_behaviors()
     
     print(f"✅ Nivel {current_level + 1}: {len(enemies)} enemigos cargados")
 
-def show_message_with_fire(message):
-    """Muestra mensaje con sprites de fuego en lugar de emojis"""
-    # Crear superficie temporal para el mensaje
+def show_message(message):
+    """Función de mensaje con limpieza automática de emojis"""
+    clean_message = message
+    clean_message = clean_message.replace("🔥", "")
+    clean_message = clean_message.replace("💎", "diamantes")
+    clean_message = clean_message.replace("🚪", "puerta")
+    clean_message = clean_message.replace("🎯", "")
+    clean_message = clean_message.replace("👹", "demonios")
+    clean_message = clean_message.replace("💀", "")
+    clean_message = clean_message.replace("🏆", "")
+    clean_message = clean_message.replace("😈", "")
+    clean_message = clean_message.replace("💖", "")
+    clean_message = clean_message.replace("⚠️", "")
+    clean_message = clean_message.replace("✅", "COMPLETADO")
+    clean_message = clean_message.replace("❌", "")
+    clean_message = clean_message.replace("🤡", "payaso")
+    clean_message = clean_message.replace("🧟", "zombie")
+    clean_message = clean_message.replace("👻", "fantasma")
+    clean_message = clean_message.replace("👽", "alien")
+    clean_message = clean_message.replace("🦹", "villano")
+    clean_message = clean_message.replace("👺", "demonio")
+    
     temp_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
     temp_surface.fill(COLOR_BACKGROUND)
     
-    # Calcular posición del mensaje
-    text_y = SCREEN_HEIGHT // 2
+    text = font.render(clean_message, True, COLOR_TEXT)
+    text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
+    temp_surface.blit(text, text_rect)
     
-    # Si el mensaje contiene 🔥, reemplazarlo con sprites
-    if "🔥" in message:
-        # Dividir el mensaje en partes
-        parts = message.split("🔥")
-        
-        # Calcular ancho total para centrar
-        total_width = 0
-        fire_size = max(25, int(base_font_size * 0.9))
-        
-        for part in parts:
-            if part.strip():  # Si la parte no está vacía
-                text_width = font.size(part)[0]
-                total_width += text_width
-        
-        # Agregar ancho de los sprites de fuego
-        num_fires = message.count("🔥")
-        total_width += num_fires * fire_size
-        
-        # Posición inicial centrada
-        current_x = (SCREEN_WIDTH - total_width) // 2
-        
-        # Dibujar cada parte
-        for i, part in enumerate(parts):
-            if part.strip():  # Si la parte no está vacía
-                text = font.render(part, True, COLOR_TEXT)
-                temp_surface.blit(text, (current_x, text_y))
-                current_x += text.get_width()
-            
-            # Dibujar sprite de fuego entre las partes (excepto al final)
-            if i < len(parts) - 1:
-                if fire_sprite:
-                    scaled_fire = pygame.transform.scale(fire_sprite, (fire_size, fire_size))
-                    temp_surface.blit(scaled_fire, (current_x, text_y))
-                else:
-                    # Respaldo con emoji
-                    fire_emoji = font.render('🔥', True, COLOR_FIRE)
-                    temp_surface.blit(fire_emoji, (current_x, text_y))
-                current_x += fire_size
-    else:
-        # Mensaje normal sin fuegos
-        text = font.render(message, True, COLOR_TEXT)
-        text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, text_y))
-        temp_surface.blit(text, text_rect)
-    
-    # Mostrar en pantalla
     screen.blit(temp_surface, (0, 0))
     pygame.display.flip()
     time.sleep(1.5)
-
-def show_message(message):
-    """Función de mensaje simple (mantener compatibilidad)"""
-    # Si el mensaje tiene fuegos, usar la versión con sprites
-    if "🔥" in message:
-        show_message_with_fire(message)
-    else:
-        # Crear superficie temporal para el mensaje
-        temp_surface = pygame.Surface((SCREEN_WIDTH, SCREEN_HEIGHT))
-        temp_surface.fill(COLOR_BACKGROUND)
-        
-        # Dibujar el mensaje
-        text = font.render(message, True, COLOR_TEXT)
-        text_rect = text.get_rect(center=(SCREEN_WIDTH // 2, SCREEN_HEIGHT // 2))
-        temp_surface.blit(text, text_rect)
-        
-        # Mostrar en pantalla
-        screen.blit(temp_surface, (0, 0))
-        pygame.display.flip()
-        time.sleep(1.5)
 
 def next_level():
     global current_level, maze, player_pos, enemies, projectiles, game_state, pathfinder, screen
@@ -2551,38 +2173,31 @@ def next_level():
     
     current_level += 1
     if current_level < len(levels):
-        # CORREGIDO: Recargar laberinto ORIGINAL del nuevo nivel
         import copy
-        maze = copy.deepcopy(levels[current_level]['maze'])  # Copia profunda
+        maze = copy.deepcopy(levels[current_level]['maze'])
         update_maze_dimensions()
         
-        # IMPORTANTE: Reinicializar pathfinder ANTES de generar enemigos
         pathfinder = AStar(maze)
         
-        # Resetear posición del jugador y proyectiles
         player_pos = [1, 1]
         projectiles = []
         
-        # Generar enemigos DESPUÉS de inicializar pathfinder (esto también resetea diamantes)
         reset_enemies()
         
-        # CORREGIDO: Mensajes con numeración correcta
-        show_message(f"🔥 Nivel {current_level + 1}: {levels[current_level]['name']} 🔥")
-        show_message(f"💎 ¡Recolecta los 5 diamantes para continuar!")
-        show_message(f"🚪 Encuentra la puerta infernal cuando tengas todos los diamantes")
+        show_message(f"Nivel {current_level + 1}: {levels[current_level]['name']}")
+        show_message(f"Recolecta los 5 diamantes para continuar!")
+        show_message(f"Encuentra la puerta infernal cuando tengas todos los diamantes")
     else:
-        # NUEVO: Música de victoria al completar todos los niveles
         if music_paths and music_paths['victory']:
             stop_music()
             play_music(music_paths['victory'], loop=0, volume=0.7)
         
-        show_message(f"🏆 ¡Has conquistado todas las dimensiones infernales! 🏆")
-        show_message(f"💎 Almas recolectadas: {player_score} 💎")
-        reset_game(show_welcome_messages=False)  # CORREGIDO: Sin mensajes de bienvenida al completar el juego
-        reset_menu()  # ASEGURAR menú limpio
+        show_message(f"Has conquistado todas las dimensiones infernales!")
+        show_message(f"Almas recolectadas: {player_score}")
+        reset_game(show_welcome_messages=False)
+        reset_menu()
         game_state = STATE_MENU
         
-        # NUEVO: Volver a música del menú después de victoria
         if music_paths and music_paths['menu']:
             play_music(music_paths['menu'], volume=0.3)
 
@@ -2590,32 +2205,26 @@ def next_level():
 print("")
 print("🎮 INICIALIZANDO COMPONENTES FINALES:")
 
-# ✅ CARGAR SPRITES AUTOMÁTICAMENTE AL INICIO
-print("🎨 Cargando sprites automáticamente...")
-
-# ✅ CARGAR TODOS LOS SPRITES AL INICIO
 sprites_loaded_count = load_all_sprites()
 
-print("🔧 PROBLEMAS CORREGIDOS:")
-print("   ✅ Bug de diamantes: Ahora reaparecen en nueva partida")
-print("   ✅ Tamaño del laberinto: Aumentado para mejor visibilidad")
-print("   ✅ Sprites: Carga automática al inicio del juego")
-print("   ✅ Audio: Integrada solución de ChatGPT")
+print("📊 RESUMEN FINAL:")
+print(f"   ✅ Sprites: {sprites_loaded_count}/10 cargados")
+print(f"   ✅ Audio: {sounds_count}/7 sonidos + {music_count}/4 músicas")
+print(f"   ✅ IA: A* + Árboles de Comportamiento implementados")
+print(f"   ✅ Controles: Xbox 360 + Teclado soportados")
+print(f"   ✅ Niveles: 5 dimensiones infernales con 5 diamantes cada una")
 
-# ✅ INICIALIZAR PATHFINDER
 pathfinder = AStar(levels[current_level]['maze'])
 
 clock = pygame.time.Clock()
 if 'enemies' in globals() and enemies:
     initialize_enemy_behaviors()
 
-# ✅ GENERAR ENEMIGOS INICIALES
 reset_enemies()
 
 # Loop principal
 running = True
 while running:
-    # NUEVO: Leer inputs del control al inicio del loop
     controller_move = get_controller_movement()
     controller_a_menu = get_controller_button_a_menu()
     controller_b = get_controller_button_b()
@@ -2624,7 +2233,6 @@ while running:
         if event.type == pygame.QUIT:
             running = False
         
-        # NUEVO: Detectar conexión/desconexión de controles
         elif event.type == pygame.JOYDEVICEADDED:
             print("🎮 Control conectado!")
             init_controller()
@@ -2633,35 +2241,27 @@ while running:
             controller_connected = False
         
         if event.type == pygame.KEYDOWN:
-            # Control de pantalla completa (funciona en todos los estados)
             if event.key == pygame.K_F11:
                 toggle_fullscreen()
             elif event.key == pygame.K_F4 and fullscreen_mode:
-                # F4 para salir de pantalla completa
                 toggle_fullscreen()
-            # Controles para ajustar tamaño del laberinto
             elif event.key == pygame.K_PLUS or event.key == pygame.K_EQUALS:
-                adjust_tile_size(increase=True)  # + para agrandar
+                adjust_tile_size(increase=True)
             elif event.key == pygame.K_MINUS:
-                adjust_tile_size(increase=False)  # - para encoger
+                adjust_tile_size(increase=False)
             
-            # Manejo ESTRICTO del menú (SOLO 3 opciones válidas)
             if game_state == STATE_MENU:
-                # Limitar navegación a SOLO 3 opciones
                 if event.key == pygame.K_UP:
-                    menu_idx = (menu_idx - 1) % 3  # MÁXIMO 3 opciones
+                    menu_idx = (menu_idx - 1) % 3
                 elif event.key == pygame.K_DOWN:
-                    menu_idx = (menu_idx + 1) % 3  # MÁXIMO 3 opciones
+                    menu_idx = (menu_idx + 1) % 3
                 elif event.key == pygame.K_RETURN:
-                    # NUEVO: Sonido de click en menú
                     play_sound('click', volume=0.5)
                     
-                    # Manejo DIRECTO por índice (sin referencias a strings)
                     if menu_idx == 0:  # Nueva Partida
-                        reset_game(show_welcome_messages=True)  # CORREGIDO: Mostrar mensajes de bienvenida
+                        reset_game(show_welcome_messages=True)
                         update_maze_dimensions()
                         
-                        # NUEVO: Cambiar a música de juego
                         if music_paths and music_paths['game']:
                             stop_music()
                             play_music(music_paths['game'], volume=0.4)
@@ -2678,39 +2278,33 @@ while running:
                 elif event.key == pygame.K_DOWN:
                     diff_idx = (diff_idx + 1) % len(difficulty_options)
                 elif event.key == pygame.K_RETURN:
-                    # NUEVO: Sonido de click
                     play_sound('click', volume=0.5)
                     
                     FPS = FPS_levels[difficulty_options[diff_idx]]
-                    reset_menu()  # ASEGURAR menú limpio
+                    reset_menu()
                     game_state = STATE_MENU
                 elif event.key == pygame.K_ESCAPE:
-                    # NUEVO: Sonido de click
                     play_sound('click', volume=0.5)
                     
-                    reset_menu()  # ASEGURAR menú limpio
+                    reset_menu()
                     game_state = STATE_MENU
     
-    # NUEVO: Manejar navegación con control en menús
+    # Manejar navegación con control en menús
     if game_state == STATE_MENU:
-        # Navegación con joystick/D-pad
-        if abs(controller_move[1]) > 0.5:  # Movimiento vertical significativo
-            if controller_move[1] < 0:  # Arriba
+        if abs(controller_move[1]) > 0.5:
+            if controller_move[1] < 0:
                 menu_idx = (menu_idx - 1) % 3
-            else:  # Abajo
+            else:
                 menu_idx = (menu_idx + 1) % 3
-            time.sleep(0.15)  # Pequeña pausa para evitar navegación muy rápida
+            time.sleep(0.15)
         
-        # Aceptar con botón A
         if controller_a_menu:
-            # NUEVO: Sonido de click con control
             play_sound('click', volume=0.5)
             
             if menu_idx == 0:  # Nueva Partida
-                reset_game(show_welcome_messages=True)  # CORREGIDO: Mostrar mensajes de bienvenida
+                reset_game(show_welcome_messages=True)
                 update_maze_dimensions()
                 
-                # NUEVO: Cambiar a música de juego
                 if music_paths and music_paths['game']:
                     stop_music()
                     play_music(music_paths['game'], volume=0.4)
@@ -2724,46 +2318,38 @@ while running:
         draw_menu()
         
     elif game_state == STATE_DIFF:
-        # Navegación con joystick/D-pad
-        if abs(controller_move[1]) > 0.5:  # Movimiento vertical significativo
-            if controller_move[1] < 0:  # Arriba
+        if abs(controller_move[1]) > 0.5:
+            if controller_move[1] < 0:
                 diff_idx = (diff_idx - 1) % len(difficulty_options)
-            else:  # Abajo
+            else:
                 diff_idx = (diff_idx + 1) % len(difficulty_options)
-            time.sleep(0.15)  # Pequeña pausa para evitar navegación muy rápida
+            time.sleep(0.15)
         
-        # Aceptar con botón A
         if controller_a_menu:
-            # NUEVO: Sonido de click
             play_sound('click', volume=0.5)
             
             FPS = FPS_levels[difficulty_options[diff_idx]]
-            reset_menu()  # ASEGURAR menú limpio
+            reset_menu()
             game_state = STATE_MENU
         
-        # Retroceder con botón B
         if controller_b:
-            # NUEVO: Sonido de click
             play_sound('click', volume=0.5)
             
-            reset_menu()  # ASEGURAR menú limpio
+            reset_menu()
             game_state = STATE_MENU
         
         draw_difficulty_menu()
         
     elif game_state == STATE_PLAY:
-        # Controles del jugador - TECLADO + CONTROL XBOX 360
+        # Controles del jugador
         keys = pygame.key.get_pressed()
         new_pos = player_pos.copy()
         
-        # NUEVO: Leer input del control Xbox 360
-        controller_shoot = get_controller_shoot()  # Ahora usa botón A
+        controller_shoot = get_controller_shoot()
         
-        # Variables para direcciones
         move_x, move_y = 0, 0
-        shoot_direction = None
         
-        # TECLADO: Movimiento con flechas
+        # Movimiento con flechas
         if keys[pygame.K_UP]:
             move_y = -1
             current_direction = 'up'
@@ -2777,13 +2363,11 @@ while running:
             move_x = 1
             current_direction = 'right'
         
-        # CONTROL: Movimiento con joystick/D-pad (tiene prioridad sobre teclado)
+        # Movimiento con control (prioridad)
         if controller_connected and (abs(controller_move[0]) > 0 or abs(controller_move[1]) > 0):
-            # Normalizar movimiento del control
             norm_move = normalize_direction(controller_move[0], controller_move[1])
             move_x, move_y = norm_move[0], norm_move[1]
             
-            # Actualizar dirección del sprite
             if move_x > 0:
                 current_direction = 'right'
             elif move_x < 0:
@@ -2803,45 +2387,32 @@ while running:
         if (0 <= new_pos[0] < MAZE_WIDTH and 0 <= new_pos[1] < MAZE_HEIGHT and 
             maze[new_pos[1]][new_pos[0]] != 1):
             
-            # CORREGIDO: Solo manejar bonificaciones si realmente nos movemos
             old_pos = player_pos.copy()
             player_pos = new_pos
             
-            # Solo verificar bonificaciones si cambió de posición
             if old_pos != player_pos:
                 handle_bonus_tile(new_pos[0], new_pos[1])
-            
-        # Si el movimiento no es válido, mantener posición anterior (sin sonidos)
         
-        # Asegurar dirección válida para disparar
         ensure_valid_shooting_direction()
         
-        # MEJORADO: Sistema de disparo más responsivo
-        can_shoot = len(projectiles) < 3  # REDUCIDO de 5 a 3 para mejor responsividad
+        can_shoot = len(projectiles) < 3
         
-        # TECLADO: Disparo con ESPACIO (con debounce mejorado)
+        # Disparo con ESPACIO
         current_space_pressed = keys[pygame.K_SPACE]
         keyboard_shoot = current_space_pressed and not last_space_state
         last_space_state = current_space_pressed
         
         if (controller_shoot or keyboard_shoot) and can_shoot:
-            # CORREGIDO: SIEMPRE disparar, con o sin enemigos
-            
-            # 1. Obtener dirección de aim bot si está activo Y hay enemigos
             aim_direction = None
             if aim_bot.aim_assistance:
                 aim_direction = aim_bot.get_aim_direction(player_pos, enemies)
             
-            # 2. Determinar dirección final de disparo
             if aim_direction:
-                # Usar aim bot si encontró enemigo
                 final_direction = aim_direction
                 disparo_tipo = "GUIADO"
             else:
-                # Disparo manual - usar última dirección de movimiento
                 final_direction = last_direction.copy()
                 
-                # NUEVO: Si la dirección es inválida, usar dirección actual del sprite
                 if final_direction == [0, 0] or final_direction is None:
                     if current_direction == 'up':
                         final_direction = [0, -1]
@@ -2852,58 +2423,49 @@ while running:
                     elif current_direction == 'right':
                         final_direction = [1, 0]
                     else:
-                        final_direction = [1, 0]  # Derecha por defecto
+                        final_direction = [1, 0]
                 
                 disparo_tipo = "MANUAL"
             
-            # 3. SIEMPRE crear el proyectil
             projectiles.append({'pos': player_pos.copy(), 'dir': final_direction})
             
-            # 4. Reproducir sonido de disparo
             play_sound('disparo', volume=0.6)
             
-            # 5. Debug mejorado
-            print(f"💩 Proyectil {disparo_tipo} creado: {final_direction}")
-            print(f"📊 Proyectiles activos: {len(projectiles)}/3")
+            print(f"PROYECTIL {disparo_tipo} creado: {final_direction}")
+            print(f"Proyectiles activos: {len(projectiles)}/3")
             
         elif (controller_shoot or keyboard_shoot) and not can_shoot:
             print("⚠️ Máximo de proyectiles alcanzado (3/3)")
         
-        # Toggle aim bot (solo teclado) - MEJORADO
+        # Toggle aim bot
         if keys[pygame.K_a]:
             aim_bot.aim_assistance = not aim_bot.aim_assistance
             status = "ACTIVADO" if aim_bot.aim_assistance else "DESACTIVADO"
             print(f"🎯 Aim bot {status}")
             show_temp_message(f"Aim bot {status}")
-            time.sleep(0.3)  # Evitar toggle múltiple
+            time.sleep(0.3)
         
-        # Recargar sprites si se presiona R
+        # Recargar sprites
         if keys[pygame.K_r]:
             print("🔄 Recargando sprites...")
             reload_sprites_if_needed()
             show_message("¡Sprites recargados!")
         
-        # Debug del control (presiona D)
-        if keys[pygame.K_d]:
-            debug_controller_state()
-            time.sleep(0.5)  # Evitar spam
-        
-        # MEJORADO: Verificar llegada a la salida con puertas visibles
+        # Verificar llegada a la salida
         if maze[player_pos[1]][player_pos[0]] == 2:
-            if collected_diamonds >= 5:  # SIEMPRE 5 diamantes requeridos
-                print(f"🚪 ¡Portal abierto! Avanzando al siguiente nivel...")
+            if collected_diamonds >= 5:
+                print(f"🚪 Portal abierto! Avanzando al siguiente nivel...")
                 
-                # NUEVO: Reproducir sonido de puerta
                 play_sound('puerta', volume=0.8)
                 
                 next_level()
             else:
-                remaining = 5 - collected_diamonds  # SIEMPRE 5 diamantes
-                show_temp_message(f"🔒 ¡Faltan {remaining} diamantes! La puerta está cerrada")
+                remaining = 5 - collected_diamonds
+                show_temp_message(f"Faltan {remaining} diamantes! La puerta está cerrada")
         
         # Actualizar enemigos y proyectiles
         move_enemies()
-        move_projectiles()  # Ahora más rápidos
+        move_projectiles()
         
         # Verificar colisiones
         if check_enemy_collision():
@@ -2912,10 +2474,8 @@ while running:
             reset_enemies()
             projectiles = []
             
-            # SONIDO: Solo cuando el JUGADOR es tocado por enemigo
             play_sound('muerte', volume=0.8)
             
-            # NUEVO: Limpiar mensaje temporal
             temp_message = ""
             temp_message_time = 0
             last_button_a_state = False
@@ -2923,43 +2483,39 @@ while running:
             last_space_state = False
             
             if player_lives <= 0:
-                # NUEVO: Música de derrota
                 if music_paths and music_paths['defeat']:
                     stop_music()
                     play_music(music_paths['defeat'], loop=0, volume=0.6)
                 
-                show_message(f"💀 Tu alma ha sido devorada 💀")
-                show_message(f"🔥 Almas perdidas: {player_score} 🔥")
-                reset_game(show_welcome_messages=False)  # CORREGIDO: Sin mensajes de bienvenida cuando pierdes
-                reset_menu()  # ASEGURAR menú limpio
+                show_message(f"Tu alma ha sido devorada")
+                show_message(f"Almas perdidas: {player_score}")
+                reset_game(show_welcome_messages=False)
+                reset_menu()
                 game_state = STATE_MENU
                 
-                # NUEVO: Volver a música del menú
                 if music_paths and music_paths['menu']:
                     play_music(music_paths['menu'], volume=0.3)
             else:
-                show_message(f"😈 ¡Los demonios te han tocado! Vida restante: {player_lives} 💖")
+                show_message(f"Los demonios te han tocado! Vida restante: {player_lives}")
         
         # Dibujar todo
         screen.fill(COLOR_BACKGROUND)
-        draw_maze()  # Ahora con sprites personalizados
+        draw_maze()
         draw_player()
-        draw_enemies()  # Ya no dibuja fantasmas invisibles
+        draw_enemies()
         draw_projectiles()
-        draw_ui()  # UI mejorada con sprites
-        draw_temp_message()  # NUEVO: Dibujar mensaje temporal
+        draw_ui()
+        draw_temp_message()
 
-        # NUEVO: Salir del juego también con botón B del control
+        # Salir del juego
         if keys[pygame.K_ESCAPE] or controller_b:
-            # NUEVO: Limpiar mensaje temporal y estados de control al salir
             temp_message = ""
             temp_message_time = 0
             last_button_a_state = False
             last_button_b_state = False
             last_space_state = False
-            reset_menu()  # ASEGURAR menú limpio
+            reset_menu()
             
-            # NUEVO: Volver a música del menú
             if music_paths and music_paths['menu']:
                 stop_music()
                 play_music(music_paths['menu'], volume=0.3)

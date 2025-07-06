@@ -1,6 +1,8 @@
 """
-Node.py - Clase Node para el algoritmo A*
-Autor: Alan Alberto Martinez Ubiera - 23-EISN-2-062
+node.py - Clase Node para el algoritmo A*
+Estudiante: Alan Alberto Martinez Ubiera 
+Matrícula: 23-EISN-2-062
+Email: aalann34@gmail.com
 """
 
 class Node:

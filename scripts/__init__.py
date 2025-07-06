@@ -1,7 +1,9 @@
 """
 scripts/__init__.py
-Paquete de módulos para el juego Perro Pacman
-Autor: Alan Alberto Martinez Ubiera - 23-EISN-2-062
+Paquete de módulos para Dimensiones Infernales
+Estudiante: Alan Alberto Martinez Ubiera 
+Matrícula: 23-EISN-2-062
+Email: aalann34@gmail.com
 """
 
 from .astar import AStar
