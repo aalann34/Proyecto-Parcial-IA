@@ -1,5 +1,5 @@
 """
-enemy_behaviors.py - Comportamientos específicos para cada tipo de enemigo (BALANCEADO)
+enemy_behaviors.py - Comportamientos específicos para cada tipo de enemigo (CORREGIDO)
 Autor: Alan Alberto Martinez Ubiera - 23-EISN-2-062
 """
 
@@ -305,48 +305,498 @@ class GhostBehavior(EnemyBehavior):
 
 class ZombieBehavior(EnemyBehavior):
     """
-    Comportamiento del Zombie (🧟)
-    Tipo: Se mueve de forma completamente aleatoria (BALANCEADO)
+    🧟 ZOMBIE MEJORADO: Persecución lenta pero implacable + comportamiento de horda
+    Tipo: Te persigue constantemente pero MUY lento, como un verdadero zombie
     """
     
     def __init__(self, enemy_data, pathfinder, player_pos_getter, all_enemies=None):
         super().__init__(enemy_data, pathfinder, player_pos_getter, all_enemies)
         self.last_move_time = 0
-        self.move_delay = 1.0  # Zombies son muy lentos
+        self.base_move_delay = 0.8  # Muy lento como zombie clásico
+        self.current_move_delay = self.base_move_delay
+        
+        # NUEVO: Sistema de horda
+        self.horde_radius = 3  # Radio para detectar otros zombies
+        self.horde_boost = False  # Si está en horda se mueve más rápido
+        self.last_horde_check = 0
+        self.horde_check_interval = 1.0  # Verificar horda cada segundo
+        
+        # NUEVO: Sistema de "olfato" para perseguir incluso cuando el jugador está lejos
+        self.scent_memory = []  # Memoria de dónde estaba el jugador
+        self.max_scent_age = 5.0  # Tiempo que dura el "olfato"
+        
+        print(f"🧟 Zombie inicializado - persecución lenta pero implacable")
         self._create_behavior_tree()
         
     def _create_behavior_tree(self):
-        """Crea el árbol de comportamiento para el zombie"""
+        """Crea el árbol de comportamiento para el zombie mejorado"""
         
-        # Secuencia principal con delay largo
-        root_sequence = Sequence("ZombieMainSequence")
+        # Selector principal con detección de horda
+        root_selector = Selector("ZombieMainSelector")
         
-        # Condición: ¿Puede moverse ahora? (zombie muy lento)
-        can_move = Condition(self._can_move_now, "CanMoveNow")
+        # Secuencia de persecución directa (prioridad más alta)
+        chase_sequence = Sequence("ChaseSequence")
+        chase_sequence.add_child(Condition(self._can_move_now, "CanMoveNow"))
+        chase_sequence.add_child(Condition(self._can_see_player, "CanSeePlayer"))
+        chase_sequence.add_child(Action(self._relentless_chase, "RelentlessChase"))
         
-        # Acción: Movimiento aleatorio
-        random_move = Action(self._random_move, "RandomMove")
+        # Secuencia de seguir rastro (cuando perdió de vista al jugador)
+        scent_sequence = Sequence("ScentSequence")
+        scent_sequence.add_child(Condition(self._can_move_now, "CanMoveNow"))
+        scent_sequence.add_child(Condition(self._has_scent_trail, "HasScentTrail"))
+        scent_sequence.add_child(Action(self._follow_scent, "FollowScent"))
         
-        # Armar la secuencia
-        root_sequence.add_child(can_move)
-        root_sequence.add_child(random_move)
+        # Vagar como último recurso (muy raro)
+        wander_sequence = Sequence("WanderSequence")
+        wander_sequence.add_child(Condition(self._can_move_now, "CanMoveNow"))
+        wander_sequence.add_child(Action(self._zombie_wander, "ZombieWander"))
         
-        self.behavior_tree = BehaviorTree(root_sequence, "ZombieBehavior")
+        # Ensamblar el árbol (prioridad: perseguir > seguir rastro > vagar)
+        root_selector.add_child(chase_sequence)
+        root_selector.add_child(scent_sequence)
+        root_selector.add_child(wander_sequence)
+        
+        self.behavior_tree = BehaviorTree(root_selector, "ZombieBehavior")
         
     def _can_move_now(self, blackboard):
-        """Verifica si puede moverse (zombie muy lento)"""
+        """Controla la velocidad del zombie con boost de horda"""
         current_time = blackboard["current_time"]
-        return current_time - self.last_move_time >= self.move_delay
         
-    def _random_move(self, blackboard):
-        """Movimiento completamente aleatorio"""
+        # Verificar si está en horda para acelerar
+        self._check_horde_status(blackboard)
+        
+        return current_time - self.last_move_time >= self.current_move_delay
+        
+    def _check_horde_status(self, blackboard):
+        """Verifica si el zombie está cerca de otros zombies (horda)"""
+        current_time = blackboard["current_time"]
+        
+        # Solo verificar cada cierto tiempo
+        if current_time - self.last_horde_check < self.horde_check_interval:
+            return
+            
+        self.last_horde_check = current_time
+        enemy_pos = blackboard["enemy_pos"]
+        all_enemies = blackboard["all_enemies"]
+        
+        nearby_zombies = 0
+        for other_enemy in all_enemies:
+            if (other_enemy != self.enemy and 
+                other_enemy.get("type") == "🧟"):  # Es otro zombie
+                
+                other_pos = other_enemy["pos"]
+                distance = math.sqrt((enemy_pos[0] - other_pos[0])**2 + 
+                                   (enemy_pos[1] - other_pos[1])**2)
+                
+                if distance <= self.horde_radius:
+                    nearby_zombies += 1
+        
+        # Si hay 1+ zombies cerca, activar boost de horda
+        old_horde_status = self.horde_boost
+        self.horde_boost = nearby_zombies >= 1
+        
+        if self.horde_boost:
+            self.current_move_delay = self.base_move_delay * 0.6  # 40% más rápido en horda
+            if not old_horde_status:
+                print(f"🧟 Zombie formó HORDA con {nearby_zombies} zombies - ¡Se mueve más rápido!")
+        else:
+            self.current_move_delay = self.base_move_delay
+            if old_horde_status:
+                print(f"🧟 Zombie perdió la horda - vuelve a velocidad normal")
+        
+    def _can_see_player(self, blackboard):
+        """Verifica si puede 'ver' al jugador (distancia razonable)"""
+        distance = blackboard["distance_to_player"]
+        
+        # Actualizar memoria de olfato
+        self._update_scent_trail(blackboard)
+        
+        return distance <= 12.0  # Amplio rango de "vista" zombie
+        
+    def _update_scent_trail(self, blackboard):
+        """Actualiza la memoria de olfato del zombie"""
+        current_time = blackboard["current_time"]
+        player_pos = blackboard["player_pos"]
+        
+        # Agregar posición actual del jugador al rastro
+        self.scent_memory.append({
+            'pos': player_pos.copy(),
+            'time': current_time
+        })
+        
+        # Limpiar rastros viejos
+        self.scent_memory = [scent for scent in self.scent_memory 
+                           if current_time - scent['time'] <= self.max_scent_age]
+        
+    def _relentless_chase(self, blackboard):
+        """Persecución implacable pero lenta del jugador"""
+        self.last_move_time = blackboard["current_time"]
+        
+        # MEJORA: Usar A* para perseguir inteligentemente
+        success = self._move_toward_player(blackboard)
+        
+        if success and self.horde_boost:
+            # Sonido de horda (opcional, se puede implementar después)
+            pass
+            
+        return success
+        
+    def _has_scent_trail(self, blackboard):
+        """Verifica si tiene rastro de olfato que seguir"""
+        return len(self.scent_memory) > 0
+        
+    def _follow_scent(self, blackboard):
+        """Sigue el rastro de olfato hacia la última posición conocida del jugador"""
+        try:
+            self.last_move_time = blackboard["current_time"]
+            
+            if not self.scent_memory:
+                return False
+                
+            # Seguir la posición más reciente en el rastro
+            target_scent = self.scent_memory[-1]
+            target_pos = target_scent['pos']
+            enemy_pos = blackboard["enemy_pos"]
+            
+            # Usar A* para ir hacia la posición del rastro
+            dx, dy = self.pathfinder.get_next_move(
+                enemy_pos[0], enemy_pos[1],
+                target_pos[0], target_pos[1]
+            )
+            
+            new_x = enemy_pos[0] + dx
+            new_y = enemy_pos[1] + dy
+            
+            if self.pathfinder.is_valid_position(new_x, new_y):
+                self.enemy["pos"] = [new_x, new_y]
+                self.enemy["dir"] = [dx, dy]
+                
+                # Si llegó a la posición del rastro, eliminarla
+                if [new_x, new_y] == target_pos:
+                    self.scent_memory.pop()
+                    
+                return True
+            return False
+        except:
+            return False
+        
+    def _zombie_wander(self, blackboard):
+        """Vagar zombie (muy ocasional)"""
         try:
             self.last_move_time = blackboard["current_time"]
             enemy_pos = blackboard["enemy_pos"]
             
-            # Direcciones posibles
+            # Movimiento lento y aleatorio
             directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
             dx, dy = random.choice(directions)
+            
+            new_x = enemy_pos[0] + dx
+            new_y = enemy_pos[1] + dy
+            
+            if self.pathfinder.is_valid_position(new_x, new_y):
+                self.enemy["pos"] = [new_x, new_y]
+                self.enemy["dir"] = [dx, dy]
+                return True
+            return False
+        except:
+            return False
+
+class ClownBehavior(EnemyBehavior):
+    """
+    🤡 PAYASO MEJORADO: Comportamiento travieso e impredecible que confunde al jugador
+    Tipo: Velocidad variable, imitación de movimientos, y efectos de confusión
+    """
+    
+    def __init__(self, enemy_data, pathfinder, player_pos_getter, all_enemies=None):
+        super().__init__(enemy_data, pathfinder, player_pos_getter, all_enemies)
+        self.last_move_time = 0
+        
+        # NUEVO: Sistema de velocidad variable (travieso)
+        self.speed_modes = ["slow", "normal", "fast", "crazy"]
+        self.current_speed_mode = "normal"
+        self.speed_change_time = 0
+        self.speed_change_interval = 3.0  # Cambiar velocidad cada 3 segundos
+        
+        # NUEVO: Sistema de imitación de movimientos del jugador
+        self.mimic_mode = False
+        self.player_movement_history = []  # Historial de movimientos del jugador
+        self.mimic_delay = 1.0  # Delay para imitar movimientos
+        self.last_player_pos = [0, 0]
+        
+        # NUEVO: Sistema de confusión (movimientos erráticos)
+        self.confusion_mode = False
+        self.confusion_start_time = 0
+        self.confusion_duration = 2.0
+        self.confusion_cooldown = 6.0
+        self.last_confusion_time = 0
+        
+        # NUEVO: Comportamiento de "burla" (se acerca y se aleja)
+        self.taunt_mode = False
+        self.taunt_phase = "approach"  # "approach" o "retreat"
+        self.taunt_distance = 4.0
+        
+        print(f"🤡 Payaso travieso inicializado - comportamiento impredecible y confuso")
+        self._create_behavior_tree()
+        
+    def _create_behavior_tree(self):
+        """Crea el árbol de comportamiento para el payaso mejorado"""
+        
+        # Selector principal con múltiples comportamientos traviesos
+        root_selector = Selector("ClownMainSelector")
+        
+        # Secuencia de confusión (máxima prioridad)
+        confusion_sequence = Sequence("ConfusionSequence")
+        confusion_sequence.add_child(Condition(self._can_move_now, "CanMoveNow"))
+        confusion_sequence.add_child(Condition(self._should_activate_confusion, "ShouldActivateConfusion"))
+        confusion_sequence.add_child(Action(self._activate_confusion, "ActivateConfusion"))
+        
+        # Secuencia de confusión activa
+        confused_sequence = Sequence("ConfusedSequence")
+        confused_sequence.add_child(Condition(self._can_move_now, "CanMoveNow"))
+        confused_sequence.add_child(Condition(self._is_confused, "IsConfused"))
+        confused_sequence.add_child(Action(self._confused_movement, "ConfusedMovement"))
+        
+        # Secuencia de burla (acercarse y alejarse)
+        taunt_sequence = Sequence("TauntSequence")
+        taunt_sequence.add_child(Condition(self._can_move_now, "CanMoveNow"))
+        taunt_sequence.add_child(Condition(self._should_taunt, "ShouldTaunt"))
+        taunt_sequence.add_child(Action(self._taunt_player, "TauntPlayer"))
+        
+        # Secuencia de imitación
+        mimic_sequence = Sequence("MimicSequence")
+        mimic_sequence.add_child(Condition(self._can_move_now, "CanMoveNow"))
+        mimic_sequence.add_child(Condition(self._should_mimic, "ShouldMimic"))
+        mimic_sequence.add_child(Action(self._mimic_player, "MimicPlayer"))
+        
+        # Movimiento errático por defecto
+        erratic_sequence = Sequence("ErraticSequence")
+        erratic_sequence.add_child(Condition(self._can_move_now, "CanMoveNow"))
+        erratic_sequence.add_child(Action(self._erratic_movement, "ErraticMovement"))
+        
+        # Ensamblar el árbol (prioridad: confusión > burla > imitación > errático)
+        root_selector.add_child(confusion_sequence)
+        root_selector.add_child(confused_sequence)
+        root_selector.add_child(taunt_sequence)
+        root_selector.add_child(mimic_sequence)
+        root_selector.add_child(erratic_sequence)
+        
+        self.behavior_tree = BehaviorTree(root_selector, "ClownBehavior")
+        
+    def _can_move_now(self, blackboard):
+        """Controla la velocidad variable del payaso"""
+        current_time = blackboard["current_time"]
+        
+        # Actualizar modo de velocidad
+        self._update_speed_mode(current_time)
+        
+        # Actualizar historial de movimientos del jugador
+        self._update_player_movement_history(blackboard)
+        
+        # Determinar delay según modo de velocidad
+        speed_delays = {
+            "slow": 0.8,     # Muy lento (burlón)
+            "normal": 0.4,   # Velocidad normal
+            "fast": 0.2,     # Rápido (agresivo)
+            "crazy": 0.1     # Súper rápido (loco)
+        }
+        
+        current_delay = speed_delays.get(self.current_speed_mode, 0.4)
+        return current_time - self.last_move_time >= current_delay
+        
+    def _update_speed_mode(self, current_time):
+        """Actualiza el modo de velocidad del payaso"""
+        if current_time - self.speed_change_time >= self.speed_change_interval:
+            old_mode = self.current_speed_mode
+            self.current_speed_mode = random.choice(self.speed_modes)
+            self.speed_change_time = current_time
+            
+            if old_mode != self.current_speed_mode:
+                print(f"🤡 Payaso cambió velocidad: {old_mode} → {self.current_speed_mode}")
+        
+    def _update_player_movement_history(self, blackboard):
+        """Actualiza el historial de movimientos del jugador"""
+        current_time = blackboard["current_time"]
+        player_pos = blackboard["player_pos"]
+        
+        # Si el jugador se movió, registrar el movimiento
+        if player_pos != self.last_player_pos:
+            movement = {
+                'from': self.last_player_pos.copy(),
+                'to': player_pos.copy(),
+                'time': current_time
+            }
+            self.player_movement_history.append(movement)
+            self.last_player_pos = player_pos.copy()
+            
+        # Limpiar historial viejo
+        self.player_movement_history = [move for move in self.player_movement_history 
+                                      if current_time - move['time'] <= 10.0]
+        
+    def _should_activate_confusion(self, blackboard):
+        """Decide si debe activar modo de confusión"""
+        current_time = blackboard["current_time"]
+        distance = blackboard["distance_to_player"]
+        
+        return (not self.confusion_mode and 
+                current_time - self.last_confusion_time >= self.confusion_cooldown and 
+                2.0 <= distance <= 6.0)
+        
+    def _activate_confusion(self, blackboard):
+        """Activa el modo de confusión"""
+        current_time = blackboard["current_time"]
+        
+        self.confusion_mode = True
+        self.confusion_start_time = current_time
+        self.last_confusion_time = current_time
+        
+        print("🤡 Payaso activó MODO CONFUSIÓN - movimientos erráticos por 2 segundos")
+        return True
+        
+    def _is_confused(self, blackboard):
+        """Verifica si está en modo confusión"""
+        current_time = blackboard["current_time"]
+        
+        if self.confusion_mode:
+            if current_time - self.confusion_start_time >= self.confusion_duration:
+                self.confusion_mode = False
+                print("🤡 Payaso salió del modo confusión")
+                
+        return self.confusion_mode
+        
+    def _confused_movement(self, blackboard):
+        """Movimiento súper errático durante confusión"""
+        try:
+            self.last_move_time = blackboard["current_time"]
+            enemy_pos = blackboard["enemy_pos"]
+            
+            # Movimientos completamente aleatorios y rápidos
+            directions = [(0, 1), (0, -1), (1, 0), (-1, 0), (1, 1), (-1, 1), (1, -1), (-1, -1)]
+            dx, dy = random.choice(directions)
+            
+            new_x = enemy_pos[0] + dx
+            new_y = enemy_pos[1] + dy
+            
+            if self.pathfinder.is_valid_position(new_x, new_y):
+                self.enemy["pos"] = [new_x, new_y]
+                self.enemy["dir"] = [dx, dy]
+                return True
+            return False
+        except:
+            return False
+        
+    def _should_taunt(self, blackboard):
+        """Decide si debe burlarse del jugador"""
+        distance = blackboard["distance_to_player"]
+        
+        # Alternar entre acercarse y alejarse
+        if not self.taunt_mode:
+            return 3.0 <= distance <= 8.0
+        else:
+            # Ya está en modo burla, continuar
+            return True
+        
+    def _taunt_player(self, blackboard):
+        """Comportamiento de burla: acercarse y alejarse"""
+        try:
+            self.last_move_time = blackboard["current_time"]
+            distance = blackboard["distance_to_player"]
+            
+            if not self.taunt_mode:
+                self.taunt_mode = True
+                self.taunt_phase = "approach"
+                print("🤡 Payaso inició BURLA - se acerca al jugador")
+            
+            if self.taunt_phase == "approach":
+                # Acercarse hasta cierta distancia
+                if distance > self.taunt_distance:
+                    success = self._move_toward_player(blackboard)
+                else:
+                    # Cambiar a fase de retirada
+                    self.taunt_phase = "retreat"
+                    print("🤡 Payaso cambia a RETIRADA - se aleja burlándose")
+                    success = self._move_away_from_player(blackboard)
+            else:  # retreat
+                # Alejarse hasta cierta distancia
+                if distance < self.taunt_distance + 3:
+                    success = self._move_away_from_player(blackboard)
+                else:
+                    # Terminar burla
+                    self.taunt_mode = False
+                    print("🤡 Payaso terminó la burla")
+                    success = True
+                    
+            return success
+        except:
+            return False
+        
+    def _should_mimic(self, blackboard):
+        """Decide si debe imitar al jugador"""
+        distance = blackboard["distance_to_player"]
+        
+        # Solo imitar cuando está a distancia media y tiene historial
+        return (4.0 <= distance <= 10.0 and 
+                len(self.player_movement_history) > 0 and 
+                random.random() < 0.3)  # 30% probabilidad
+        
+    def _mimic_player(self, blackboard):
+        """Imita los movimientos del jugador con delay"""
+        try:
+            self.last_move_time = blackboard["current_time"]
+            current_time = blackboard["current_time"]
+            
+            # Buscar un movimiento del jugador para imitar (con delay)
+            for move in self.player_movement_history:
+                if current_time - move['time'] >= self.mimic_delay:
+                    # Calcular dirección del movimiento del jugador
+                    player_dx = move['to'][0] - move['from'][0]
+                    player_dy = move['to'][1] - move['from'][1]
+                    
+                    # Imitar ese movimiento
+                    enemy_pos = blackboard["enemy_pos"]
+                    new_x = enemy_pos[0] + player_dx
+                    new_y = enemy_pos[1] + player_dy
+                    
+                    if self.pathfinder.is_valid_position(new_x, new_y):
+                        self.enemy["pos"] = [new_x, new_y]
+                        self.enemy["dir"] = [player_dx, player_dy]
+                        
+                        # Remover movimiento imitado
+                        self.player_movement_history.remove(move)
+                        print(f"🤡 Payaso imitó movimiento del jugador: [{player_dx}, {player_dy}]")
+                        return True
+            
+            return False
+        except:
+            return False
+        
+    def _erratic_movement(self, blackboard):
+        """Movimiento errático por defecto (más interesante)"""
+        try:
+            self.last_move_time = blackboard["current_time"]
+            enemy_pos = blackboard["enemy_pos"]
+            player_pos = blackboard["player_pos"]
+            
+            # Combinar movimiento aleatorio con ligera tendencia hacia/lejos del jugador
+            directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
+            
+            # 70% aleatorio, 30% hacia el jugador
+            if random.random() < 0.7:
+                dx, dy = random.choice(directions)
+            else:
+                # Calcular dirección hacia el jugador
+                if player_pos[0] > enemy_pos[0]:
+                    dx = 1
+                elif player_pos[0] < enemy_pos[0]:
+                    dx = -1
+                else:
+                    dx = 0
+                    
+                if player_pos[1] > enemy_pos[1]:
+                    dy = 1
+                elif player_pos[1] < enemy_pos[1]:
+                    dy = -1
+                else:
+                    dy = 0
             
             new_x = enemy_pos[0] + dx
             new_y = enemy_pos[1] + dy
@@ -475,16 +925,18 @@ class VillainBehavior(EnemyBehavior):
 
 class DemonBehavior(EnemyBehavior):
     """
-    Comportamiento del Demonio (👺)
-    Tipo: Se teletransporta en tramos (BALANCEADO)
+    Comportamiento del Demonio (👺) - CORREGIDO CON TELETRANSPORTE ALEATORIO
+    Tipo: Se teletransporta a posiciones ALEATORIAS del mapa (no cerca del jugador)
     """
     
     def __init__(self, enemy_data, pathfinder, player_pos_getter, all_enemies=None):
         super().__init__(enemy_data, pathfinder, player_pos_getter, all_enemies)
         self.last_teleport_time = 0
-        self.teleport_cooldown = 5.0  # Cooldown más largo
+        self.teleport_cooldown = 4.0  # Cada 4 segundos
         self.last_move_time = 0
-        self.move_delay = 0.6  # Movimiento normal más lento
+        self.move_delay = 0.7  # Movimiento normal lento
+        
+        print(f"👺 Demonio inicializado - teletransporte ALEATORIO cada {self.teleport_cooldown}s")
         self._create_behavior_tree()
         
     def _create_behavior_tree(self):
@@ -493,10 +945,10 @@ class DemonBehavior(EnemyBehavior):
         # Selector principal
         root_selector = Selector("DemonMainSelector")
         
-        # Secuencia de teletransporte
+        # Secuencia de teletransporte ALEATORIO
         teleport_sequence = Sequence("TeleportSequence")
         teleport_sequence.add_child(Condition(self._can_teleport, "CanTeleport"))
-        teleport_sequence.add_child(Action(self._teleport_near_player, "TeleportNearPlayer"))
+        teleport_sequence.add_child(Action(self._teleport_randomly, "TeleportRandomly"))
         
         # Movimiento normal como respaldo
         normal_move_sequence = Sequence("NormalMoveSequence")
@@ -517,158 +969,50 @@ class DemonBehavior(EnemyBehavior):
     def _can_teleport(self, blackboard):
         """Verifica si puede teletransportarse"""
         current_time = blackboard["current_time"]
-        distance = blackboard["distance_to_player"]
         
-        # Puede teletransportarse si ha pasado el cooldown y el jugador está lejos
-        return (current_time - self.last_teleport_time >= self.teleport_cooldown and 
-                distance > 6.0)  # Aumentado para mejor balance
+        # Puede teletransportarse si ha pasado el cooldown
+        return current_time - self.last_teleport_time >= self.teleport_cooldown
         
-    def _teleport_near_player(self, blackboard):
-        """Se teletransporta cerca del jugador"""
+    def _teleport_randomly(self, blackboard):
+        """CORREGIDO: Se teletransporta a una posición COMPLETAMENTE ALEATORIA del mapa"""
         try:
             current_time = blackboard["current_time"]
-            player_pos = blackboard["player_pos"]
-            
             self.last_teleport_time = current_time
             
-            # Posiciones cercanas al jugador para teletransportarse (más conservador)
-            teleport_positions = []
-            for radius in range(3, 5):  # Anillo más pequeño
-                for dx in range(-radius, radius + 1):
-                    for dy in range(-radius, radius + 1):
-                        if abs(dx) == radius or abs(dy) == radius:  # Solo el borde
-                            new_x = player_pos[0] + dx
-                            new_y = player_pos[1] + dy
-                            if self.pathfinder.is_valid_position(new_x, new_y):
-                                teleport_positions.append([new_x, new_y])
+            # NUEVO: Obtener el mapa actual para encontrar posiciones válidas
+            # Nota: Necesitaremos acceso al mapa actual, lo simularemos aquí
+            pathfinder = blackboard["pathfinder"]
             
-            if teleport_positions:
-                new_pos = random.choice(teleport_positions)
+            # Encontrar TODAS las posiciones válidas del mapa (no solo cerca del jugador)
+            valid_positions = []
+            
+            # Buscar en todo el grid del pathfinder
+            for y in range(1, pathfinder.height - 1):
+                for x in range(1, pathfinder.width - 1):
+                    if pathfinder.is_valid_position(x, y):
+                        valid_positions.append([x, y])
+            
+            if valid_positions:
+                # Elegir una posición COMPLETAMENTE ALEATORIA
+                new_pos = random.choice(valid_positions)
+                old_pos = self.enemy["pos"].copy()
                 self.enemy["pos"] = new_pos
                 self.enemy["dir"] = [0, 0]  # Sin dirección específica tras teletransporte
+                
+                print(f"👺 Demonio se teletransportó ALEATORIAMENTE de {old_pos} a {new_pos}")
                 return True
+            
+            print("👺 No se encontraron posiciones válidas para teletransporte aleatorio")
             return False
-        except:
+            
+        except Exception as e:
+            print(f"❌ Error en teletransporte aleatorio del demonio: {e}")
             return False
         
     def _normal_move(self, blackboard):
         """Movimiento normal cuando no puede teletransportarse"""
         self.last_move_time = blackboard["current_time"]
         return self._move_toward_player(blackboard)
-
-class ClownBehavior(EnemyBehavior):
-    """
-    Comportamiento del Payaso (🤡)
-    Tipo: Deja trampas y se mueve en patrones erráticos (BALANCEADO)
-    """
-    
-    def __init__(self, enemy_data, pathfinder, player_pos_getter, all_enemies=None):
-        super().__init__(enemy_data, pathfinder, player_pos_getter, all_enemies)
-        self.traps = []  # Lista de trampas colocadas
-        self.last_trap_time = 0
-        self.trap_cooldown = 6.0  # Cooldown más largo
-        self.movement_pattern = 0
-        self.pattern_steps = 0
-        self.last_move_time = 0
-        self.move_delay = 0.5  # Velocidad moderada
-        self._create_behavior_tree()
-        
-    def _create_behavior_tree(self):
-        """Crea el árbol de comportamiento para el payaso"""
-        
-        # Selector principal
-        root_selector = Selector("ClownMainSelector")
-        
-        # Secuencia de colocar trampa
-        trap_sequence = Sequence("TrapSequence")
-        trap_sequence.add_child(Condition(self._can_place_trap, "CanPlaceTrap"))
-        trap_sequence.add_child(Action(self._place_trap, "PlaceTrap"))
-        
-        # Secuencia de movimiento errático
-        erratic_sequence = Sequence("ErraticSequence")
-        erratic_sequence.add_child(Condition(self._can_move_now, "CanMoveNow"))
-        erratic_sequence.add_child(Action(self._erratic_movement, "ErraticMovement"))
-        
-        # Ensamblar el árbol
-        root_selector.add_child(trap_sequence)
-        root_selector.add_child(erratic_sequence)
-        
-        self.behavior_tree = BehaviorTree(root_selector, "ClownBehavior")
-        
-    def _can_move_now(self, blackboard):
-        """Controla la velocidad del payaso"""
-        current_time = blackboard["current_time"]
-        return current_time - self.last_move_time >= self.move_delay
-        
-    def _can_place_trap(self, blackboard):
-        """Verifica si puede colocar una trampa"""
-        current_time = blackboard["current_time"]
-        distance = blackboard["distance_to_player"]
-        
-        # Puede colocar trampa si ha pasado el cooldown y está cerca del jugador
-        return (current_time - self.last_trap_time >= self.trap_cooldown and 
-                3.0 <= distance <= 6.0)  # Rango más conservador
-        
-    def _place_trap(self, blackboard):
-        """Coloca una trampa en la posición actual"""
-        try:
-            current_time = blackboard["current_time"]
-            enemy_pos = blackboard["enemy_pos"]
-            
-            self.last_trap_time = current_time
-            
-            # Agregar trampa (nota: las trampas no están implementadas visualmente en este ejemplo)
-            trap_pos = enemy_pos.copy()
-            self.traps.append({
-                'pos': trap_pos,
-                'time': current_time
-            })
-            
-            # Limpiar trampas viejas (después de 12 segundos)
-            self.traps = [trap for trap in self.traps 
-                         if current_time - trap['time'] < 12.0]
-            
-            return True
-        except:
-            return False
-        
-    def _erratic_movement(self, blackboard):
-        """Movimiento errático en patrones"""
-        try:
-            self.last_move_time = blackboard["current_time"]
-            enemy_pos = blackboard["enemy_pos"]
-            
-            # Cambiar patrón cada 7 pasos (más lento)
-            if self.pattern_steps >= 7:
-                self.movement_pattern = (self.movement_pattern + 1) % 4
-                self.pattern_steps = 0
-            
-            self.pattern_steps += 1
-            
-            # Patrones de movimiento diferentes (más conservadores)
-            if self.movement_pattern == 0:  # Zigzag horizontal
-                dx = 1 if self.pattern_steps % 2 == 0 else -1
-                dy = 0
-            elif self.movement_pattern == 1:  # Zigzag vertical
-                dx = 0
-                dy = 1 if self.pattern_steps % 2 == 0 else -1
-            elif self.movement_pattern == 2:  # Diagonal
-                dx = 1 if self.pattern_steps % 2 == 0 else -1
-                dy = 1 if self.pattern_steps % 2 == 0 else -1
-            else:  # Completamente aleatorio
-                directions = [(0, 1), (0, -1), (1, 0), (-1, 0)]
-                dx, dy = random.choice(directions)
-            
-            new_x = enemy_pos[0] + dx
-            new_y = enemy_pos[1] + dy
-            
-            if self.pathfinder.is_valid_position(new_x, new_y):
-                self.enemy["pos"] = [new_x, new_y]
-                self.enemy["dir"] = [dx, dy]
-                return True
-            return False
-        except:
-            return False
 
 def create_enemy_behavior(enemy_data, pathfinder, player_pos_getter, all_enemies=None):
     """
@@ -689,13 +1033,13 @@ def create_enemy_behavior(enemy_data, pathfinder, player_pos_getter, all_enemies
         return AlienBehavior(enemy_data, pathfinder, player_pos_getter, all_enemies)
     elif enemy_type == "👻":  # Fantasma - INVISIBILIDAD TEMPORAL
         return GhostBehavior(enemy_data, pathfinder, player_pos_getter, all_enemies)
-    elif enemy_type == "🧟":  # Zombie - Movimiento aleatorio lento
+    elif enemy_type == "🧟":  # Zombie - PERSECUCIÓN LENTA + HORDA (MEJORADO)
         return ZombieBehavior(enemy_data, pathfinder, player_pos_getter, all_enemies)
     elif enemy_type == "🦹":  # Villano - Persecución y emboscada balanceada
         return VillainBehavior(enemy_data, pathfinder, player_pos_getter, all_enemies)
-    elif enemy_type == "👺":  # Demonio - Teletransporte balanceado
+    elif enemy_type == "👺":  # Demonio - TELETRANSPORTE ALEATORIO (CORREGIDO)
         return DemonBehavior(enemy_data, pathfinder, player_pos_getter, all_enemies)
-    elif enemy_type == "🤡":  # Payaso - Trampas y movimiento errático balanceado
+    elif enemy_type == "🤡":  # Payaso - COMPORTAMIENTO TRAVIESO (MEJORADO)
         return ClownBehavior(enemy_data, pathfinder, player_pos_getter, all_enemies)
     else:
         # Comportamiento por defecto (Alien)
