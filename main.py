@@ -187,11 +187,11 @@ def normalize_direction(dx, dy):
             return [0, -1]  # Arriba ↑
 
 def ensure_valid_shooting_direction():
-    """Asegura que siempre haya una dirección válida para disparar"""
+    """CORREGIDO: Asegura que siempre haya una dirección válida para disparar"""
     global last_direction, current_direction
     
-    # Si last_direction es [0,0], usar la dirección del sprite actual
-    if last_direction == [0, 0]:
+    # Si last_direction es [0,0] o inválida, usar la dirección del sprite actual
+    if last_direction == [0, 0] or last_direction is None:
         if current_direction == 'up':
             last_direction = [0, -1]
         elif current_direction == 'down':
@@ -201,7 +201,14 @@ def ensure_valid_shooting_direction():
         elif current_direction == 'right':
             last_direction = [1, 0]
         else:
-            last_direction = [1, 0]  # Derecha por defecto
+            # Por defecto: disparar hacia la derecha
+            last_direction = [1, 0]
+            current_direction = 'right'
+    
+    # NUEVO: Verificar que la dirección sea válida (no [0,0])
+    if last_direction[0] == 0 and last_direction[1] == 0:
+        last_direction = [1, 0]  # Forzar dirección derecha por defecto
+        print("🔧 Dirección de disparo corregida: derecha")
 
 def debug_controller_state():
     """Función de debug para verificar el estado del control"""
@@ -794,16 +801,21 @@ class AimBot:
             return [0, 1 if dy > 0 else -1]
     
     def get_aim_direction(self, player_pos, enemies):
-        """Obtiene la dirección de disparo asistido"""
+        """CORREGIDO: Obtiene la dirección de disparo asistido solo si hay enemigos cerca"""
         if not self.aim_assistance:
+            return None
+        
+        # Si no hay enemigos, no hay dirección de aim
+        if not enemies:
             return None
             
         nearest_enemy, distance = self.find_nearest_enemy(player_pos, enemies)
         
-        if nearest_enemy:
+        if nearest_enemy and distance <= self.detection_range:
             self.target_enemy = nearest_enemy
             return self.calculate_aim_direction(player_pos, nearest_enemy['pos'])
         
+        # No hay enemigos en rango
         self.target_enemy = None
         return None
     
@@ -1138,7 +1150,7 @@ player_lives = 3
 current_level = 0
 maze = levels[current_level]['maze']
 projectiles = []
-last_direction = [1, 0]
+last_direction = [1, 0]  # CORREGIDO: Inicializar con dirección válida (derecha)
 
 # NUEVO: Sistema de diamantes obligatorios
 total_diamonds = 0  # Diamantes totales en el nivel actual
@@ -1728,8 +1740,17 @@ def draw_ui():
     screen.blit(projectile_text, (10, combat_y))
     
     # Información de aim bot (derecha)
-    aim_status = "🎯 GUIADO" if aim_bot.aim_assistance else "🎯 MANUAL"
-    aim_color = COLOR_FIRE if aim_bot.aim_assistance else (100, 100, 100)
+    if aim_bot.aim_assistance:
+        if aim_bot.target_enemy:
+            aim_status = "🎯 ACTIVO"
+            aim_color = (0, 255, 0)  # Verde cuando está apuntando
+        else:
+            aim_status = "🎯 ESPERANDO"
+            aim_color = COLOR_FIRE  # Naranja cuando está esperando enemigos
+    else:
+        aim_status = "🎯 MANUAL"
+        aim_color = (100, 100, 100)  # Gris cuando está desactivado
+    
     aim_text = small_font.render(aim_status, True, aim_color)
     screen.blit(aim_text, (200, combat_y))
     
@@ -1739,9 +1760,9 @@ def draw_ui():
     
     # Información de controles más compacta
     if controller_connected:
-        control_text = f"🎮 Xbox360 | {levels[current_level]['difficulty']} | {FPS}FPS | A=disparar B=salir | +/-=tamaño F11=pantalla"
+        control_text = f"🎮 Xbox360 | {levels[current_level]['difficulty']} | {FPS}FPS | A=disparar(siempre) B=salir | +/-=tamaño F11=pantalla"
     else:
-        control_text = f"⌨️ Teclado | {levels[current_level]['difficulty']} | {FPS}FPS | ESPACIO=disparar A=guiado +/-=tamaño F11=pantalla"
+        control_text = f"⌨️ Teclado | {levels[current_level]['difficulty']} | {FPS}FPS | ESPACIO=disparar(siempre) A=aim +/-=tamaño F11=pantalla"
     
     info_color = COLOR_FIRE if controller_connected else COLOR_TEXT
     info_text_surface = small_font.render(control_text, True, info_color)
@@ -1823,6 +1844,7 @@ def draw_menu():
         "🎯 OBJETIVO: Recolecta TODOS los diamantes 💎 para abrir las puertas 🚪",
         "👹 ENEMIGOS: 7 tipos de criaturas infernales con IA única",
         "👻 Los fantasmas pueden volverse INVISIBLES temporalmente",
+        "💩 DISPARO: Siempre puedes disparar (ESPACIO/A) - Presiona A para aim bot",
         "🎮 Sprites personalizados para mejor experiencia visual"
     ]
     
@@ -2298,31 +2320,56 @@ while running:
         last_space_state = current_space_pressed
         
         if (controller_shoot or keyboard_shoot) and can_shoot:
-            # Determinar dirección de disparo (SOLO 4 direcciones como antes)
-            shoot_direction = last_direction.copy()  # Usar última dirección de movimiento
+            # CORREGIDO: SIEMPRE disparar, con o sin enemigos
             
-            # Obtener dirección de aim bot si está activo
-            aim_direction = aim_bot.get_aim_direction(player_pos, enemies)
+            # 1. Obtener dirección de aim bot si está activo Y hay enemigos
+            aim_direction = None
+            if aim_bot.aim_assistance:
+                aim_direction = aim_bot.get_aim_direction(player_pos, enemies)
             
+            # 2. Determinar dirección final de disparo
             if aim_direction:
-                # Usar aim bot
-                projectiles.append({'pos': player_pos.copy(), 'dir': aim_direction})
-                print(f"🎯 Proyectil GUIADO creado: {aim_direction}")
+                # Usar aim bot si encontró enemigo
+                final_direction = aim_direction
+                disparo_tipo = "GUIADO"
             else:
-                # Disparo normal (4 direcciones: arriba, abajo, izquierda, derecha)
-                projectiles.append({'pos': player_pos.copy(), 'dir': shoot_direction})
-                print(f"💥 Proyectil RÁPIDO creado: {shoot_direction}")
+                # Disparo manual - usar última dirección de movimiento
+                final_direction = last_direction.copy()
+                
+                # NUEVO: Si la dirección es inválida, usar dirección actual del sprite
+                if final_direction == [0, 0] or final_direction is None:
+                    if current_direction == 'up':
+                        final_direction = [0, -1]
+                    elif current_direction == 'down':
+                        final_direction = [0, 1]
+                    elif current_direction == 'left':
+                        final_direction = [-1, 0]
+                    elif current_direction == 'right':
+                        final_direction = [1, 0]
+                    else:
+                        final_direction = [1, 0]  # Derecha por defecto
+                
+                disparo_tipo = "MANUAL"
             
-            # NUEVO: Reproducir sonido de disparo
+            # 3. SIEMPRE crear el proyectil
+            projectiles.append({'pos': player_pos.copy(), 'dir': final_direction})
+            
+            # 4. Reproducir sonido de disparo
             play_sound('shoot', volume=0.6)
             
+            # 5. Debug mejorado
+            print(f"💥 Proyectil {disparo_tipo} creado: {final_direction}")
             print(f"📊 Proyectiles activos: {len(projectiles)}/3")
+            
         elif (controller_shoot or keyboard_shoot) and not can_shoot:
             print("⚠️ Máximo de proyectiles alcanzado (3/3)")
         
-        # Toggle aim bot (solo teclado)
+        # Toggle aim bot (solo teclado) - MEJORADO
         if keys[pygame.K_a]:
             aim_bot.aim_assistance = not aim_bot.aim_assistance
+            status = "ACTIVADO" if aim_bot.aim_assistance else "DESACTIVADO"
+            print(f"🎯 Aim bot {status}")
+            show_temp_message(f"Aim bot {status}")
             time.sleep(0.3)  # Evitar toggle múltiple
         
         # Recargar sprites si se presiona R
