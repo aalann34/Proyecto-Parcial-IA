@@ -6,7 +6,7 @@
 **Universidad:** Universidad O&M  
 **Materia:** Inteligencia Artificial  
 **Profesor:** Yoel Andeyci Pilier Martínez  
-**Fecha:** 5/7/2025 
+**Fecha:** 5 de Julio, 2025  
 
 ## 📋 Descripción del Proyecto
 
@@ -40,10 +40,10 @@ Juego de acción estilo laberinto donde un **perro héroe** debe navegar por **d
 
 ### 👾 **Criaturas Infernales con IA Única**
 - ✅ **7 tipos de enemigos** con comportamientos únicos
-- ✅ **Fantasmas invisibles** - pueden desaparecer temporalmente
+- ✅ **Habilidades especiales** - diferentes características por tipo
 - ✅ **Spawn aleatorio** en posiciones seguras
 - ✅ **IA cooperativa** entre enemigos
-- ✅ **Detección de invisibilidad** en UI y combate
+- ✅ **Comportamientos dinámicos** según el estado del juego
 
 ## 🧠 Inteligencia Artificial Implementada
 
@@ -64,7 +64,7 @@ Juego de acción estilo laberinto donde un **perro héroe** debe navegar por **d
   - **Nodos de Acción** - Movimientos y decisiones estratégicas
   - **Nodos Composite** - Secuencias y selectores complejos
   - **Comportamientos Especiales:**
-    - 👻 **Fantasmas:** Pueden volverse invisibles
+    - 👻 **Fantasmas:** Movimiento sigiloso
     - 👽 **Aliens:** Persecución inteligente
     - 🧟 **Zombies:** Movimiento impredecible
     - 🦹 **Villanos:** Táctica de emboscada
@@ -256,7 +256,7 @@ Proyecto-Parcial-IA/
 ### 🧠 **IA Avanzada**
 - **Comportamiento emergente** - enemigos coordinan estrategias
 - **Estados dinámicos** - los enemigos reaccionan al entorno
-- **Invisibilidad compleja** - fantasmas con lógica de aparición/desaparición
+- **Habilidades únicas** - cada tipo tiene características especiales
 - **Pathfinding cooperativo** - enemigos evitan chocar entre sí
 
 ### 🎮 **Experiencia de Usuario**
@@ -335,7 +335,7 @@ pip install pygame==2.6.1
 **Carrera:** Ingeniería en Sistemas y Computación  
 **Materia:** Inteligencia Artificial  
 **Profesor:** Yoel Andeyci Pilier Martínez  
-**Periodo:** Julio 2025  
+**Periodo:** 5 de Julio, 2025  
 **Tipo:** Examen Parcial - Proyecto Final  
 
 ### 📋 **Criterios Cumplidos**
