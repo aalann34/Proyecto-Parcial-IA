@@ -1702,21 +1702,21 @@ def draw_ui():
     level_text = small_font.render(level_info, True, COLOR_BONUS)
     screen.blit(level_text, (10, ui_start_y))
     
-    # Vidas con sprites de fuego
+    # Vidas con sprites de corazón
     hearts_x = SCREEN_WIDTH - 150
     hearts_y = ui_start_y
     
     lives_label = small_font.render("Vida:", True, COLOR_FIRE)
     screen.blit(lives_label, (hearts_x - 50, hearts_y + 8))
     
-    if fire_sprite:
-        large_fire_sprite = pygame.transform.scale(fire_sprite, (35, 35))
-        for i in range(player_lives):
-            screen.blit(large_fire_sprite, (hearts_x + i * 40, hearts_y))
-    elif heart_sprite:
+    if heart_sprite:
         large_heart_sprite = pygame.transform.scale(heart_sprite, (35, 35))
         for i in range(player_lives):
             screen.blit(large_heart_sprite, (hearts_x + i * 40, hearts_y))
+    elif fire_sprite:
+        large_fire_sprite = pygame.transform.scale(fire_sprite, (35, 35))
+        for i in range(player_lives):
+            screen.blit(large_fire_sprite, (hearts_x + i * 40, hearts_y))
     else:
         for i in range(player_lives):
             pygame.draw.rect(screen, COLOR_FIRE, (hearts_x + i * 40, hearts_y, 30, 30))
