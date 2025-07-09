@@ -11,6 +11,5 @@
 pygame==2.6.1
 
 # Dependencias adicionales opcionales
-# (descomenta si las necesitas más adelante)
 # numpy>=1.24.0
 # pillow>=9.0.0
